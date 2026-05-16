@@ -1,0 +1,14 @@
+package com.example.flickfind_ltttbdd.data.remote
+
+import retrofit2.http.GET
+import retrofit2.http.Query
+
+interface MovieApiService {
+
+    // Hàm gọi API lấy danh sách phim có áp dụng phân trang
+    @GET("api/v1/movies")
+    suspend fun getMovies(
+        @Query("page") page: Int,
+        @Query("limit") limit: Int
+    ): List<MovieResponse>
+}
