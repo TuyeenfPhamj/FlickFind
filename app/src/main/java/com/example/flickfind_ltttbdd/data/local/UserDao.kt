@@ -11,5 +11,5 @@ interface UserDao {
 
     // 2. Cập nhật hoặc khởi tạo thông tin người dùng
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insertOrUpdateUser(user: UserEntity)
+    suspend fun insertOrUpdateUser(user: UserEntity): Long
 }
