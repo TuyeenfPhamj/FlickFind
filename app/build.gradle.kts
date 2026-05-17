@@ -60,6 +60,9 @@ dependencies {
 
     // 4. Hiển thị ảnh từ URL (Coil)
     implementation("io.coil-kt:coil-compose:2.6.0")
+
+    //5. Hiển thị icon nâng cao cho nav
+    implementation("androidx.compose.material:material-icons-extended")
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.activity.compose)
