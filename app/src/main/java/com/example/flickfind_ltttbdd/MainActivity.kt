@@ -17,6 +17,7 @@ import com.example.flickfind_ltttbdd.ui.theme.FlickFindLTTTBDDTheme
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        enableEdgeToEdge()
         setContent {
             FlickFindLTTTBDDTheme {
                 MainNavGraph()

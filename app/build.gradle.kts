@@ -67,6 +67,8 @@ dependencies {
 
     //5. Hiển thị icon nâng cao cho nav
     implementation("androidx.compose.material:material-icons-extended")
+
+
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.activity.compose)
