@@ -11,11 +11,11 @@ interface MovieDao {
 
     // 2. Thêm một bộ phim vào danh sách yêu thích (Nếu trùng ID sẽ ghi đè/cập nhật)
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insertFavorite(movie: FavoriteMovieEntity)
+    suspend fun insertFavorite(movie: FavoriteMovieEntity): Long
 
     // 3. Xóa một bộ phim khỏi danh sách yêu thích
     @Delete
-    suspend fun deleteFavorite(movie: FavoriteMovieEntity)
+    suspend fun deleteFavorite(movie: FavoriteMovieEntity): Int
 
     // 4. Kiểm tra xem phim đã được thích chưa (trả về null nếu chưa có)
     @Query("SELECT * FROM favorite_movies WHERE id = :movieId LIMIT 1")

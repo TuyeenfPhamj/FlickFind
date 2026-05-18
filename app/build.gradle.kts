@@ -2,7 +2,10 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.compose)
     id("com.google.devtools.ksp")
+}
 
+ksp {
+    arg("room.generateKotlin", "true")
 }
 
 android {
@@ -51,18 +54,21 @@ dependencies {
     implementation("com.squareup.retrofit2:retrofit:2.11.0")
     implementation("com.squareup.retrofit2:converter-gson:2.11.0")
 
-    // 3. Cơ sở dữ liệu nội bộ (Room DB)
-    val roomVersion = "2.6.1"
-    implementation("androidx.room:room-runtime:$roomVersion")
-    implementation("androidx.room:room-ktx:$roomVersion")
-    // Dòng dưới này dùng để xử lý sinh code tự động cho Room
-    ksp("androidx.room:room-compiler:$roomVersion")
+    val room_version = "2.6.1" // Khai báo một biến version chung
+
+    implementation("androidx.room:room-runtime:$room_version")
+    implementation("androidx.room:room-ktx:$room_version")
+
+    // Đảm bảo dòng này dùng đúng từ khóa 'ksp' thay vì 'kapt' hoặc 'annotationProcessor'
+    ksp("androidx.room:room-compiler:$room_version")
 
     // 4. Hiển thị ảnh từ URL (Coil)
     implementation("io.coil-kt:coil-compose:2.6.0")
 
     //5. Hiển thị icon nâng cao cho nav
     implementation("androidx.compose.material:material-icons-extended")
+
+
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.activity.compose)
