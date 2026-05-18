@@ -1,6 +1,7 @@
 package com.example.flickfind_ltttbdd.data.remote
 
 import retrofit2.http.GET
+import retrofit2.http.Path
 import retrofit2.http.Query
 
 interface MovieApiService {
@@ -11,4 +12,8 @@ interface MovieApiService {
         @Query("page") page: Int,
         @Query("limit") limit: Int
     ): List<MovieResponse>
+
+    // Lấy chi tiết một bộ phim theo ID
+    @GET("api/v1/movies/{id}")
+    suspend fun getMovieById(@Path("id") id: String): MovieResponse
 }

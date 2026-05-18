@@ -28,6 +28,16 @@ class MovieRepository(
         }
     }
 
+    // Hàm lấy chi tiết một bộ phim từ API
+    suspend fun getMovieById(id: String): Result<MovieResponse> {
+        return try {
+            val response = apiService.getMovieById(id)
+            Result.success(response)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
 
     // ==========================================
     // 2. PHẦN XỬ LÝ DANH SÁCH YÊU THÍCH (ROOM DB)

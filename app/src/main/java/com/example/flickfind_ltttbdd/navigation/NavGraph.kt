@@ -1,7 +1,7 @@
 package com.example.flickfind_ltttbdd.navigation
 
 
-import android.net.http.SslCertificate.saveState
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Home
@@ -14,35 +14,65 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavHostController
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navArgument
+import com.example.flickfind_ltttbdd.ui.screens.DetailScreen
 import com.example.flickfind_ltttbdd.ui.viewmodel.AppViewModelProvider
 import com.example.flickfind_ltttbdd.ui.viewmodel.HomeViewModel
+import com.example.flickfind_ltttbdd.ui.viewmodel.DetailViewModel
 import com.example.flickfind_ltttbdd.ui.screens.HomeScreen
 
 @Composable
 fun MainNavGraph() {
     val navController = rememberNavController()
+    val navBackStackEntry by navController.currentBackStackEntryAsState()
+    val currentRoute = navBackStackEntry?.destination?.route
+
+    // Chỉ hiện Bottom Bar ở các màn hình chính
+    val showBottomBar = currentRoute in listOf(Screen.Home.route, Screen.Profile.route, Screen.About.route)
 
     Scaffold(
-        bottomBar = { AppBottomNavigationBar(navController) }
+        bottomBar = { 
+            if (showBottomBar) {
+                AppBottomNavigationBar(navController)
+            }
+        }
     ) { innerPadding ->
 
         // Khung NavHost liên kết các màn hình theo cấu trúc của bạn
         NavHost(
             navController = navController,
-            startDestination = Screen.Home.route,
-            modifier = Modifier.padding(innerPadding)
+            startDestination = Screen.Detail.createRoute(1), // Sử dụng hàm tạo route mẫu
+            modifier = Modifier.padding(if (showBottomBar) innerPadding else PaddingValues(0.dp))
         ) {
-            // Màn hình 1: Khám phá (Trang chủ của bạn)
+            // Màn hình 1: Khám phá (Trang chủ)
             composable(Screen.Home.route) {
                 val context = LocalContext.current
                 val homeViewModel: HomeViewModel = viewModel(
                     factory = AppViewModelProvider(context)
                 )
                 HomeScreen(viewModel = homeViewModel, navController = navController)
+            }
+
+            // Màn hình Chi tiết
+            composable(
+                route = Screen.Detail.route,
+                arguments = listOf(navArgument("movieId") { type = NavType.StringType })
+            ) { backStackEntry ->
+                val movieId = backStackEntry.arguments?.getString("movieId") ?: ""
+                val context = LocalContext.current
+                val detailViewModel: DetailViewModel = viewModel(
+                    factory = AppViewModelProvider(context)
+                )
+                DetailScreen(
+                    movieId = movieId,
+                    viewModel = detailViewModel,
+                    onBackClick = { navController.popBackStack() }
+                )
             }
 
             // Màn hình 2: Cá nhân (Giao diện phụ trách của thành viên khác)

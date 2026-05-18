@@ -1,110 +1,271 @@
 package com.example.flickfind_ltttbdd.ui.screens
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material.icons.filled.Favorite
-import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 import com.example.flickfind_ltttbdd.data.remote.MovieResponse
+import com.example.flickfind_ltttbdd.navigation.bottomNavItems
+import com.example.flickfind_ltttbdd.ui.viewmodel.DetailViewModel
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DetailScreen(
-    movieId: Int?,
+    movieId: String,
+    viewModel: DetailViewModel,
     onBackClick: () -> Unit
 ) {
-    // Giả sử bạn lấy được thông tin movie từ ViewModel dựa trên movieId
-    // Đây là giao diện mẫu
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text("Chi tiết phim") },
-                navigationIcon = {
-                    IconButton(onClick = onBackClick) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "Back")
-                    }
-                },
-                actions = {
-                    IconButton(onClick = { /* Xử lý yêu thích */ }) {
-                        Icon(Icons.Default.FavoriteBorder, contentDescription = "Favorite")
+    val movie by viewModel.movie.collectAsState()
+    val isLoading by viewModel.isLoading.collectAsState()
+    val errorMessage by viewModel.errorMessage.collectAsState()
+    val isFavorite by viewModel.isFavorite.collectAsState()
+
+    LaunchedEffect(movieId) {
+        viewModel.getMovieById(movieId)
+    }
+
+    Surface(
+        modifier = Modifier.fillMaxSize(),
+        color = Color(0xFF0F172A) // Màu nền xanh than đậm theo hình
+    ) {
+        Box(modifier = Modifier.fillMaxSize()) {
+            when {
+                isLoading -> {
+                    CircularProgressIndicator(
+                        modifier = Modifier.align(Alignment.Center),
+                        color = Color(0xFF0EA5E9)
+                    )
+                }
+                errorMessage != null -> {
+                    Column(
+                        modifier = Modifier.align(Alignment.Center),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Text(text = errorMessage!!, color = Color.White)
+                        Button(onClick = { viewModel.getMovieById(movieId) }) {
+                            Text("Thử lại")
+                        }
                     }
                 }
-            )
-        }
-    ) { innerPadding ->
-        Column(
-            modifier = Modifier
-                .padding(innerPadding)
-                .verticalScroll(rememberScrollState())
-                .fillMaxSize()
-        ) {
-            // Backdrop Image
-            AsyncImage(
-                model = "https://image.tmdb.org/t/p/w500/backdrop_path_sample", // Thay bằng movie.backdropPath
-                contentDescription = null,
+                movie != null -> {
+                    MovieDetailContent(
+                        movie = movie!!,
+                        isFavorite = isFavorite,
+                        onToggleFavorite = { viewModel.toggleFavorite(movie!!) }
+                    )
+                }
+            }
+
+            // Nút thoát (Góc trái trên - Hình chữ nhật)
+            Button(
+                onClick = onBackClick,
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .height(250.dp),
+                    .padding(16.dp)
+                    .align(Alignment.TopStart),
+                shape = RoundedCornerShape(8.dp),
+                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF1E293B).copy(alpha = 0.8f)),
+                contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp)
+            ) {
+                Text("Nút\nthoát", color = Color.White, fontSize = 14.sp, fontWeight = FontWeight.Bold)
+            }
+        }
+    }
+}
+
+@Composable
+fun MovieDetailContent(
+    movie: MovieResponse,
+    isFavorite: Boolean,
+    onToggleFavorite: () -> Unit
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .verticalScroll(rememberScrollState())
+    ) {
+        // 1. Ảnh Banner
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(400.dp)
+                .background(Color.Black)
+        ) {
+            AsyncImage(
+                model = movie.backdropPath,
+                contentDescription = null,
+                modifier = Modifier.fillMaxSize(),
                 contentScale = ContentScale.Crop
             )
+            
+            Text(
+                text = "Ảnh Banner",
+                color = Color.White,
+                fontSize = 32.sp,
+                modifier = Modifier.align(Alignment.Center)
+            )
+        }
 
-            Column(modifier = Modifier.padding(16.dp)) {
-                Text(
-                    text = "Tên phim mẫu", // movie.title
-                    style = MaterialTheme.typography.headlineMedium,
-                    fontWeight = FontWeight.Bold
-                )
-
-                Spacer(modifier = Modifier.height(8.dp))
-
-                Row {
-                    Text(text = "⭐ 8.5", color = MaterialTheme.colorScheme.primary) // movie.rating
-                    Spacer(modifier = Modifier.width(16.dp))
-                    Text(text = "120 phút") // movie.runtime
+        // 2. Khung Thông tin phim (Có Border)
+        Box(
+            modifier = Modifier
+                .padding(12.dp)
+                .fillMaxWidth()
+                .border(1.dp, Color(0xFF334155), RoundedCornerShape(4.dp))
+                .background(Color(0xFF1E293B).copy(alpha = 0.5f))
+                .padding(16.dp)
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Column(modifier = Modifier.weight(1f)) {
+                    InfoText("Tên phim: ", movie.title)
+                    InfoText("Thời gian: ", "${movie.runtime} phút")
+                    InfoText("Thể loại: ", movie.genres.joinToString(", "))
+                    InfoText("Đánh giá: ", "${movie.rating}/10")
                 }
 
-                Spacer(modifier = Modifier.height(16.dp))
+                // Nút thêm vào danh sách
+                Button(
+                    onClick = onToggleFavorite,
+                    modifier = Modifier
+                        .width(120.dp)
+                        .height(80.dp),
+                    shape = RoundedCornerShape(12.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF1E293B).copy(alpha = 0.9f)),
+                    border = borderStroke()
+                ) {
+                    Text(
+                        text = if (isFavorite) "Đã thêm\nvào list" else "Nút thêm\nvào danh\nsách",
+                        color = Color.White,
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.Bold,
+                        lineHeight = 16.sp
+                    )
+                }
+            }
+        }
 
-                Text(
-                    text = "Thể loại: Hành động, Phiêu lưu", // movie.genres.joinToString()
-                    style = MaterialTheme.typography.bodyMedium
-                )
+        // 3. Khung Nội dung (Có Border)
+        Column(
+            modifier = Modifier
+                .padding(horizontal = 12.dp)
+                .fillMaxWidth()
+                .border(1.dp, Color(0xFF334155), RoundedCornerShape(4.dp))
+                .background(Color(0xFF1E293B).copy(alpha = 0.5f))
+                .padding(16.dp)
+        ) {
+            Text(
+                text = "Nội dung:",
+                color = Color.White,
+                fontSize = 32.sp,
+                fontWeight = FontWeight.Normal
+            )
+            Spacer(modifier = Modifier.height(24.dp))
+            Text(
+                text = movie.overview,
+                color = Color.White,
+                fontSize = 16.sp,
+                lineHeight = 24.sp
+            )
+        }
+        
+        // 4. Các nút dưới cùng (Giả lập theo hình)
+        NavigationBar(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(top = 16.dp),
+            containerColor = Color(0xFF1E293B)
+        ) {
 
-                Spacer(modifier = Modifier.height(16.dp))
+            bottomNavItems.forEach { screen ->
 
-                Text(
-                    text = "Nội dung",
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold
-                )
-                Text(
-                    text = "Đây là phần tóm tắt nội dung phim...", // movie.overview
-                    style = MaterialTheme.typography.bodyLarge,
-                    lineHeight = 24.sp
-                )
+                NavigationBarItem(
 
-                Spacer(modifier = Modifier.height(16.dp))
+                    selected = false,
 
-                Text(
-                    text = "Đạo diễn: Christopher Nolan", // movie.director
-                    style = MaterialTheme.typography.bodyMedium,
-                    fontWeight = FontWeight.SemiBold
-                )
-                Text(
-                    text = "Diễn viên: Leonardo DiCaprio, Joseph Gordon-Levitt", // movie.cast
-                    style = MaterialTheme.typography.bodyMedium
+                    onClick = {
+                        // TODO: Navigate
+                    },
+
+                    icon = {
+
+                        screen.icon?.let {
+
+                            Icon(
+                                imageVector = it,
+                                contentDescription = screen.title,
+                                tint = Color.White
+                            )
+                        }
+                    },
+
+                    label = {
+
+                        Text(
+                            text = screen.title,
+                            color = Color.White,
+                            fontSize = 12.sp
+                        )
+                    },
+
+                    colors = NavigationBarItemDefaults.colors(
+                        indicatorColor = Color(0xFF0EA5E9)
+                    )
                 )
             }
         }
+    }
+}
+
+@Composable
+fun InfoText(label: String, value: String) {
+    Text(
+        text = "$label $value",
+        color = Color.White,
+        fontSize = 16.sp,
+        fontWeight = FontWeight.Normal,
+        modifier = Modifier.padding(vertical = 2.dp)
+    )
+}
+
+fun borderStroke() = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFF0EA5E9))
+
+@Preview(showBackground = true)
+@Composable
+fun DetailScreenPreview() {
+    val mockMovie = MovieResponse(
+        id = 1,
+        title = "Spider-Man",
+        posterPath = "",
+        backdropPath = "",
+        genres = listOf("Hành động", "Phiêu lưu"),
+        rating = 8.5f,
+        runtime = 148,
+        director = "Jon Watts",
+        cast = "Tom Holland",
+        releaseDate = "2021",
+        overview = "Đây là nội dung mô tả của bộ phim mẫu để xem trước giao diện bố cục mới theo đúng hình ảnh yêu cầu."
+    )
+    
+    Surface(color = Color(0xFF0F172A)) {
+        MovieDetailContent(
+            movie = mockMovie,
+            isFavorite = false,
+            onToggleFavorite = {}
+        )
     }
 }

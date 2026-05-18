@@ -7,19 +7,38 @@ import com.example.flickfind_ltttbdd.data.local.FavoriteMovieEntity
 import com.example.flickfind_ltttbdd.data.remote.MovieResponse
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
 class DetailViewModel(private val repository: MovieRepository) : ViewModel() {
 
     private val _movie = MutableStateFlow<MovieResponse?>(null)
-    val movie: StateFlow<MovieResponse?> = _movie
+    val movie: StateFlow<MovieResponse?> = _movie.asStateFlow()
+
+    private val _isLoading = MutableStateFlow(false)
+    val isLoading: StateFlow<Boolean> = _isLoading.asStateFlow()
+
+    private val _errorMessage = MutableStateFlow<String?>(null)
+    val errorMessage: StateFlow<String?> = _errorMessage.asStateFlow()
 
     private val _isFavorite = MutableStateFlow(false)
-    val isFavorite: StateFlow<Boolean> = _isFavorite
+    val isFavorite: StateFlow<Boolean> = _isFavorite.asStateFlow()
 
-    fun setMovie(movie: MovieResponse) {
-        _movie.value = movie
-        checkIfFavorite(movie.id)
+    fun getMovieById(id: String) {
+        viewModelScope.launch {
+            _isLoading.value = true
+            _errorMessage.value = null
+            repository.getMovieById(id)
+                .onSuccess { movieResponse ->
+                    _movie.value = movieResponse
+                    checkIfFavorite(movieResponse.id)
+                    _isLoading.value = false
+                }
+                .onFailure { exception ->
+                    _errorMessage.value = exception.message ?: "Lỗi khi tải chi tiết phim"
+                    _isLoading.value = false
+                }
+        }
     }
 
     private fun checkIfFavorite(movieId: Int) {
