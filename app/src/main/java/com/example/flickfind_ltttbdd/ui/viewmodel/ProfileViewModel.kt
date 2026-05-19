@@ -12,8 +12,7 @@ data class ProfileUiState(
     val user: UserEntity? = null,
     val favoriteMovies: List<FavoriteMovieEntity> = emptyList(),
     val totalWatchTime: Int = 0,
-    val mostWatchedGenre: String = "Chưa có",
-    val leastWatchedGenre: String = "Chưa có"
+    val genreDistribution: Map<String, Int> = emptyMap()
 )
 
 class ProfileViewModel(private val repository: MovieRepository) : ViewModel() {
@@ -47,16 +46,12 @@ class ProfileViewModel(private val repository: MovieRepository) : ViewModel() {
                     .filter { it.isNotEmpty() }
                     .groupingBy { it }
                     .eachCount()
-                
-                val mostWatched = genreCounts.maxByOrNull { it.value }?.key ?: "Chưa có"
-                val leastWatched = genreCounts.minByOrNull { it.value }?.key ?: "Chưa có"
 
                 _uiState.update { 
                     it.copy(
                         favoriteMovies = favorites,
                         totalWatchTime = totalTime,
-                        mostWatchedGenre = mostWatched,
-                        leastWatchedGenre = leastWatched
+                        genreDistribution = genreCounts
                     )
                 }
             }

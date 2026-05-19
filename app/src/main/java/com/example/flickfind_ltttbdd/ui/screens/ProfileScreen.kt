@@ -1,14 +1,17 @@
 package com.example.flickfind_ltttbdd.ui.screens
 
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Done
 import androidx.compose.material.icons.filled.Edit
-import androidx.compose.material.icons.filled.Logout
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -18,6 +21,8 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
@@ -32,76 +37,181 @@ fun ProfileScreen(
     onLogout: () -> Unit = {}
 ) {
     val uiState by viewModel.uiState.collectAsState()
-    val bgColor = Color(0xFF0B101B) // Màu nền tối toàn màn hình
+    val bgColor = Color(0xFF0B101B)
+    var isEditMode by remember { mutableStateOf(false) }
 
-    Column(
+    LazyColumn(
         modifier = Modifier
             .fillMaxSize()
-            .background(bgColor)
-            .padding(16.dp)
+            .background(bgColor),
+        contentPadding = PaddingValues(16.dp),
+        verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        // 1. Header: Avatar + Tên + Đăng xuất
-        ProfileHeader(
-            name = uiState.user?.name ?: "Người dùng",
-            avatarUrl = uiState.user?.avatarUrl ?: "",
-            onLogout = onLogout
-        )
-
-        Spacer(modifier = Modifier.height(20.dp))
-
-        // 2. Statistics: Phim xem nhiều nhất/ít nhất + Tổng thời gian
-        StatsSection(
-            mostWatched = uiState.mostWatchedGenre,
-            leastWatched = uiState.leastWatchedGenre,
-            totalTime = uiState.totalWatchTime
-        )
-
-        Spacer(modifier = Modifier.height(20.dp))
-
-        // 3. Title Section: Danh sách yêu thích
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Text(
-                text = "Danh sách yêu thích",
-                color = Color.White,
-                fontSize = 20.sp,
-                fontWeight = FontWeight.Bold
+        // 1. Header
+        item {
+            ProfileHeader(
+                name = uiState.user?.name ?: "Người dùng",
+                avatarUrl = uiState.user?.avatarUrl ?: "",
+                onLogout = onLogout
             )
-            IconButton(onClick = { /* Sửa danh sách */ }) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier
-                        .background(Color(0xFF172033), RoundedCornerShape(8.dp))
-                        .padding(horizontal = 8.dp, vertical = 4.dp)
+        }
+
+        // 2. Statistics
+        item {
+            GenreDistributionSection(
+                genreDistribution = uiState.genreDistribution,
+                totalTime = uiState.totalWatchTime
+            )
+        }
+
+        // 3. Title Section with Edit Toggle
+        item {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = "Danh sách yêu thích",
+                    color = Color.White,
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.Bold
+                )
+                Surface(
+                    onClick = { isEditMode = !isEditMode },
+                    color = if (isEditMode) Color(0xFFE91E63) else Color(0xFF172033),
+                    shape = RoundedCornerShape(8.dp)
                 ) {
-                    Text("Sửa", color = Color.White, fontSize = 12.sp)
-                    Spacer(modifier = Modifier.width(4.dp))
-                    Icon(
-                        imageVector = Icons.Default.Edit,
-                        contentDescription = "Edit",
-                        tint = Color.White,
-                        modifier = Modifier.size(14.dp)
-                    )
+                    Row(
+                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = if (isEditMode) "Xong" else "Sửa",
+                            color = Color.White,
+                            fontSize = 12.sp
+                        )
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Icon(
+                            imageVector = if (isEditMode) Icons.Default.Done else Icons.Default.Edit,
+                            contentDescription = null,
+                            tint = Color.White,
+                            modifier = Modifier.size(14.dp)
+                        )
+                    }
                 }
             }
         }
 
-        Spacer(modifier = Modifier.height(12.dp))
+        // 4. Horizontal Favorite Movie List
+        items(uiState.favoriteMovies) { movie ->
+            HorizontalFavoriteMovieItem(
+                movie = movie,
+                isEditMode = isEditMode,
+                onToggleWatched = { viewModel.toggleWatched(movie) },
+                onDelete = { viewModel.deleteFavorite(movie) }
+            )
+        }
+    }
+}
 
-        // 4. Favorite List
-        LazyColumn(
-            verticalArrangement = Arrangement.spacedBy(16.dp),
-            modifier = Modifier.fillMaxSize()
+@Composable
+fun HorizontalFavoriteMovieItem(
+    movie: FavoriteMovieEntity,
+    isEditMode: Boolean,
+    onToggleWatched: () -> Unit,
+    onDelete: () -> Unit
+) {
+    Card(
+        colors = CardDefaults.cardColors(containerColor = Color(0xFF172033)),
+        shape = RoundedCornerShape(12.dp),
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Row(
+            modifier = Modifier
+                .padding(8.dp)
+                .fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            items(uiState.favoriteMovies) { movie ->
-                FavoriteMovieItem(
-                    movie = movie,
-                    onToggleWatched = { viewModel.toggleWatched(movie) },
-                    onDelete = { viewModel.deleteFavorite(movie) }
+            // Ảnh phim bên trái
+            Box(modifier = Modifier.size(width = 80.dp, height = 110.dp)) {
+                val imageUrl = if (movie.posterPath.startsWith("/")) {
+                    "https://image.tmdb.org/t/p/w500${movie.posterPath}"
+                } else {
+                    movie.posterPath
+                }
+
+                AsyncImage(
+                    model = imageUrl,
+                    contentDescription = movie.title,
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .clip(RoundedCornerShape(8.dp)),
+                    contentScale = ContentScale.Crop
                 )
+
+                // Nhãn trạng thái nhỏ trên ảnh
+                Surface(
+                    color = if (movie.isWatched) Color(0xFF00BFA5) else Color(0xFFE91E63),
+                    modifier = Modifier
+                        .align(Alignment.BottomStart)
+                        .padding(4.dp)
+                        .clip(RoundedCornerShape(4.dp))
+                        .clickable { onToggleWatched() }
+                ) {
+                    Text(
+                        text = if (movie.isWatched) "Đã xem" else "Chưa xem",
+                        color = Color.White,
+                        fontSize = 8.sp,
+                        fontWeight = FontWeight.Bold,
+                        modifier = Modifier.padding(horizontal = 4.dp, vertical = 2.dp)
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.width(12.dp))
+
+            // Thông tin phim ở giữa
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = movie.title,
+                    color = Color.White,
+                    fontSize = 15.sp,
+                    fontWeight = FontWeight.Bold,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+                Text(
+                    text = movie.genre,
+                    color = Color.Gray,
+                    fontSize = 12.sp,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.padding(top = 4.dp)
+                ) {
+                    Icon(Icons.Default.Star, null, tint = Color.Yellow, modifier = Modifier.size(12.dp))
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Text(text = movie.rating.toString(), color = Color.White, fontSize = 12.sp)
+                    Spacer(modifier = Modifier.width(12.dp))
+                    Text(text = "${movie.runtime} phút", color = Color.Gray, fontSize = 12.sp)
+                }
+            }
+
+            // Dấu X xóa phim (chỉ hiện khi ở chế độ sửa)
+            if (isEditMode) {
+                IconButton(
+                    onClick = onDelete,
+                    modifier = Modifier.size(32.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Close,
+                        contentDescription = "Delete",
+                        tint = Color.Red
+                    )
+                }
             }
         }
     }
@@ -115,157 +225,81 @@ fun ProfileHeader(name: String, avatarUrl: String, onLogout: () -> Unit) {
         modifier = Modifier.fillMaxWidth()
     ) {
         Row(
-            modifier = Modifier.padding(16.dp),
+            modifier = Modifier.padding(12.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // Ảnh đại diện
             Box(
-                modifier = Modifier
-                    .size(64.dp)
-                    .clip(CircleShape)
-                    .background(Color(0xFF23304B)),
+                modifier = Modifier.size(50.dp).clip(CircleShape).background(Color(0xFF23304B)),
                 contentAlignment = Alignment.Center
             ) {
                 if (avatarUrl.isNotEmpty()) {
-                    AsyncImage(
-                        model = avatarUrl,
-                        contentDescription = "Avatar",
-                        modifier = Modifier.fillMaxSize(),
-                        contentScale = ContentScale.Crop
-                    )
+                    AsyncImage(model = avatarUrl, contentDescription = null, modifier = Modifier.fillMaxSize(), contentScale = ContentScale.Crop)
                 } else {
-                    Text("Ảnh\nđại\ndiện", color = Color.Cyan, fontSize = 10.sp, textAlign = androidx.compose.ui.text.style.TextAlign.Center)
+                    Text("Ảnh", color = Color.Cyan, fontSize = 10.sp)
                 }
             }
-
-            Spacer(modifier = Modifier.width(16.dp))
-
-            // Tên tài khoản
-            Text(
-                text = name,
-                color = Color.White,
-                fontSize = 20.sp,
-                fontWeight = FontWeight.Medium,
-                modifier = Modifier.weight(1f) // Dùng weight để đẩy nút Đăng xuất
-            )
-
-            // Nút đăng xuất
+            Spacer(modifier = Modifier.width(12.dp))
+            Text(text = name, color = Color.White, fontSize = 16.sp, fontWeight = FontWeight.Medium, modifier = Modifier.weight(1f))
             Button(
                 onClick = onLogout,
                 colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF23304B)),
                 shape = RoundedCornerShape(8.dp),
-                contentPadding = PaddingValues(horizontal = 8.dp)
+                contentPadding = PaddingValues(horizontal = 12.dp, vertical = 4.dp),
+                modifier = Modifier.height(32.dp)
             ) {
-                Text("Đăng\nxuất", color = Color.White, fontSize = 12.sp, textAlign = androidx.compose.ui.text.style.TextAlign.Center)
+                Text("Đăng xuất", color = Color.White, fontSize = 11.sp)
             }
         }
     }
 }
 
 @Composable
-fun StatsSection(mostWatched: String, leastWatched: String, totalTime: Int) {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(12.dp)
-    ) {
-        // Cột bên trái: Phim xem nhiều nhất/ít nhất
-        Card(
-            colors = CardDefaults.cardColors(containerColor = Color(0xFF172033)),
-            shape = RoundedCornerShape(16.dp),
-            modifier = Modifier.weight(0.6f)
-        ) {
-            Column(modifier = Modifier.padding(16.dp)) {
-                Text("Thể loại xem nhiều nhất: $mostWatched", color = Color.White, fontSize = 12.sp)
-                Spacer(modifier = Modifier.height(4.dp))
-                Text("Thể loại xem ít nhất: $leastWatched", color = Color.White, fontSize = 12.sp)
-            }
-        }
-
-        // Cột bên phải: Tổng thời gian
-        Card(
-            colors = CardDefaults.cardColors(containerColor = Color(0xFF172033)),
-            shape = RoundedCornerShape(16.dp),
-            modifier = Modifier.weight(0.4f)
-        ) {
-            Column(
-                modifier = Modifier.padding(16.dp),
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                Text("Tổng thời gian đã xem", color = Color.White, fontSize = 11.sp, textAlign = androidx.compose.ui.text.style.TextAlign.Center)
-                Text(text = "$totalTime phút", color = Color.Cyan, fontSize = 14.sp, fontWeight = FontWeight.Bold)
-            }
-        }
-    }
-}
-
-@Composable
-fun FavoriteMovieItem(
-    movie: FavoriteMovieEntity,
-    onToggleWatched: () -> Unit,
-    onDelete: () -> Unit
-) {
+fun GenreDistributionSection(genreDistribution: Map<String, Int>, totalTime: Int) {
     Card(
         colors = CardDefaults.cardColors(containerColor = Color(0xFF172033)),
         shape = RoundedCornerShape(16.dp),
         modifier = Modifier.fillMaxWidth()
     ) {
         Row(
-            modifier = Modifier
-                .padding(8.dp)
-                .fillMaxWidth(),
+            modifier = Modifier.padding(12.dp).fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // Ảnh phim
-            Box(modifier = Modifier.width(100.dp)) {
-                AsyncImage(
-                    model = "https://image.tmdb.org/t/p/w500${movie.posterPath}",
-                    contentDescription = movie.title,
-                    modifier = Modifier
-                        .height(140.dp)
-                        .clip(RoundedCornerShape(12.dp)),
-                    contentScale = ContentScale.Crop
-                )
-                
-                // Label Đã xem/Chưa xem
-                Surface(
-                    color = if (movie.isWatched) Color(0xFF00BFA5) else Color(0xFF23304B),
-                    modifier = Modifier
-                        .align(Alignment.BottomCenter)
-                        .padding(bottom = 8.dp)
-                        .clip(RoundedCornerShape(4.dp)),
-                    onClick = onToggleWatched
-                ) {
-                    Text(
-                        text = if (movie.isWatched) "Đã xem" else "Chưa xem",
-                        color = Color.White,
-                        fontSize = 10.sp,
-                        modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
-                    )
+            Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.weight(0.35f)) {
+                CustomPieChart(data = genreDistribution, modifier = Modifier.size(80.dp))
+                Text("Thể loại", color = Color.Gray, fontSize = 10.sp, modifier = Modifier.padding(top = 4.dp))
+            }
+            Column(modifier = Modifier.weight(0.45f).padding(horizontal = 8.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                val colors = listOf(Color.Cyan, Color.Magenta, Color.Yellow, Color.Green, Color.Red)
+                genreDistribution.keys.take(4).forEachIndexed { index, genre ->
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Box(modifier = Modifier.size(6.dp).background(colors[index % colors.size], CircleShape))
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text(text = genre, color = Color.White, fontSize = 9.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                    }
                 }
             }
+            Column(modifier = Modifier.weight(0.2f), horizontalAlignment = Alignment.CenterHorizontally) {
+                Text("Tổng TG", color = Color.Gray, fontSize = 9.sp, textAlign = TextAlign.Center)
+                Text(text = "$totalTime", color = Color.Cyan, fontSize = 14.sp, fontWeight = FontWeight.Bold)
+                Text("phút", color = Color.Gray, fontSize = 9.sp)
+            }
+        }
+    }
+}
 
-            Spacer(modifier = Modifier.width(12.dp))
-
-            // Thông tin phim
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = movie.title,
-                    color = Color.White,
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.Bold,
-                    maxLines = 2
-                )
-                Text(
-                    text = movie.genre,
-                    color = Color.Gray,
-                    fontSize = 12.sp
-                )
-                Spacer(modifier = Modifier.height(8.dp))
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(Icons.Default.Star, contentDescription = null, tint = Color.Yellow, modifier = Modifier.size(16.dp))
-                    Spacer(modifier = Modifier.width(4.dp))
-                    Text(text = movie.rating.toString(), color = Color.White, fontSize = 14.sp)
-                }
+@Composable
+fun CustomPieChart(data: Map<String, Int>, modifier: Modifier = Modifier) {
+    val colors = listOf(Color.Cyan, Color.Magenta, Color.Yellow, Color.Green, Color.Red)
+    val totalCount = data.values.sum().toFloat().let { if (it == 0f) 1f else it }
+    Canvas(modifier = modifier) {
+        var startAngle = -90f
+        if (data.isEmpty()) {
+            drawCircle(Color.Gray)
+        } else {
+            data.values.forEachIndexed { index, count ->
+                val sweepAngle = (count / totalCount) * 360f
+                drawArc(color = colors[index % colors.size], startAngle = startAngle, sweepAngle = sweepAngle, useCenter = true)
+                startAngle += sweepAngle
             }
         }
     }
@@ -276,44 +310,29 @@ fun FavoriteMovieItem(
 fun ProfileScreenPreview() {
     val dummyUser = UserEntity(name = "Nguyễn Văn A", avatarUrl = "")
     val dummyMovies = listOf(
-        FavoriteMovieEntity(
-            id = 1,
-            title = "Inception",
-            posterPath = "/edv5bs1pUQC67SWHqcYf67OQ97R.jpg",
-            backdropPath = "",
-            genre = "Hành động, Khoa học viễn tưởng",
-            rating = 8.8f,
-            runtime = 148,
-            isWatched = true
-        ),
-        FavoriteMovieEntity(
-            id = 2,
-            title = "The Dark Knight",
-            posterPath = "/qJ2tW6WMUDp9QmSJJIVP6YFZO8r.jpg",
-            backdropPath = "",
-            genre = "Hành động, Hình sự",
-            rating = 9.0f,
-            runtime = 152,
-            isWatched = false
-        )
+        FavoriteMovieEntity(1, "Inception", "/edv5bs1pUQC67SWHqcYf67OQ97R.jpg", "", "Hành động", 8.8f, 148, true),
+        FavoriteMovieEntity(2, "The Dark Knight", "/qJ2tW6WMUDp9QmSJJIVP6YFZO8r.jpg", "", "Hành động", 9.0f, 152, true),
+        FavoriteMovieEntity(3, "Interstellar", "/gEU2QniE6E77NI6lCU6MxlS67jP.jpg", "", "Khoa học", 8.7f, 169, false)
     )
+    
+    ProfileScreenPreviewContent(dummyUser, dummyMovies)
+}
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(Color(0xFF0B101B))
-            .padding(16.dp)
+@Composable
+fun ProfileScreenPreviewContent(user: UserEntity, movies: List<FavoriteMovieEntity>) {
+    LazyColumn(
+        modifier = Modifier.fillMaxSize().background(Color(0xFF0B101B)),
+        contentPadding = PaddingValues(16.dp),
+        verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        ProfileHeader(name = dummyUser.name, avatarUrl = dummyUser.avatarUrl, onLogout = {})
-        Spacer(modifier = Modifier.height(20.dp))
-        StatsSection(mostWatched = "Hành động", leastWatched = "Kinh dị", totalTime = 300)
-        Spacer(modifier = Modifier.height(20.dp))
-        Text("Danh sách yêu thích", color = Color.White, fontSize = 20.sp, fontWeight = FontWeight.Bold)
-        Spacer(modifier = Modifier.height(12.dp))
-        LazyColumn(verticalArrangement = Arrangement.spacedBy(16.dp)) {
-            items(dummyMovies) { movie ->
-                FavoriteMovieItem(movie = movie, onToggleWatched = {}, onDelete = {})
+        item { ProfileHeader(user.name, "", {}) }
+        item { GenreDistributionSection(mapOf("Hành động" to 2, "Khoa học" to 1), 300) }
+        item {
+            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                Text("Danh sách yêu thích", color = Color.White, fontSize = 18.sp, fontWeight = FontWeight.Bold)
+                Text("Sửa", color = Color.Cyan, fontSize = 12.sp)
             }
         }
+        items(movies) { HorizontalFavoriteMovieItem(it, true, {}, {}) }
     }
 }
