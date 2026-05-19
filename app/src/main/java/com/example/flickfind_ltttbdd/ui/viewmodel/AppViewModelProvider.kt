@@ -13,7 +13,7 @@ class AppViewModelProvider(private val context: Context) : ViewModelProvider.Fac
         val repository = MovieRepository(
             apiService = RetrofitClient.instance,
             movieDao = database.movieDao(),
-            userDao = database.userDao()
+            userDao = database.userDao(),
         )
 
         return when {

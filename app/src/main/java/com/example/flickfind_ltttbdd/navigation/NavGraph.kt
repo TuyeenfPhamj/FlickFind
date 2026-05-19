@@ -10,57 +10,53 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
-<<<<<<< HEAD
 import com.example.flickfind_ltttbdd.ui.viewmodel.AppViewModelProvider
 import com.example.flickfind_ltttbdd.ui.viewmodel.HomeViewModel
 import com.example.flickfind_ltttbdd.ui.viewmodel.ProfileViewModel
 import com.example.flickfind_ltttbdd.ui.screens.ProfileScreen
 import com.example.flickfind_ltttbdd.ui.screens.HomeScreen
-=======
 import com.example.flickfind_ltttbdd.ui.screens.AboutScreen
->>>>>>> 79e296337e9371259f73e87c4cd221ca30bddc87
 
 @Composable
-
 fun MainNavGraph() {
     val navController = rememberNavController()
 
     Scaffold(
-
         bottomBar = { AppBottomNavigationBar(navController) }
     ) { innerPadding ->
         NavHost(
             navController = navController,
-            startDestination = Screen.About.route,
+            startDestination = Screen.Home.route,
             modifier = Modifier.padding(innerPadding)
         ) {
+            // Màn hình 1: Trang chủ
             composable(Screen.Home.route) {
-                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    Text("Màn hình Trang chủ - Đang phát triển")
-                }
+                val context = LocalContext.current
+                val homeViewModel: HomeViewModel = viewModel(
+                    factory = AppViewModelProvider(context)
+                )
+                HomeScreen(viewModel = homeViewModel, navController = navController)
             }
 
+            // Màn hình 2: Cá nhân
             composable(Screen.Profile.route) {
-<<<<<<< HEAD
                 val context = LocalContext.current
                 val profileViewModel: ProfileViewModel = viewModel(
                     factory = AppViewModelProvider(context)
                 )
                 ProfileScreen(viewModel = profileViewModel)
-=======
-                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    Text("Màn hình Cá nhân - Đang phát triển")
-                }
->>>>>>> 79e296337e9371259f73e87c4cd221ca30bddc87
             }
 
+            // Màn hình 3: Giới thiệu
             composable(Screen.About.route) {
                 AboutScreen()
             }
@@ -75,20 +71,19 @@ fun AppBottomNavigationBar(navController: NavHostController) {
         Screen.Profile,
         Screen.About
     )
-    val AppSurface = Color(0xFF171E30)    // Màu thanh điều hướng (trùng màu ô tìm kiếm của bạn)
-    val AppIndicator = Color(0xFF1A2844)  // Màu vòng bo (viên nhộng) bọc Icon khi được chọn
-    val TextActive = Color(0xFFFFFFFF)    // Chữ và Icon sáng trắng khi Active
-    val TextInactive = Color(0xFF8E9AA6)
+    val appSurface = Color(0xFF171E30)
+    val appIndicator = Color(0xFF1A2844)
+    val textActive = Color(0xFFFFFFFF)
+    val textInactive = Color(0xFF8E9AA6)
+    
     NavigationBar(
-        containerColor = AppSurface,
+        containerColor = appSurface,
         tonalElevation = 0.dp
     ) {
-        // Lấy trạng thái màn hình hiện tại để check làm sáng nút
         val navBackStackEntry by navController.currentBackStackEntryAsState()
         val currentRoute = navBackStackEntry?.destination?.route
 
         navigationItems.forEach { screen ->
-            // ĐIỀU KIỆN LÀM SÁNG: Nếu route trùng khớp thì mục đó sẽ sáng lên
             val isSelected = currentRoute == screen.route
 
             NavigationBarItem(
@@ -107,19 +102,18 @@ fun AppBottomNavigationBar(navController: NavHostController) {
                 label = {
                     Text(
                         text = screen.title,
-                        color = if (isSelected) TextActive else TextInactive
+                        color = if (isSelected) textActive else textInactive
                     )
                 },
                 icon = {
                     Icon(
-                        // Sửa lỗi ImageVector? bằng cách thêm toán tử dự phòng ?:
                         imageVector = screen.icon ?: Icons.Default.Home,
                         contentDescription = screen.title,
-                        tint = if (isSelected) TextActive else TextInactive
+                        tint = if (isSelected) textActive else textInactive
                     )
                 },
                 colors = NavigationBarItemDefaults.colors(
-                    indicatorColor = AppIndicator
+                    indicatorColor = appIndicator
                 )
             )
         }
