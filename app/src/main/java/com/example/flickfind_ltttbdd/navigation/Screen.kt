@@ -1,5 +1,7 @@
 package com.example.flickfind_ltttbdd.navigation
 
+import androidx.navigation.NavType
+import androidx.navigation.navArgument
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Info
@@ -14,7 +16,18 @@ sealed class Screen(val route: String, val title: String, val icon: ImageVector?
     object Profile : Screen("profile", "Cá nhân", Icons.Default.Person)
     object About : Screen("about", "Giới thiệu", Icons.Default.Info)
 
-    // Màn hình phụ không xuất hiện trên Bottom Bar (nên không cần truyền Icon)
+    // Màn hình phụ không xuất hiện trên Bottom Bar
+    object Filter : Screen("filter", "Lọc phim")
+    object SearchResult : Screen("search_result?query={query}&genre={genre}&yearRange={yearRange}", "Kết quả tìm kiếm") {
+        val arguments = listOf(
+            navArgument("query") { type = NavType.StringType; nullable = true; defaultValue = null },
+            navArgument("genre") { type = NavType.StringType; nullable = true; defaultValue = null },
+            navArgument("yearRange") { type = NavType.StringType; nullable = true; defaultValue = null }
+        )
+        fun createRoute(query: String? = null, genre: String? = null, yearRange: String? = null): String {
+            return "search_result?query=${query ?: ""}&genre=${genre ?: ""}&yearRange=${yearRange ?: ""}"
+        }
+    }
     object Detail : Screen("detail/{movieId}", "Chi tiết") {
         fun createRoute(movieId: Int) = "detail/$movieId"
     }

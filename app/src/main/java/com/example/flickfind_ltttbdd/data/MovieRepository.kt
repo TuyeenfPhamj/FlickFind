@@ -18,10 +18,16 @@ class MovieRepository(
     // 1. PHẦN XỬ LÝ MOCK API (REMOTE)
     // ==========================================
 
-    // Hàm lấy danh sách phim phân trang từ API, bọc trong Result để bắt lỗi mạng (nếu có)
-    suspend fun getMoviesFromApi(page: Int, limit: Int): Result<List<MovieResponse>> {
+    // Hàm lấy danh sách phim phân trang từ API có kèm bộ lọc, bọc trong Result để bắt lỗi mạng
+    suspend fun getMoviesFromApi(
+        page: Int,
+        limit: Int,
+        search: String? = null,
+        genre: String? = null,
+        yearRange: String? = null
+    ): Result<List<MovieResponse>> {
         return try {
-            val response = apiService.getMovies(page, limit)
+            val response = apiService.getMovies(page, limit, search, genre, yearRange)
             Result.success(response)
         } catch (e: Exception) {
             Result.failure(e)

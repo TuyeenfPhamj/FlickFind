@@ -28,7 +28,7 @@ abstract class AppDatabase : RoomDatabase() {
                     AppDatabase::class.java,
                     "flick_find_database" // Tên file database lưu trên điện thoại
                 )
-                    // Đoạn cấu hình dưới đây giúp tạo sẵn một tài khoản mặc định nếu DB trống rỗng
+                    .fallbackToDestructiveMigration()
                     .build()
                 INSTANCE = instance
                 instance
