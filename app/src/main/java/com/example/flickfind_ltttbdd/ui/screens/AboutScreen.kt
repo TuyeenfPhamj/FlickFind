@@ -46,34 +46,34 @@ fun AboutScreen() {
             textAlign = TextAlign.Start
         )
 
-        // 2. Cụm Logo và Version (To và Sát khít nhau)
+        // 2. Cụm Logo và Version (Nhỏ gọn, tinh tế)
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(310.dp),
+                .height(130.dp),
             contentAlignment = Alignment.TopCenter
         ) {
             Image(
                 painter = painterResource(id = R.drawable.logo_v2),
                 contentDescription = "App Logo",
-                modifier = Modifier.size(350.dp).offset(y = (-25).dp),
+                modifier = Modifier.size(80.dp),
                 contentScale = ContentScale.Fit
             )
             
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally,
-                modifier = Modifier.align(Alignment.BottomCenter).padding(bottom = 5.dp)
+                modifier = Modifier.align(Alignment.BottomCenter)
             ) {
                 Text(
                     text = "FlickFind App",
                     color = Color.White,
-                    fontSize = 26.sp,
+                    fontSize = 24.sp,
                     fontWeight = FontWeight.Bold
                 )
                 Text(
                     text = "Version 1.0.0",
                     color = Color.Gray,
-                    fontSize = 14.sp
+                    fontSize = 13.sp
                 )
             }
         }
