@@ -60,7 +60,7 @@ fun AboutScreen() {
             contentAlignment = Alignment.Center
         ) {
             Image(
-                painter = painterResource(id = R.drawable.logoinapp),
+                painter = painterResource(id = R.drawable.logo_v2),
                 contentDescription = "App Logo",
                 modifier = Modifier.fillMaxSize(),
                 contentScale = ContentScale.Fit
