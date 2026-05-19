@@ -18,7 +18,8 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.example.flickfind_ltttbdd.ui.screens.AboutScreen
-
+import com.example.flickfind_ltttbdd.ui.viewmodel.AppViewModelProvider
+import com.example.flickfind_ltttbdd.ui.viewmodel.HomeViewModel
 @Composable
 
 fun MainNavGraph() {

@@ -13,7 +13,6 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
@@ -25,7 +24,6 @@ import com.example.flickfind_ltttbdd.R
 
 @Composable
 fun AboutScreen() {
-    // Màu sắc chủ đạo (Xanh đen tối)
     val backgroundColor = Color(0xFF0D1724)
     val cardColor = Color(0xFF1B2A3E)
     val primaryColor = Color(0xFF155074)
@@ -35,56 +33,54 @@ fun AboutScreen() {
             .fillMaxSize()
             .background(backgroundColor)
             .verticalScroll(rememberScrollState())
-            .padding(24.dp),
+            .padding(horizontal = 20.dp, vertical = 8.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        // Dòng chữ About & Help ở góc trên bên trái
+        // 1. Tiêu đề
         Text(
             text = "About & Help",
             color = Color.White,
-            fontSize = 24.sp,
+            fontSize = 22.sp,
             fontWeight = FontWeight.ExtraBold,
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
             textAlign = TextAlign.Start
         )
 
-        Spacer(modifier = Modifier.height(24.dp))
-
-        // 1. Logo ứng dụng trong khung bo tròn
+        // 2. Cụm Logo và Version (To và Sát khít nhau)
         Box(
             modifier = Modifier
-                .size(120.dp)
-                .clip(RoundedCornerShape(24.dp))
-                .background(cardColor)
-                .padding(20.dp),
-            contentAlignment = Alignment.Center
+                .fillMaxWidth()
+                .height(310.dp),
+            contentAlignment = Alignment.TopCenter
         ) {
             Image(
                 painter = painterResource(id = R.drawable.logo_v2),
                 contentDescription = "App Logo",
-                modifier = Modifier.fillMaxSize(),
+                modifier = Modifier.size(350.dp).offset(y = (-25).dp),
                 contentScale = ContentScale.Fit
             )
+            
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                modifier = Modifier.align(Alignment.BottomCenter).padding(bottom = 5.dp)
+            ) {
+                Text(
+                    text = "FlickFind App",
+                    color = Color.White,
+                    fontSize = 26.sp,
+                    fontWeight = FontWeight.Bold
+                )
+                Text(
+                    text = "Version 1.0.0",
+                    color = Color.Gray,
+                    fontSize = 14.sp
+                )
+            }
         }
 
-        Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(12.dp))
 
-        // 2. Tên Ứng dụng và Phiên bản
-        Text(
-            text = "FlickFind App",
-            color = Color.White,
-            fontSize = 26.sp,
-            fontWeight = FontWeight.Bold
-        )
-        Text(
-            text = "Version 1.0.0",
-            color = Color.Gray,
-            fontSize = 16.sp
-        )
-
-        Spacer(modifier = Modifier.height(32.dp))
-
-        // 3. Thẻ Giới thiệu
+        // 3. Thẻ Giới thiệu (Theo ảnh mẫu)
         Card(
             modifier = Modifier.fillMaxWidth(),
             shape = RoundedCornerShape(16.dp),
@@ -94,23 +90,22 @@ fun AboutScreen() {
                 Text(
                     text = "Giới thiệu",
                     color = Color.White,
-                    fontSize = 18.sp,
+                    fontSize = 20.sp,
                     fontWeight = FontWeight.Bold
                 )
-                Spacer(modifier = Modifier.height(8.dp))
+                Spacer(modifier = Modifier.height(10.dp))
                 Text(
                     text = "Dự án FlickFind được phát triển nhằm mang lại trải nghiệm tìm kiếm và quản lý phim tốt nhất cho người dùng.",
                     color = Color.LightGray,
-                    fontSize = 14.sp,
-                    lineHeight = 20.sp,
-                    textAlign = TextAlign.Start
+                    fontSize = 16.sp,
+                    lineHeight = 22.sp
                 )
             }
         }
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        // 4. Thẻ Đội ngũ phát triển
+        // 4. Thẻ Đội ngũ phát triển (Theo ảnh mẫu - Dọc xuống)
         Card(
             modifier = Modifier.fillMaxWidth(),
             shape = RoundedCornerShape(16.dp),
@@ -128,14 +123,13 @@ fun AboutScreen() {
                     Text(
                         text = "Đội ngũ phát triển",
                         color = Color.White,
-                        fontSize = 18.sp,
+                        fontSize = 20.sp,
                         fontWeight = FontWeight.Bold
                     )
                 }
                 
-                Spacer(modifier = Modifier.height(12.dp))
+                Spacer(modifier = Modifier.height(16.dp))
 
-                // Danh sách thành viên
                 val members = listOf(
                     "Phạm Văn Tuyền",
                     "Nguyễn Thế Lực",
@@ -147,19 +141,18 @@ fun AboutScreen() {
                     Text(
                         text = "Thành viên ${index + 1}: $name",
                         color = Color.White,
-                        fontSize = 15.sp,
-                        modifier = Modifier.padding(vertical = 4.dp)
+                        fontSize = 17.sp,
+                        modifier = Modifier.padding(vertical = 5.dp)
                     )
                 }
             }
         }
 
-        Spacer(modifier = Modifier.weight(1f))
-        Spacer(modifier = Modifier.height(40.dp))
+        Spacer(modifier = Modifier.height(24.dp))
 
-        // 4. Nút tải tài liệu hướng dẫn (PDF)
+        // 5. Nút User Guide
         Button(
-            onClick = { /* Xử lý sự kiện khi nhấn */ },
+            onClick = { /* Xử lý sự kiện */ },
             modifier = Modifier
                 .fillMaxWidth()
                 .height(56.dp),
@@ -176,5 +169,7 @@ fun AboutScreen() {
                 )
             }
         }
+        
+        Spacer(modifier = Modifier.height(24.dp))
     }
 }
