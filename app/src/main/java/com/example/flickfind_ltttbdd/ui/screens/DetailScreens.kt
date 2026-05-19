@@ -13,6 +13,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Home
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -74,11 +78,19 @@ fun DetailScreen(
                 modifier = Modifier
                     .padding(16.dp)
                     .align(Alignment.TopStart),
-                shape = RoundedCornerShape(8.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF1E293B).copy(alpha = 0.8f)),
-                contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp)
+                shape = RoundedCornerShape(4.dp),
+                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF1E293B).copy(alpha = 0.9f)),
+                contentPadding = PaddingValues(horizontal = 12.dp, vertical = 8.dp),
+                border = borderStroke()
             ) {
-                Text("Nút\nthoát", color = Color.White, fontSize = 14.sp, fontWeight = FontWeight.Bold)
+                Text(
+                    text = "Nút\nthoát",
+                    color = Color.White,
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.Bold,
+                    textAlign = TextAlign.Center,
+                    lineHeight = 14.sp
+                )
             }
         }
     }
@@ -122,7 +134,7 @@ fun MovieDetailContent(
             modifier = Modifier
                 .padding(12.dp)
                 .fillMaxWidth()
-                .border(1.dp, Color(0xFF334155), RoundedCornerShape(4.dp))
+                .border(1.dp, Color(0xFF0EA5E9), RoundedCornerShape(8.dp))
                 .background(Color(0xFF1E293B).copy(alpha = 0.5f))
                 .padding(16.dp)
         ) {
@@ -153,6 +165,7 @@ fun MovieDetailContent(
                         color = Color.White,
                         fontSize = 12.sp,
                         fontWeight = FontWeight.Bold,
+                        textAlign = TextAlign.Center,
                         lineHeight = 16.sp
                     )
                 }
@@ -164,17 +177,17 @@ fun MovieDetailContent(
             modifier = Modifier
                 .padding(horizontal = 12.dp)
                 .fillMaxWidth()
-                .border(1.dp, Color(0xFF334155), RoundedCornerShape(4.dp))
+                .border(1.dp, Color(0xFF0EA5E9), RoundedCornerShape(8.dp))
                 .background(Color(0xFF1E293B).copy(alpha = 0.5f))
                 .padding(16.dp)
         ) {
             Text(
                 text = "Nội dung:",
                 color = Color.White,
-                fontSize = 32.sp,
-                fontWeight = FontWeight.Normal
+                fontSize = 24.sp,
+                fontWeight = FontWeight.Bold
             )
-            Spacer(modifier = Modifier.height(24.dp))
+            Spacer(modifier = Modifier.height(12.dp))
             Text(
                 text = movie.overview,
                 color = Color.White,
@@ -182,7 +195,7 @@ fun MovieDetailContent(
                 lineHeight = 24.sp
             )
         }
-        
+
         // 4. Các nút dưới cùng (Giả lập theo hình)
         NavigationBar(
             modifier = Modifier
@@ -190,38 +203,24 @@ fun MovieDetailContent(
                 .padding(top = 16.dp),
             containerColor = Color(0xFF1E293B)
         ) {
-
             bottomNavItems.forEach { screen ->
-
                 NavigationBarItem(
-
                     selected = false,
-
-                    onClick = {
-                        // TODO: Navigate
-                    },
-
+                    onClick = { /* Giả lập điều hướng */ },
                     icon = {
-
-                        screen.icon?.let {
-
-                            Icon(
-                                imageVector = it,
-                                contentDescription = screen.title,
-                                tint = Color.White
-                            )
-                        }
+                        Icon(
+                            imageVector = screen.icon ?: Icons.Default.Home,
+                            contentDescription = screen.title,
+                            tint = Color.White
+                        )
                     },
-
                     label = {
-
                         Text(
                             text = screen.title,
                             color = Color.White,
-                            fontSize = 12.sp
+                            fontSize = 10.sp
                         )
                     },
-
                     colors = NavigationBarItemDefaults.colors(
                         indicatorColor = Color(0xFF0EA5E9)
                     )
@@ -236,13 +235,13 @@ fun InfoText(label: String, value: String) {
     Text(
         text = "$label $value",
         color = Color.White,
-        fontSize = 16.sp,
+        fontSize = 14.sp,
         fontWeight = FontWeight.Normal,
         modifier = Modifier.padding(vertical = 2.dp)
     )
 }
 
-fun borderStroke() = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFF0EA5E9))
+fun borderStroke() = BorderStroke(1.dp, Color(0xFF0EA5E9))
 
 @Preview(showBackground = true)
 @Composable

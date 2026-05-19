@@ -10,7 +10,10 @@ interface MovieApiService {
     @GET("api/v1/movies")
     suspend fun getMovies(
         @Query("page") page: Int,
-        @Query("limit") limit: Int
+        @Query("limit") limit: Int,
+        @Query("search") search: String? = null,
+        @Query("genre") genre: String? = null,
+        @Query("yearRange") yearRange: String? = null
     ): List<MovieResponse>
 
     // Lấy chi tiết một bộ phim theo ID
