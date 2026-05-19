@@ -9,7 +9,7 @@ import com.example.flickfind_ltttbdd.data.remote.RetrofitClient
 import kotlin.jvm.java
 
 /**
- * Provides a factory to create ViewModel instances with the necessary dependencies.
+ * Provides a factory to create ViewModel instances with the necessary dependencies.git
  */
 class AppViewModelProvider(private val context: Context) : ViewModelProvider.Factory {
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
