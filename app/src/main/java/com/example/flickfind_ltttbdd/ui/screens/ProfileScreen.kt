@@ -7,6 +7,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Logout
 import androidx.compose.material.icons.filled.Star
@@ -218,7 +219,7 @@ fun FavoriteMovieItem(
             // Ảnh phim
             Box(modifier = Modifier.width(100.dp)) {
                 AsyncImage(
-                    model = "https://image.tmdb.org/t/p/w500${movie.posterPath}",
+                    model = movie.posterPath,
                     contentDescription = movie.title,
                     modifier = Modifier
                         .height(140.dp)
@@ -248,13 +249,31 @@ fun FavoriteMovieItem(
 
             // Thông tin phim
             Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = movie.title,
-                    color = Color.White,
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.Bold,
-                    maxLines = 2
-                )
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.Top
+                ) {
+                    Text(
+                        text = movie.title,
+                        color = Color.White,
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.Bold,
+                        maxLines = 2,
+                        modifier = Modifier.weight(1f)
+                    )
+                    IconButton(
+                        onClick = onDelete,
+                        modifier = Modifier.size(24.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Delete,
+                            contentDescription = "Delete",
+                            tint = Color.Red.copy(alpha = 0.7f),
+                            modifier = Modifier.size(18.dp)
+                        )
+                    }
+                }
                 Text(
                     text = movie.genre,
                     color = Color.Gray,
@@ -277,7 +296,7 @@ fun ProfileScreenPreview() {
     val dummyUser = UserEntity(name = "Nguyễn Văn A", avatarUrl = "")
     val dummyMovies = listOf(
         FavoriteMovieEntity(
-            id = 1,
+            id = "1",
             title = "Inception",
             posterPath = "/edv5bs1pUQC67SWHqcYf67OQ97R.jpg",
             backdropPath = "",
@@ -287,7 +306,7 @@ fun ProfileScreenPreview() {
             isWatched = true
         ),
         FavoriteMovieEntity(
-            id = 2,
+            id = "2",
             title = "The Dark Knight",
             posterPath = "/qJ2tW6WMUDp9QmSJJIVP6YFZO8r.jpg",
             backdropPath = "",

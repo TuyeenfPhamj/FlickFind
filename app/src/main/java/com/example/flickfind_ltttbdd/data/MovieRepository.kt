@@ -63,7 +63,7 @@ class MovieRepository(
     }
 
     // Kiểm tra xem phim này đã được lưu trong Room chưa
-    suspend fun isMovieFavorite(movieId: Int): Boolean {
+    suspend fun isMovieFavorite(movieId: String): Boolean {
         return movieDao.getMovieById(movieId) != null
     }
 

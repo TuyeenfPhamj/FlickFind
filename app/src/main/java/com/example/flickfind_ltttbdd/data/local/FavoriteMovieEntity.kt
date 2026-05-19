@@ -5,7 +5,7 @@ import androidx.room.PrimaryKey
 
 @Entity(tableName = "favorite_movies")
 data class FavoriteMovieEntity(
-    @PrimaryKey val id: Int, // Đồng bộ kiểu Int với API
+    @PrimaryKey val id: String, // Đồng bộ kiểu String với API
     val title: String,
     val posterPath: String,  // Đồng bộ tên biến với API cho dễ quản lý
     val backdropPath: String,

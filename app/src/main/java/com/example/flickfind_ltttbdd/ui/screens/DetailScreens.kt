@@ -161,7 +161,7 @@ fun MovieDetailContent(
                     border = borderStroke()
                 ) {
                     Text(
-                        text = if (isFavorite) "Đã thêm\nvào list" else "Nút thêm\nvào danh\nsách",
+                        text = if (isFavorite) "Đã thêm\nvào list" else "Thêm vào\ndanh sách",
                         color = Color.White,
                         fontSize = 12.sp,
                         fontWeight = FontWeight.Bold,
@@ -195,38 +195,8 @@ fun MovieDetailContent(
                 lineHeight = 24.sp
             )
         }
-
-        // 4. Các nút dưới cùng (Giả lập theo hình)
-        NavigationBar(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(top = 16.dp),
-            containerColor = Color(0xFF1E293B)
-        ) {
-            bottomNavItems.forEach { screen ->
-                NavigationBarItem(
-                    selected = false,
-                    onClick = { /* Giả lập điều hướng */ },
-                    icon = {
-                        Icon(
-                            imageVector = screen.icon ?: Icons.Default.Home,
-                            contentDescription = screen.title,
-                            tint = Color.White
-                        )
-                    },
-                    label = {
-                        Text(
-                            text = screen.title,
-                            color = Color.White,
-                            fontSize = 10.sp
-                        )
-                    },
-                    colors = NavigationBarItemDefaults.colors(
-                        indicatorColor = Color(0xFF0EA5E9)
-                    )
-                )
-            }
-        }
+        
+        Spacer(modifier = Modifier.height(32.dp))
     }
 }
 
@@ -243,28 +213,3 @@ fun InfoText(label: String, value: String) {
 
 fun borderStroke() = BorderStroke(1.dp, Color(0xFF0EA5E9))
 
-@Preview(showBackground = true)
-@Composable
-fun DetailScreenPreview() {
-    val mockMovie = MovieResponse(
-        id = 1,
-        title = "Spider-Man",
-        posterPath = "",
-        backdropPath = "",
-        genres = listOf("Hành động", "Phiêu lưu"),
-        rating = 8.5f,
-        runtime = 148,
-        director = "Jon Watts",
-        cast = "Tom Holland",
-        releaseDate = "2021",
-        overview = "Đây là nội dung mô tả của bộ phim mẫu để xem trước giao diện bố cục mới theo đúng hình ảnh yêu cầu."
-    )
-    
-    Surface(color = Color(0xFF0F172A)) {
-        MovieDetailContent(
-            movie = mockMovie,
-            isFavorite = false,
-            onToggleFavorite = {}
-        )
-    }
-}

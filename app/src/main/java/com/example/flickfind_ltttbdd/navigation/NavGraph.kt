@@ -24,11 +24,13 @@ import com.example.flickfind_ltttbdd.ui.viewmodel.AppViewModelProvider
 import com.example.flickfind_ltttbdd.ui.viewmodel.HomeViewModel
 import com.example.flickfind_ltttbdd.ui.viewmodel.SearchViewModel
 import com.example.flickfind_ltttbdd.ui.viewmodel.DetailViewModel
+import com.example.flickfind_ltttbdd.ui.viewmodel.ProfileViewModel
 import com.example.flickfind_ltttbdd.ui.screens.HomeScreen
 import com.example.flickfind_ltttbdd.ui.screens.FilterScreen
 import com.example.flickfind_ltttbdd.ui.screens.SearchResultScreen
 import com.example.flickfind_ltttbdd.ui.screens.DetailScreen
 import com.example.flickfind_ltttbdd.ui.screens.AboutScreen
+import com.example.flickfind_ltttbdd.ui.screens.ProfileScreen
 
 @Composable
 fun MainNavGraph() {
@@ -52,15 +54,17 @@ fun MainNavGraph() {
     ) { innerPadding ->
         NavHost(
             navController = navController,
-            startDestination = Screen.Detail.createRoute(1), // Chạy thẳng vào Chi tiết để test
+            startDestination = Screen.Home.route,
             modifier = Modifier.padding(if (showBottomBar) innerPadding else PaddingValues(0.dp))
         ) {
+            // 1. Màn hình Trang chủ
             composable(Screen.Home.route) {
                 val context = LocalContext.current
                 val homeViewModel: HomeViewModel = viewModel(factory = AppViewModelProvider(context))
                 HomeScreen(viewModel = homeViewModel, navController = navController)
             }
 
+            // 2. Màn hình Lọc phim
             composable(Screen.Filter.route) {
                 FilterScreen(
                     navController = navController,
@@ -70,6 +74,7 @@ fun MainNavGraph() {
                 )
             }
 
+            // 3. Màn hình Kết quả tìm kiếm
             composable(
                 route = Screen.SearchResult.route,
                 arguments = Screen.SearchResult.arguments
@@ -89,23 +94,34 @@ fun MainNavGraph() {
                 )
             }
 
-            composable(Screen.Profile.route) { Text("Màn hình Cá nhân", color = Color.White) }
-            composable(Screen.About.route) { Text("Màn hình Giới thiệu", color = Color.White) }
+            // 4. Màn hình Cá nhân
+            composable(Screen.Profile.route) {
+                val context = LocalContext.current
+                val profileViewModel: ProfileViewModel = viewModel(factory = AppViewModelProvider(context))
+                ProfileScreen(viewModel = profileViewModel)
+            }
+
+            // 5. Màn hình Giới thiệu
+            composable(Screen.About.route) {
+                AboutScreen()
+            }
             
-            // Màn hình Chi tiết
+            // 6. Màn hình Chi tiết phim
             composable(
                 route = Screen.Detail.route,
                 arguments = listOf(navArgument("movieId") { type = NavType.StringType })
             ) { backStackEntry ->
-                val movieId = backStackEntry.arguments?.getString("movieId") ?: "1"
+                val movieId = backStackEntry.arguments?.getString("movieId") ?: ""
                 val context = LocalContext.current
                 val detailViewModel: DetailViewModel = viewModel(factory = AppViewModelProvider(context))
                 
-                DetailScreen(
-                    movieId = movieId,
-                    viewModel = detailViewModel,
-                    onBackClick = { navController.popBackStack() }
-                )
+                if (movieId.isNotEmpty()) {
+                    DetailScreen(
+                        movieId = movieId,
+                        viewModel = detailViewModel,
+                        onBackClick = { navController.popBackStack() }
+                    )
+                }
             }
         }
     }

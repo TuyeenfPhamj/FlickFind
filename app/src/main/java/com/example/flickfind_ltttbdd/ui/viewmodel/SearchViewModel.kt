@@ -14,7 +14,7 @@ import kotlinx.coroutines.launch
 
 data class SearchUiState(
     val movies: List<MovieResponse> = emptyList(),
-    val favoriteMovieIds: Set<Int> = emptySet(),
+    val favoriteMovieIds: Set<String> = emptySet(),
     val isLoading: Boolean = false,
     val errorMessage: String? = null,
     val query: String? = null,

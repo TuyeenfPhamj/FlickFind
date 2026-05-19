@@ -25,25 +25,42 @@ class DetailViewModel(private val repository: MovieRepository) : ViewModel() {
     val isFavorite: StateFlow<Boolean> = _isFavorite.asStateFlow()
 
     fun getMovieById(id: String) {
+        if (id.isBlank()) {
+            _errorMessage.value = "ID phim không hợp lệ"
+            return
+        }
+
         viewModelScope.launch {
             _isLoading.value = true
             _errorMessage.value = null
-            repository.getMovieById(id)
-                .onSuccess { movieResponse ->
-                    _movie.value = movieResponse
-                    checkIfFavorite(movieResponse.id)
-                    _isLoading.value = false
+            
+            // Thay vì gọi trực tiếp endpoint /{id} (dễ bị 404 trên MockAPI), 
+            // chúng ta lấy danh sách và lọc theo trường id trong JSON.
+            repository.getMoviesFromApi(page = 1, limit = 100)
+                .onSuccess { movies ->
+                    val foundMovie = movies.find { it.id == id }
+                    if (foundMovie != null) {
+                        _movie.value = foundMovie
+                        observeFavoriteStatus(foundMovie.id)
+                        _isLoading.value = false
+                    } else {
+                        _errorMessage.value = "Không tìm thấy phim có ID: $id"
+                        _isLoading.value = false
+                    }
                 }
                 .onFailure { exception ->
-                    _errorMessage.value = exception.message ?: "Lỗi khi tải chi tiết phim"
+                    android.util.Log.e("DetailViewModel", "Lỗi tải phim", exception)
+                    _errorMessage.value = "Lỗi kết nối hoặc không tìm thấy phim"
                     _isLoading.value = false
                 }
         }
     }
 
-    private fun checkIfFavorite(movieId: Int) {
+    private fun observeFavoriteStatus(movieId: String) {
         viewModelScope.launch {
-            _isFavorite.value = repository.isMovieFavorite(movieId)
+            repository.getAllFavorites().collect { favorites ->
+                _isFavorite.value = favorites.any { it.id == movieId }
+            }
         }
     }
 
