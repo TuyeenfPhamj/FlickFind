@@ -37,8 +37,9 @@ abstract class AppDatabase : RoomDatabase() {
                         override fun onCreate(db: SupportSQLiteDatabase) {
                             super.onCreate(db)
                             // Chèn dữ liệu mẫu khi database được tạo lần đầu
-                            INSTANCE?.let { database ->
-                                CoroutineScope(Dispatchers.IO).launch {
+                            CoroutineScope(Dispatchers.IO).launch {
+                                // Lấy instance vừa tạo để seed data
+                                getDatabase(context).let { database ->
                                     seedDatabase(database.userDao(), database.movieDao())
                                 }
                             }
