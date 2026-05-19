@@ -21,38 +21,79 @@ import androidx.navigation.compose.rememberNavController
 import com.example.flickfind_ltttbdd.ui.viewmodel.AppViewModelProvider
 import com.example.flickfind_ltttbdd.ui.viewmodel.HomeViewModel
 import com.example.flickfind_ltttbdd.ui.screens.HomeScreen
+import com.example.flickfind_ltttbdd.ui.screens.FilterScreen
+import com.example.flickfind_ltttbdd.ui.screens.SearchResultScreen
 
 @Composable
 fun MainNavGraph() {
     val navController = rememberNavController()
+    val navBackStackEntry by navController.currentBackStackEntryAsState()
+    val currentRoute = navBackStackEntry?.destination?.route
+
+    // Chỉ hiển thị Bottom Bar ở 3 màn hình chính
+    val showBottomBar = currentRoute in listOf(
+        Screen.Home.route,
+        Screen.Profile.route,
+        Screen.About.route
+    )
 
     Scaffold(
-        bottomBar = { AppBottomNavigationBar(navController) }
+        bottomBar = {
+            if (showBottomBar) {
+                AppBottomNavigationBar(navController)
+            }
+        }
     ) { innerPadding ->
+        val context = LocalContext.current
+        val homeViewModel: HomeViewModel = viewModel(
+            factory = AppViewModelProvider(context)
+        )
 
-        // Khung NavHost liên kết các màn hình theo cấu trúc của bạn
         NavHost(
             navController = navController,
             startDestination = Screen.Home.route,
             modifier = Modifier.padding(innerPadding)
         ) {
-            // Màn hình 1: Khám phá (Trang chủ của bạn)
             composable(Screen.Home.route) {
-                val context = LocalContext.current
-                val homeViewModel: HomeViewModel = viewModel(
-                    factory = AppViewModelProvider(context)
-                )
                 HomeScreen(viewModel = homeViewModel, navController = navController)
             }
 
-            // Màn hình 2: Cá nhân (Giao diện phụ trách của thành viên khác)
+            composable(Screen.Filter.route) {
+                FilterScreen(
+                    navController = navController,
+                    onApplyFilters = { genre, yearRange ->
+                        navController.navigate(Screen.SearchResult.createRoute(genre = genre, yearRange = yearRange))
+                    }
+                )
+            }
+
+            composable(
+                route = Screen.SearchResult.route,
+                arguments = Screen.SearchResult.arguments // Tôi sẽ cập nhật Screen.kt để định nghĩa arguments này
+            ) { backStackEntry ->
+                val query = backStackEntry.arguments?.getString("query")
+                val genre = backStackEntry.arguments?.getString("genre")
+                val yearRange = backStackEntry.arguments?.getString("yearRange")
+                
+                SearchResultScreen(
+                    query = query,
+                    genre = genre,
+                    yearRange = yearRange,
+                    viewModel = homeViewModel,
+                    navController = navController
+                )
+            }
+
             composable(Screen.Profile.route) {
                 Text("Màn hình Cá nhân - Đang xây dựng")
             }
 
-            // Màn hình 3: Giới thiệu (Giao diện phụ trách của thành viên khác)
             composable(Screen.About.route) {
                 Text("Màn hình Giới thiệu - Đang xây dựng")
+            }
+            
+            composable(Screen.Detail.route) {
+                Text("Màn hình Chi tiết - Đang xây dựng")
             }
         }
     }

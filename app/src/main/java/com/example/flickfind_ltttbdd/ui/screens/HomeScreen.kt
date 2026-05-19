@@ -1,5 +1,6 @@
 package com.example.flickfind_ltttbdd.ui.screens
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -11,6 +12,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.FavoriteBorder
+import androidx.compose.material.icons.filled.FilterList
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -19,12 +21,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import coil.compose.AsyncImage
+import com.example.flickfind_ltttbdd.R
 import com.example.flickfind_ltttbdd.data.remote.MovieResponse
 import com.example.flickfind_ltttbdd.navigation.Screen
 import com.example.flickfind_ltttbdd.ui.viewmodel.HomeViewModel
@@ -38,153 +42,215 @@ fun HomeScreen(
     // Lắng nghe trạng thái UI State từ ViewModel phát ra
     val uiState by viewModel.uiState.collectAsState()
     var searchQuery by remember { mutableStateOf("") }
+    var isSuggestionsVisible by remember { mutableStateOf(false) }
+
+    // Lọc danh sách gợi ý (tối đa 5 kết quả) dựa trên những gì người dùng đang nhập
+    val searchSuggestions = remember(searchQuery, uiState.movies) {
+        if (searchQuery.isBlank()) emptyList()
+        else uiState.movies.filter {
+            it.title.contains(searchQuery, ignoreCase = true)
+        }.take(5)
+    }
 
     // Giao diện tổng thể sử dụng LazyColumn để cuộn mượt mà toàn bộ trang chủ
-    LazyColumn(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(Color(0xFF0B121F)), // Màu nền tối sâu theo đúng thiết kế wireframe
-        contentPadding = PaddingValues(16.dp),
-        verticalArrangement = Arrangement.spacedBy(20.dp)
-    ) {
-
-        // 1. KHỐI LOGO (Căn giữa)
-        item {
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(vertical = 8.dp),
-                contentAlignment = Alignment.Center
-            ) {
-                Surface(
-                    color = Color(0xFF1A2436),
-                    shape = RoundedCornerShape(8.dp),
-                    modifier = Modifier.width(140.dp).height(45.dp)
+    Box(modifier = Modifier.fillMaxSize().background(Color(0xFF0B121F))) {
+        LazyColumn(
+            modifier = Modifier.fillMaxSize(),
+            contentPadding = PaddingValues(16.dp),
+            verticalArrangement = Arrangement.spacedBy(20.dp)
+        ) {
+            // 1. KHỐI LOGO (Căn giữa)
+            item {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 8.dp),
+                    contentAlignment = Alignment.Center
                 ) {
-                    Box(contentAlignment = Alignment.Center) {
-                        Text(
-                            text = "FlickFind",
-                            color = Color.White,
-                            fontSize = 18.sp,
-                            fontWeight = FontWeight.Bold
-                        )
+                    Image(
+                        painter = painterResource(id = R.drawable.logoinapp),
+                        contentDescription = "Logo FlickFind",
+                        modifier = Modifier
+                            .width(180.dp)
+                            .height(60.dp),
+                        contentScale = ContentScale.Fit
+                    )
+                }
+            }
+
+            // 2. THANH TÌM KIẾM (Search Bar)
+            item {
+                Column(modifier = Modifier.fillMaxWidth()) {
+                    OutlinedTextField(
+                        value = searchQuery,
+                        onValueChange = {
+                            searchQuery = it
+                            isSuggestionsVisible = it.isNotEmpty()
+                        },
+                        modifier = Modifier.fillMaxWidth(),
+                        placeholder = { Text("Thanh tìm kiếm...", color = Color.Gray) },
+                        leadingIcon = {
+                            IconButton(onClick = {
+                                if (searchQuery.isNotEmpty()) {
+                                    navController.navigate(Screen.SearchResult.createRoute(query = searchQuery))
+                                }
+                            }) {
+                                Icon(Icons.Default.Search, contentDescription = "Search", tint = Color.Gray)
+                            }
+                        },
+                        trailingIcon = {
+                            IconButton(onClick = { navController.navigate(Screen.Filter.route) }) {
+                                Icon(
+                                    imageVector = Icons.Default.FilterList,
+                                    contentDescription = "Filter",
+                                    tint = Color.Gray
+                                )
+                            }
+                        },
+                        shape = RoundedCornerShape(8.dp),
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = Color(0xFF38B6FF),
+                            unfocusedBorderColor = Color(0xFF233044),
+                            focusedContainerColor = Color(0xFF131C2E),
+                            unfocusedContainerColor = Color(0xFF131C2E),
+                            focusedTextColor = Color.White,
+                            unfocusedTextColor = Color.White
+                        ),
+                        singleLine = true
+                    )
+
+                    // Hiển thị danh sách gợi ý ngay bên dưới thanh tìm kiếm (Dropdown overlay style)
+                    if (isSuggestionsVisible && searchSuggestions.isNotEmpty()) {
+                        Card(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(top = 4.dp),
+                            colors = CardDefaults.cardColors(containerColor = Color(0xFF131C2E)),
+                            shape = RoundedCornerShape(8.dp),
+                            elevation = CardDefaults.cardElevation(8.dp)
+                        ) {
+                            Column {
+                                searchSuggestions.forEach { movie ->
+                                    Text(
+                                        text = movie.title,
+                                        color = Color.White,
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .clickable {
+                                                navController.navigate(Screen.Detail.createRoute(movie.id))
+                                                isSuggestionsVisible = false
+                                            }
+                                            .padding(12.dp),
+                                        fontSize = 14.sp
+                                    )
+                                    HorizontalDivider(color = Color(0xFF0B121F), thickness = 1.dp)
+                                }
+
+                                // Nút màu xanh (Xem tất cả kết quả)
+                                Button(
+                                    onClick = {
+                                        navController.navigate(Screen.SearchResult.createRoute(query = searchQuery))
+                                        isSuggestionsVisible = false
+                                    },
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .height(40.dp),
+                                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF4CAF50)), // Màu xanh lá như yêu cầu
+                                    shape = RoundedCornerShape(bottomStart = 8.dp, bottomEnd = 8.dp)
+                                ) {
+                                    Text("Xem tất cả kết quả", color = Color.White, fontSize = 12.sp)
+                                }
+                            }
+                        }
                     }
                 }
             }
-        }
 
-        // 2. THANH TÌM KIẾM (Search Bar)
-        item {
-            OutlinedTextField(
-                value = searchQuery,
-                onValueChange = { searchQuery = it },
-                modifier = Modifier.fillMaxWidth(),
-                placeholder = { Text("Thanh tìm kiếm...", color = Color.Gray) },
-                leadingIcon = { Icon(Icons.Default.Search, contentDescription = "Search", tint = Color.Gray) },
-                shape = RoundedCornerShape(8.dp),
-                colors = OutlinedTextFieldDefaults.colors(
-                    focusedBorderColor = Color(0xFF38B6FF),
-                    unfocusedBorderColor = Color(0xFF233044),
-                    focusedContainerColor = Color(0xFF131C2E),
-                    unfocusedContainerColor = Color(0xFF131C2E),
-                    focusedTextColor = Color.White,
-                    unfocusedTextColor = Color.White
-                ),
-                singleLine = true
-            )
-        }
+            // Giao diện trang chủ không thay đổi theo searchQuery (Dùng uiState.movies gốc)
+            val allMovies = uiState.movies
 
-        // Lọc danh sách phim dựa theo thanh tìm kiếm (nếu có nhập)
-        val filteredMovies = uiState.movies.filter {
-            it.title.contains(searchQuery, ignoreCase = true)
-        }
+            // 3. MỤC PHIM PHỔ BIẾN
+            if (allMovies.isNotEmpty()) {
+                item {
+                    Text(
+                        text = "Phim Phổ Biến",
+                        color = Color.White,
+                        fontSize = 18.sp,
+                        fontWeight = FontWeight.Bold,
+                        modifier = Modifier.padding(bottom = 8.dp)
+                    )
 
-        // 3. MỤC PHIM PHỔ BIẾN (Hiển thị 5 phim đầu tiên dạng Cuộn Ngang - LazyRow)
-        if (filteredMovies.isNotEmpty()) {
-            item {
-                Text(
-                    text = "Phim Phổ Biến",
-                    color = Color.White,
-                    fontSize = 18.sp,
-                    fontWeight = FontWeight.Bold,
-                    modifier = Modifier.padding(bottom = 8.dp)
-                )
+                    val popularMovies = allMovies.take(5)
+                    LazyRow(
+                        horizontalArrangement = Arrangement.spacedBy(14.dp)
+                    ) {
+                        items(popularMovies) { movie ->
+                            MovieItemCard(
+                                movie = movie,
+                                isFavorite = uiState.favoriteMovieIds.contains(movie.id),
+                                onFavoriteClick = { viewModel.toggleFavorite(movie) },
+                                onCardClick = {
+                                    navController.navigate(Screen.Detail.createRoute(movie.id))
+                                }
+                            )
+                        }
+                    }
+                }
+            }
 
-                val popularMovies = filteredMovies.take(5) // Lấy tối đa 5 bản ghi làm phim phổ biến
-                LazyRow(
-                    horizontalArrangement = Arrangement.spacedBy(14.dp)
-                ) {
-                    items(popularMovies) { movie ->
-                        MovieItemCard(
+            // 4. MỤC PHIM HOT
+            if (allMovies.isNotEmpty()) {
+                item {
+                    Text(
+                        text = "Phim Hot",
+                        color = Color.White,
+                        fontSize = 18.sp,
+                        fontWeight = FontWeight.Bold,
+                        modifier = Modifier.padding(bottom = 8.dp)
+                    )
+                }
+
+                itemsIndexed(allMovies) { index, movie ->
+                    if (index >= allMovies.lastIndex - 2 && !uiState.isLoading && !uiState.isEndReached) {
+                        LaunchedEffect(key1 = allMovies.size) {
+                            viewModel.loadNextMovies()
+                        }
+                    }
+
+                    Box(modifier = Modifier.padding(vertical = 4.dp)) {
+                        MovieHorizontalRowItem(
                             movie = movie,
                             isFavorite = uiState.favoriteMovieIds.contains(movie.id),
                             onFavoriteClick = { viewModel.toggleFavorite(movie) },
                             onCardClick = {
-                                // Điều hướng sang màn hình Chi tiết truyền kèm ID phim
                                 navController.navigate(Screen.Detail.createRoute(movie.id))
                             }
                         )
                     }
                 }
             }
-        }
 
-        // 4. MỤC PHIM HOT (Hiển thị toàn bộ danh sách còn lại dạng Cuộn Dọc & Phân Trang)
-        if (filteredMovies.isNotEmpty()) {
-            item {
-                Text(
-                    text = "Phim Hot",
-                    color = Color.White,
-                    fontSize = 18.sp,
-                    fontWeight = FontWeight.Bold,
-                    modifier = Modifier.padding(bottom = 8.dp)
-                )
-            }
-
-            // Duyệt danh sách phim kèm chỉ số (index) để phát hiện thời điểm chạm đáy màn hình
-            itemsIndexed(filteredMovies) { index, movie ->
-                // THUẬT TOÁN PHÂN TRANG: Nếu người dùng cuộn đến vị trí cách phần tử cuối cùng 2 mục,
-                // hệ thống tự động kích hoạt lệnh gọi API tải thêm trang tiếp theo.
-                if (index >= filteredMovies.lastIndex - 2 && !uiState.isLoading && !uiState.isEndReached) {
-                    LaunchedEffect(key1 = filteredMovies.size) {
-                        viewModel.loadNextMovies()
+            // 5. TRẠNG THÁI LOADING
+            if (uiState.isLoading) {
+                item {
+                    Box(
+                        modifier = Modifier.fillMaxWidth().padding(16.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        CircularProgressIndicator(color = Color(0xFF38B6FF))
                     }
                 }
+            }
 
-                // Vẽ hàng phim Hot (Mỗi dòng một thẻ phim thiết kế chuẩn wireframe)
-                Box(modifier = Modifier.padding(vertical = 4.dp)) {
-                    MovieHorizontalRowItem(
-                        movie = movie,
-                        isFavorite = uiState.favoriteMovieIds.contains(movie.id),
-                        onFavoriteClick = { viewModel.toggleFavorite(movie) },
-                        onCardClick = {
-                            navController.navigate(Screen.Detail.createRoute(movie.id))
-                        }
+            uiState.errorMessage?.let { error ->
+                item {
+                    Text(
+                        text = error,
+                        color = Color.Red,
+                        fontSize = 14.sp,
+                        modifier = Modifier.fillMaxWidth().padding(16.dp)
                     )
                 }
-            }
-        }
-
-        // 5. TRẠNG THÁI LOADING / BÁO LỖI Ở ĐÁY MÀN HÌNH
-        if (uiState.isLoading) {
-            item {
-                Box(
-                    modifier = Modifier.fillMaxWidth().padding(16.dp),
-                    contentAlignment = Alignment.Center
-                ) {
-                    CircularProgressIndicator(color = Color(0xFF38B6FF))
-                }
-            }
-        }
-
-        uiState.errorMessage?.let { error ->
-            item {
-                Text(
-                    text = error,
-                    color = Color.Red,
-                    fontSize = 14.sp,
-                    modifier = Modifier.fillMaxWidth().padding(16.dp)
-                )
             }
         }
     }
