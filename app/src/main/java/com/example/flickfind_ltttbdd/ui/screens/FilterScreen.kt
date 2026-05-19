@@ -2,11 +2,10 @@ package com.example.flickfind_ltttbdd.ui.screens
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.grid.GridCells
-import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
@@ -29,8 +28,14 @@ fun FilterScreen(
     var selectedGenre by remember { mutableStateOf<String?>(null) }
     var selectedYearRange by remember { mutableStateOf<String?>(null) }
 
-    val genres = listOf("Hành động", "Kinh dị", "Anime", "Hài hước", "Viễn tưởng", "Tâm lý")
+    val genres = listOf(
+        "Khoa học viễn tưởng", "Hành động", "Gây cấn", "Phiêu lưu", "Chính kịch",
+        "Hình sự", "Hoạt hình", "Gia đình", "Giả tưởng", "Kinh dị",
+        "Hài hước", "Tình cảm", "Chiến tranh", "Lịch sử", "Âm nhạc", "Bí ẩn"
+    )
     val yearRanges = listOf("1991 - 1995", "1996 - 2000", "2001 - 2005", "2006 - 2010", "2011 - 2015", "2016 - 2020", "2021 - 2025")
+
+    val scrollState = rememberScrollState()
 
     Scaffold(
         topBar = {
@@ -51,57 +56,79 @@ fun FilterScreen(
                 .fillMaxSize()
                 .padding(padding)
                 .padding(16.dp)
+                .verticalScroll(scrollState)
         ) {
             Text("Theo thể loại", color = Color.White, fontSize = 18.sp, fontWeight = FontWeight.Bold)
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(12.dp))
             
-            // Grid thể loại
-            LazyVerticalGrid(
-                columns = GridCells.Fixed(3),
-                modifier = Modifier.height(120.dp),
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                items(genres) { genre ->
-                    FilterChip(
-                        selected = selectedGenre == genre,
-                        onClick = { selectedGenre = if (selectedGenre == genre) null else genre },
-                        label = { Text(genre) },
-                        colors = FilterChipDefaults.filterChipColors(
-                            containerColor = Color(0xFF131C2E),
-                            labelColor = Color.Gray,
-                            selectedContainerColor = Color(0xFF38B6FF),
-                            selectedLabelColor = Color.White
+            // Grid thể loại (Không dùng Lazy để tự động giãn theo nội dung)
+            genres.chunked(3).forEach { rowGenres ->
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    rowGenres.forEach { genre ->
+                        FilterChip(
+                            selected = selectedGenre == genre,
+                            onClick = { selectedGenre = if (selectedGenre == genre) null else genre },
+                            label = { 
+                                Text(
+                                    genre, 
+                                    maxLines = 1, 
+                                    overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
+                                    modifier = Modifier.fillMaxWidth(),
+                                    textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                                ) 
+                            },
+                            modifier = Modifier.weight(1f),
+                            colors = FilterChipDefaults.filterChipColors(
+                                containerColor = Color(0xFF131C2E),
+                                labelColor = Color.Gray,
+                                selectedContainerColor = Color(0xFF38B6FF),
+                                selectedLabelColor = Color.White
+                            )
                         )
-                    )
+                    }
+                    // Spacer bù nếu dòng cuối không đủ 3 cột
+                    repeat(3 - rowGenres.size) {
+                        Spacer(modifier = Modifier.weight(1f))
+                    }
                 }
+                Spacer(modifier = Modifier.height(8.dp))
             }
 
             Spacer(modifier = Modifier.height(24.dp))
             Text("Theo năm phát hành", color = Color.White, fontSize = 18.sp, fontWeight = FontWeight.Bold)
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(12.dp))
 
-            // Grid năm
-            LazyVerticalGrid(
-                columns = GridCells.Fixed(2),
-                modifier = Modifier.weight(1f),
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                items(yearRanges) { range ->
-                    FilterChip(
-                        selected = selectedYearRange == range,
-                        onClick = { selectedYearRange = if (selectedYearRange == range) null else range },
-                        label = { Text(range, modifier = Modifier.fillMaxWidth(), textAlign = androidx.compose.ui.text.style.TextAlign.Center) },
-                        colors = FilterChipDefaults.filterChipColors(
-                            containerColor = Color(0xFF131C2E),
-                            labelColor = Color.Gray,
-                            selectedContainerColor = Color(0xFF38B6FF),
-                            selectedLabelColor = Color.White
+            // Grid năm (Không dùng Lazy)
+            yearRanges.chunked(2).forEach { rowYears ->
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    rowYears.forEach { range ->
+                        FilterChip(
+                            selected = selectedYearRange == range,
+                            onClick = { selectedYearRange = if (selectedYearRange == range) null else range },
+                            label = { Text(range, modifier = Modifier.fillMaxWidth(), textAlign = androidx.compose.ui.text.style.TextAlign.Center) },
+                            modifier = Modifier.weight(1f),
+                            colors = FilterChipDefaults.filterChipColors(
+                                containerColor = Color(0xFF131C2E),
+                                labelColor = Color.Gray,
+                                selectedContainerColor = Color(0xFF38B6FF),
+                                selectedLabelColor = Color.White
+                            )
                         )
-                    )
+                    }
+                    repeat(2 - rowYears.size) {
+                        Spacer(modifier = Modifier.weight(1f))
+                    }
                 }
+                Spacer(modifier = Modifier.height(8.dp))
             }
+
+            Spacer(modifier = Modifier.height(16.dp))
 
             Button(
                 onClick = { onApplyFilters(selectedGenre, selectedYearRange) },

@@ -13,27 +13,53 @@ import kotlinx.coroutines.launch
 
 // 1. Định nghĩa trạng thái giao diện (UI State) theo chuẩn UDF
 data class HomeUiState(
-    val movies: List<MovieResponse> = emptyList(), // Danh sách phim đã tải được gộp lại
-    val favoriteMovieIds: Set<Int> = emptySet(),   // Danh sách ID phim đã thích để đổi màu Icon Trái tim
-    val isLoading: Boolean = false,                // Đang tải dữ liệu trang đầu hoặc trang tiếp theo
-    val errorMessage: String? = null,              // Thông báo lỗi nếu mất mạng/lỗi API
-    val currentPage: Int = 1,                      // Trang hiện tại
-    val isEndReached: Boolean = false              // Đã tải hết sạch 60 phim chưa
+    val movies: List<MovieResponse> = emptyList(), // Danh sách phim cho trang chủ (phân trang)
+    val favoriteMovieIds: Set<Int> = emptySet(),
+    val isLoading: Boolean = false,
+    val errorMessage: String? = null,
+    val currentPage: Int = 1,
+    val isEndReached: Boolean = false,
+    val searchSuggestions: List<MovieResponse> = emptyList() // Danh sách gợi ý tìm kiếm
 )
 
 class HomeViewModel(private val repository: MovieRepository) : ViewModel() {
 
-    // Khai báo StateFlow nội bộ và mã hóa đầu ra chỉ đọc cho UI
     private val _uiState = MutableStateFlow(HomeUiState())
     val uiState: StateFlow<HomeUiState> = _uiState.asStateFlow()
 
-    private val PAGE_LIMIT = 10 // Mỗi lần cuộn sẽ tải thêm 10 bộ phim
+    private val PAGE_LIMIT = 10
+    private var allMoviesForSuggestions: List<MovieResponse> = emptyList()
 
     init {
-        // Tự động tải trang đầu tiên khi ứng dụng mở lên
         loadNextMovies()
-        // Lắng nghe danh sách phim yêu thích từ Room để đồng bộ Icon Trái tim trên UI
         observeFavorites()
+        fetchAllMoviesForSuggestions()
+    }
+
+    private fun fetchAllMoviesForSuggestions() {
+        viewModelScope.launch {
+            // Tải 100 phim một lần để phục vụ gợi ý tìm kiếm tức thì
+            repository.getMoviesFromApi(page = 1, limit = 100).onSuccess { all ->
+                allMoviesForSuggestions = all
+            }
+        }
+    }
+
+    fun updateSearchSuggestions(query: String) {
+        if (query.length <= 3) {
+            _uiState.update { it.copy(searchSuggestions = emptyList()) }
+            return
+        }
+        
+        val filtered = allMoviesForSuggestions.filter { 
+            it.title.contains(query, ignoreCase = true) 
+        }.take(5)
+        
+        _uiState.update { it.copy(searchSuggestions = filtered) }
+    }
+
+    fun clearSuggestions() {
+        _uiState.update { it.copy(searchSuggestions = emptyList()) }
     }
 
     // 2. Logic Phân trang (Pagination) thủ công cực kỳ trực quan

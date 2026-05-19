@@ -18,8 +18,10 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+
 import com.example.flickfind_ltttbdd.ui.viewmodel.AppViewModelProvider
 import com.example.flickfind_ltttbdd.ui.viewmodel.HomeViewModel
+import com.example.flickfind_ltttbdd.ui.viewmodel.SearchViewModel
 import com.example.flickfind_ltttbdd.ui.screens.HomeScreen
 import com.example.flickfind_ltttbdd.ui.screens.FilterScreen
 import com.example.flickfind_ltttbdd.ui.screens.SearchResultScreen
@@ -46,6 +48,9 @@ fun MainNavGraph() {
     ) { innerPadding ->
         val context = LocalContext.current
         val homeViewModel: HomeViewModel = viewModel(
+            factory = AppViewModelProvider(context)
+        )
+        val searchViewModel: SearchViewModel = viewModel(
             factory = AppViewModelProvider(context)
         )
 
@@ -79,17 +84,17 @@ fun MainNavGraph() {
                     query = query,
                     genre = genre,
                     yearRange = yearRange,
-                    viewModel = homeViewModel,
+                    viewModel = searchViewModel,
                     navController = navController
                 )
             }
 
             composable(Screen.Profile.route) {
-                Text("Màn hình Cá nhân - Đang xây dựng")
+
             }
 
             composable(Screen.About.route) {
-                Text("Màn hình Giới thiệu - Đang xây dựng")
+
             }
             
             composable(Screen.Detail.route) {

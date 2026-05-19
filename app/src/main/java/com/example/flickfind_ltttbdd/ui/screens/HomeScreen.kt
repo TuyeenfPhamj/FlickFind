@@ -23,6 +23,9 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -44,12 +47,16 @@ fun HomeScreen(
     var searchQuery by remember { mutableStateOf("") }
     var isSuggestionsVisible by remember { mutableStateOf(false) }
 
-    // Lọc danh sách gợi ý (tối đa 5 kết quả) dựa trên những gì người dùng đang nhập
-    val searchSuggestions = remember(searchQuery, uiState.movies) {
-        if (searchQuery.isBlank()) emptyList()
-        else uiState.movies.filter {
-            it.title.contains(searchQuery, ignoreCase = true)
-        }.take(5)
+    // Xử lý Debounce tìm kiếm: Chỉ tìm khi nhập > 3 ký tự và dừng gõ 2 giây
+    LaunchedEffect(searchQuery) {
+        if (searchQuery.length > 3) {
+            kotlinx.coroutines.delay(2000)
+            viewModel.updateSearchSuggestions(searchQuery)
+            isSuggestionsVisible = true
+        } else {
+            viewModel.clearSuggestions()
+            isSuggestionsVisible = false
+        }
     }
 
     // Giao diện tổng thể sử dụng LazyColumn để cuộn mượt mà toàn bộ trang chủ
@@ -68,11 +75,11 @@ fun HomeScreen(
                     contentAlignment = Alignment.Center
                 ) {
                     Image(
-                        painter = painterResource(id = R.drawable.logoinapp),
+                        painter = painterResource(id = R.drawable.logo_v1),
                         contentDescription = "Logo FlickFind",
                         modifier = Modifier
-                            .width(180.dp)
-                            .height(60.dp),
+                            .width(340.dp)
+                            .height(120.dp),
                         contentScale = ContentScale.Fit
                     )
                 }
@@ -85,7 +92,11 @@ fun HomeScreen(
                         value = searchQuery,
                         onValueChange = {
                             searchQuery = it
-                            isSuggestionsVisible = it.isNotEmpty()
+                            // Trình điều khiển hiển thị gợi ý đã được xử lý bởi LaunchedEffect (Debounce)
+                            // Tuy nhiên, khi xóa text về <= 3 thì ẩn ngay lập tức cho trải nghiệm mượt mà
+                            if (it.length <= 3) {
+                                isSuggestionsVisible = false
+                            }
                         },
                         modifier = Modifier.fillMaxWidth(),
                         placeholder = { Text("Thanh tìm kiếm...", color = Color.Gray) },
@@ -116,11 +127,20 @@ fun HomeScreen(
                             focusedTextColor = Color.White,
                             unfocusedTextColor = Color.White
                         ),
-                        singleLine = true
+                        singleLine = true,
+                        keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
+                        keyboardActions = KeyboardActions(
+                            onSearch = {
+                                if (searchQuery.isNotBlank()) {
+                                    navController.navigate(Screen.SearchResult.createRoute(query = searchQuery))
+                                    isSuggestionsVisible = false
+                                }
+                            }
+                        )
                     )
 
                     // Hiển thị danh sách gợi ý ngay bên dưới thanh tìm kiếm (Dropdown overlay style)
-                    if (isSuggestionsVisible && searchSuggestions.isNotEmpty()) {
+                    if (isSuggestionsVisible && uiState.searchSuggestions.isNotEmpty()) {
                         Card(
                             modifier = Modifier
                                 .fillMaxWidth()
@@ -130,7 +150,7 @@ fun HomeScreen(
                             elevation = CardDefaults.cardElevation(8.dp)
                         ) {
                             Column {
-                                searchSuggestions.forEach { movie ->
+                                uiState.searchSuggestions.forEach { movie ->
                                     Text(
                                         text = movie.title,
                                         color = Color.White,

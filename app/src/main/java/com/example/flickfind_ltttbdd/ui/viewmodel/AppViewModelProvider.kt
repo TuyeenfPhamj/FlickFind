@@ -6,21 +6,39 @@ import androidx.lifecycle.ViewModelProvider
 import com.example.flickfind_ltttbdd.data.MovieRepository
 import com.example.flickfind_ltttbdd.data.local.AppDatabase
 import com.example.flickfind_ltttbdd.data.remote.RetrofitClient
-import kotlin.jvm.java
 
 class AppViewModelProvider(private val context: Context) : ViewModelProvider.Factory {
-    override fun <T : ViewModel> create(modelClass: Class<T>): T {
-        val database = AppDatabase.getDatabase(context)
-        val repository = MovieRepository(
-            apiService = RetrofitClient.instance,
-            movieDao = database.movieDao(),
-            userDao = database.userDao()
-        )
 
-//        if (modelClass.isAssignableFrom(HomeViewModel::class.java)) {
-//            @Suppress("UNCHECKED_CAST")
-//            return HomeViewModel(repository) as T
-//        }
+    companion object {
+        @Volatile
+        private var repository: MovieRepository? = null
+
+        fun getRepository(context: Context): MovieRepository {
+            return repository ?: synchronized(this) {
+                val database = AppDatabase.getDatabase(context)
+                val repo = MovieRepository(
+                    apiService = RetrofitClient.instance,
+                    movieDao = database.movieDao(),
+                    userDao = database.userDao()
+                )
+                repository = repo
+                repo
+            }
+        }
+    }
+
+    override fun <T : ViewModel> create(modelClass: Class<T>): T {
+        val repo = getRepository(context)
+
+        if (modelClass.isAssignableFrom(HomeViewModel::class.java)) {
+            @Suppress("UNCHECKED_CAST")
+            return HomeViewModel(repo) as T
+        }
+
+        if (modelClass.isAssignableFrom(SearchViewModel::class.java)) {
+            @Suppress("UNCHECKED_CAST")
+            return SearchViewModel(repo) as T
+        }
 
         throw IllegalArgumentException("Unknown ViewModel class")
     }

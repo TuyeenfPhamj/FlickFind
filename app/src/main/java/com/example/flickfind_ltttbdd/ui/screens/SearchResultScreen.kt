@@ -15,7 +15,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
-import com.example.flickfind_ltttbdd.ui.viewmodel.HomeViewModel
+import com.example.flickfind_ltttbdd.navigation.Screen
+import com.example.flickfind_ltttbdd.ui.viewmodel.SearchViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -23,25 +24,18 @@ fun SearchResultScreen(
     query: String?,
     genre: String?,
     yearRange: String?,
-    viewModel: HomeViewModel,
+    viewModel: SearchViewModel,
     navController: NavController
 ) {
     val uiState by viewModel.uiState.collectAsState()
-    
-    // Logic lọc phim dựa trên các tiêu chí
-    val filteredMovies = remember(uiState.movies, query, genre, yearRange) {
-        uiState.movies.filter { movie ->
-            val matchQuery = query.isNullOrBlank() || movie.title.contains(query, ignoreCase = true)
-            val matchGenre = genre.isNullOrBlank() || movie.genres.any { it.contains(genre, ignoreCase = true) }
-            val matchYear = yearRange.isNullOrBlank() || try {
-                val years = yearRange.split("-").map { it.trim().toInt() }
-                val movieYear = movie.releaseDate.take(4).toInt()
-                movieYear in years[0]..years[1]
-            } catch (e: Exception) { true }
-            
-            matchQuery && matchGenre && matchYear
-        }
+
+    // Gọi API lọc mới mỗi khi tham số đầu vào thay đổi
+    LaunchedEffect(query, genre, yearRange) {
+        viewModel.setFiltersAndSearch(query, genre, yearRange)
     }
+
+    // Tự động tải thêm khi cuộn gần tới cuối danh sách
+    val movies = uiState.movies
 
     Scaffold(
         topBar = {
@@ -49,8 +43,13 @@ fun SearchResultScreen(
                 title = { 
                     Column {
                         Text("Kết quả tìm kiếm", color = Color.White, fontSize = 18.sp)
-                        if (!query.isNullOrBlank()) {
-                            Text("Từ khóa: $query", color = Color.Gray, fontSize = 12.sp)
+                        val filterText = listOfNotNull(
+                            query?.takeIf { it.isNotBlank() }?.let { "Từ khóa: $it" },
+                            genre?.takeIf { it.isNotBlank() }?.let { "Thể loại: $it" },
+                            yearRange?.takeIf { it.isNotBlank() }?.let { "Năm: $it" }
+                        ).joinToString(" | ")
+                        if (filterText.isNotBlank()) {
+                            Text(filterText, color = Color.Gray, fontSize = 12.sp)
                         }
                     }
                 },
@@ -64,7 +63,7 @@ fun SearchResultScreen(
         },
         containerColor = Color(0xFF0B121F)
     ) { padding ->
-        if (filteredMovies.isEmpty()) {
+        if (movies.isEmpty() && !uiState.isLoading) {
             Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                 Text("Không tìm thấy phim nào phù hợp", color = Color.Gray)
             }
@@ -76,15 +75,33 @@ fun SearchResultScreen(
                 contentPadding = PaddingValues(16.dp),
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                items(filteredMovies) { movie ->
+                items(movies) { movie ->
                     MovieHorizontalRowItem(
                         movie = movie,
                         isFavorite = uiState.favoriteMovieIds.contains(movie.id),
                         onFavoriteClick = { viewModel.toggleFavorite(movie) },
                         onCardClick = {
-                            navController.navigate("detail/${movie.id}")
+                            navController.navigate(Screen.Detail.createRoute(movie.id))
                         }
                     )
+                }
+
+                // Hiển thị loading khi tải trang tiếp theo
+                if (uiState.isLoading) {
+                    item {
+                        Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+                            CircularProgressIndicator(color = Color(0xFF38B6FF))
+                        }
+                    }
+                }
+
+                // Trigger tải thêm phim khi cuộn tới cuối
+                item {
+                    LaunchedEffect(Unit) {
+                        if (!uiState.isEndReached && !uiState.isLoading) {
+                            viewModel.loadNextMovies()
+                        }
+                    }
                 }
             }
         }
