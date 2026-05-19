@@ -1,58 +1,52 @@
 package com.example.flickfind_ltttbdd.navigation
 
-
-import android.net.http.SslCertificate.saveState
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
-import com.example.flickfind_ltttbdd.ui.viewmodel.AppViewModelProvider
-import com.example.flickfind_ltttbdd.ui.viewmodel.HomeViewModel
-import com.example.flickfind_ltttbdd.ui.screens.HomeScreen
+import com.example.flickfind_ltttbdd.ui.screens.AboutScreen
 
 @Composable
+
 fun MainNavGraph() {
     val navController = rememberNavController()
 
     Scaffold(
+
         bottomBar = { AppBottomNavigationBar(navController) }
     ) { innerPadding ->
-
-        // Khung NavHost liên kết các màn hình theo cấu trúc của bạn
         NavHost(
             navController = navController,
-            startDestination = Screen.Home.route,
+            startDestination = Screen.About.route,
             modifier = Modifier.padding(innerPadding)
         ) {
-            // Màn hình 1: Khám phá (Trang chủ của bạn)
             composable(Screen.Home.route) {
-                val context = LocalContext.current
-                val homeViewModel: HomeViewModel = viewModel(
-                    factory = AppViewModelProvider(context)
-                )
-                HomeScreen(viewModel = homeViewModel, navController = navController)
+                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    Text("Màn hình Trang chủ - Đang phát triển")
+                }
             }
 
-            // Màn hình 2: Cá nhân (Giao diện phụ trách của thành viên khác)
             composable(Screen.Profile.route) {
-                Text("Màn hình Cá nhân - Đang xây dựng")
+                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    Text("Màn hình Cá nhân - Đang phát triển")
+                }
             }
 
-            // Màn hình 3: Giới thiệu (Giao diện phụ trách của thành viên khác)
             composable(Screen.About.route) {
-                Text("Màn hình Giới thiệu - Đang xây dựng")
+                AboutScreen()
             }
         }
     }
