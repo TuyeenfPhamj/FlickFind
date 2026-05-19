@@ -28,6 +28,7 @@ import com.example.flickfind_ltttbdd.ui.screens.HomeScreen
 import com.example.flickfind_ltttbdd.ui.screens.FilterScreen
 import com.example.flickfind_ltttbdd.ui.screens.SearchResultScreen
 import com.example.flickfind_ltttbdd.ui.screens.DetailScreen
+import com.example.flickfind_ltttbdd.ui.screens.AboutScreen
 
 @Composable
 fun MainNavGraph() {
