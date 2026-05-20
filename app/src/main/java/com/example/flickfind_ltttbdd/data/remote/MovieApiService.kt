@@ -14,4 +14,10 @@ interface MovieApiService {
         @Query("genre") genre: String? = null,
         @Query("yearRange") yearRange: String? = null
     ): List<MovieResponse>
+
+    // Lấy chi tiết một bộ phim theo ID
+    @GET("api/v1/movies/{id}")
+    suspend fun getMovieById(
+        @retrofit2.http.Path("id") id: Int
+    ): MovieResponse
 }

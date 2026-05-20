@@ -22,9 +22,11 @@ import androidx.navigation.compose.rememberNavController
 import com.example.flickfind_ltttbdd.ui.viewmodel.AppViewModelProvider
 import com.example.flickfind_ltttbdd.ui.viewmodel.HomeViewModel
 import com.example.flickfind_ltttbdd.ui.viewmodel.ProfileViewModel
+import com.example.flickfind_ltttbdd.ui.viewmodel.DetailViewModel
 import com.example.flickfind_ltttbdd.ui.screens.ProfileScreen
 import com.example.flickfind_ltttbdd.ui.screens.HomeScreen
 import com.example.flickfind_ltttbdd.ui.screens.AboutScreen
+import com.example.flickfind_ltttbdd.ui.screens.DetailScreen
 
 @Composable
 fun MainNavGraph() {
@@ -53,12 +55,27 @@ fun MainNavGraph() {
                 val profileViewModel: ProfileViewModel = viewModel(
                     factory = AppViewModelProvider(context)
                 )
-                ProfileScreen(viewModel = profileViewModel)
+                ProfileScreen(viewModel = profileViewModel, navController = navController)
             }
 
             // Màn hình 3: Giới thiệu
             composable(Screen.About.route) {
                 AboutScreen()
+            }
+
+            // Màn hình 4: Chi tiết phim
+            composable(
+                route = Screen.Detail.route,
+                arguments = listOf(
+                    androidx.navigation.navArgument("movieId") { type = androidx.navigation.NavType.IntType }
+                )
+            ) { backStackEntry ->
+                val movieId = backStackEntry.arguments?.getInt("movieId") ?: 0
+                val context = LocalContext.current
+                val detailViewModel: DetailViewModel = viewModel(
+                    factory = AppViewModelProvider(context, movieId)
+                )
+                DetailScreen(viewModel = detailViewModel, navController = navController)
             }
         }
     }
