@@ -32,6 +32,14 @@ class AppViewModelProvider(
                 @Suppress("UNCHECKED_CAST")
                 DetailViewModel(repository, movieId ?: 0) as T
             }
+            modelClass.isAssignableFrom(SearchViewModel::class.java) -> {
+                @Suppress("UNCHECKED_CAST")
+                SearchViewModel(repository) as T
+            }
+            modelClass.isAssignableFrom(AuthViewModel::class.java) -> {
+                @Suppress("UNCHECKED_CAST")
+                AuthViewModel() as T
+            }
             else -> throw IllegalArgumentException("Unknown ViewModel class: ${modelClass.name}")
         }
     }

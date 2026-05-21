@@ -15,9 +15,9 @@ interface MovieApiService {
         @Query("yearRange") yearRange: String? = null
     ): List<MovieResponse>
 
-    // Lấy chi tiết một bộ phim theo ID
-    @GET("api/v1/movies/{id}")
+    // Lấy chi tiết một bộ phim theo ID (Dùng Query để ổn định hơn Path trên MockAPI)
+    @GET("api/v1/movies")
     suspend fun getMovieById(
-        @retrofit2.http.Path("id") id: Int
-    ): MovieResponse
+        @Query("id") id: Int
+    ): List<MovieResponse>
 }

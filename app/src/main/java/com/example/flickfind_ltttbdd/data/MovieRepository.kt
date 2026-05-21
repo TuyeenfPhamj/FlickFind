@@ -38,7 +38,11 @@ class MovieRepository(
     suspend fun getMovieByIdFromApi(movieId: Int): Result<MovieResponse> {
         return try {
             val response = apiService.getMovieById(movieId)
-            Result.success(response)
+            if (response.isNotEmpty()) {
+                Result.success(response[0])
+            } else {
+                Result.failure(Exception("404"))
+            }
         } catch (e: Exception) {
             Result.failure(e)
         }

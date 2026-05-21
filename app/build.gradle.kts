@@ -2,6 +2,7 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.compose)
     id("com.google.devtools.ksp")
+    id("com.google.gms.google-services")
 }
 
 ksp {
@@ -64,9 +65,13 @@ dependencies {
 
     // 4. Hiển thị ảnh từ URL (Coil)
     implementation("io.coil-kt:coil-compose:2.6.0")
-
-    //5. Hiển thị icon nâng cao cho nav
     implementation("androidx.compose.material:material-icons-extended")
+
+    // 6. Firebase (Cho đăng ký/đăng nhập)
+    implementation(platform("com.google.firebase:firebase-bom:33.1.0"))
+    implementation("com.google.firebase:firebase-auth-ktx")
+    implementation("com.google.firebase:firebase-firestore-ktx")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.8.1")
 
 
     implementation(libs.androidx.core.ktx)
