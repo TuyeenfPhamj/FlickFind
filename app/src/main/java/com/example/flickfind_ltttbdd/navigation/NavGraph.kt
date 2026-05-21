@@ -31,11 +31,11 @@ fun MainNavGraph() {
     ) { innerPadding ->
 
         // Khung NavHost liên kết các màn hình theo cấu trúc của bạn
-        NavHost(
-            navController = navController,
+        NavHost(navController = navController,
             startDestination = Screen.Home.route,
-            modifier = Modifier.padding(innerPadding)
-        ) {
+            // Thay vì padding toàn bộ, hãy chỉ padding bottom để không đè lên BottomBar
+            modifier = Modifier.padding(bottom = innerPadding.calculateBottomPadding())
+        )  {
             // Màn hình 1: Khám phá (Trang chủ của bạn)
 //            composable(Screen.Home.route) {
 //                val context = LocalContext.current

@@ -17,10 +17,10 @@ class AppViewModelProvider(private val context: Context) : ViewModelProvider.Fac
             userDao = database.userDao()
         )
 
-        if (modelClass.isAssignableFrom(HomeViewModel::class.java)) {
-            @Suppress("UNCHECKED_CAST")
-            return HomeViewModel(repository) as T
-        }
+//        if (modelClass.isAssignableFrom(HomeViewModel::class.java)) {
+//            @Suppress("UNCHECKED_CAST")
+//            return HomeViewModel(repository) as T
+//        }
 
         throw IllegalArgumentException("Unknown ViewModel class")
     }
