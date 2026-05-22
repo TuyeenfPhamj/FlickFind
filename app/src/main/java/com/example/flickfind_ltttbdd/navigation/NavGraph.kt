@@ -33,13 +33,13 @@ fun MainNavGraph() {
     val authState by authViewModel.uiState.collectAsState()
 
     Scaffold(
-        bottomBar = { 
+        bottomBar = {
             val navBackStackEntry by navController.currentBackStackEntryAsState()
             val currentRoute = navBackStackEntry?.destination?.route
             // Hiện Bottom Bar ở các màn chính, ẩn ở Login/Register nếu cần, hoặc hiện tất cả
             val hideBottomBarRoutes = listOf(Screen.Login.route, Screen.Register.route)
             if (currentRoute !in hideBottomBarRoutes) {
-                AppBottomNavigationBar(navController) 
+                AppBottomNavigationBar(navController)
             }
         }
     ) { innerPadding ->
@@ -59,8 +59,8 @@ fun MainNavGraph() {
                 if (authState.isLoggedIn) {
                     val profileViewModel: ProfileViewModel = viewModel(factory = AppViewModelProvider(context))
                     ProfileScreen(
-                        viewModel = profileViewModel, 
-                        navController = navController, 
+                        viewModel = profileViewModel,
+                        navController = navController,
                         onLogout = {
                             authViewModel.logout()
                             navController.navigate(Screen.Home.route) {
@@ -144,7 +144,7 @@ fun AppBottomNavigationBar(navController: NavHostController) {
     val appIndicator = Color(0xFF1A2844)
     val textActive = Color(0xFFFFFFFF)
     val textInactive = Color(0xFF8E9AA6)
-    
+
     NavigationBar(containerColor = appSurface, tonalElevation = 0.dp) {
         val navBackStackEntry by navController.currentBackStackEntryAsState()
         val currentRoute = navBackStackEntry?.destination?.route
