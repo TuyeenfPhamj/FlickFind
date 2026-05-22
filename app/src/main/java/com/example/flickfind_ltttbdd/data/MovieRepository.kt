@@ -50,7 +50,7 @@ class MovieRepository(
     // ==========================================
 
     // Lấy luồng dữ liệu danh sách phim yêu thích thời gian thực
-    fun getAllFavorites(): Flow<List<FavoriteMovieEntity>> = movieDao.getAllFavorites()
+    fun getAllFavorites(userId: String): Flow<List<FavoriteMovieEntity>> = movieDao.getAllFavorites(userId)
 
     // Thêm một phim vào danh sách yêu thích
     suspend fun addToFavorite(movie: FavoriteMovieEntity) {
@@ -63,8 +63,8 @@ class MovieRepository(
     }
 
     // Kiểm tra xem phim này đã được lưu trong Room chưa
-    suspend fun isMovieFavorite(movieId: Int): Boolean {
-        return movieDao.getMovieById(movieId) != null
+    suspend fun isMovieFavorite(movieId: Int, userId: String): Boolean {
+        return movieDao.getMovieById(movieId, userId) != null
     }
 
 
@@ -73,7 +73,12 @@ class MovieRepository(
     // ==========================================
 
     // Lấy thông tin User profile
-    fun getUserProfile(): Flow<UserEntity?> = userDao.getUserProfile()
+    fun getUserProfile(userId: String): Flow<UserEntity?> = userDao.getUserProfile(userId)
+
+    // Cập nhật hoặc khởi tạo User
+    suspend fun insertOrUpdateUser(user: UserEntity) {
+        userDao.insertOrUpdateUser(user)
+    }
 
     // Cập nhật thông tin User (CRUD - Update)
     suspend fun updateUserProfile(user: UserEntity) {
