@@ -18,6 +18,8 @@ interface MovieDao {
     suspend fun deleteFavorite(movie: FavoriteMovieEntity): Int
 
     // 4. Kiểm tra xem phim đã được thích chưa (trả về null nếu chưa có)
+    @Query("SELECT * FROM favorite_movies WHERE id = :movieId LIMIT 1")
+    suspend fun getMovieById(movieId: String): FavoriteMovieEntity?
     @Query("SELECT * FROM favorite_movies WHERE id = :movieId AND userId = :userId LIMIT 1")
     suspend fun getMovieById(movieId: Int, userId: String): FavoriteMovieEntity?
 }

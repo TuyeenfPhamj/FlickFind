@@ -48,6 +48,16 @@ class MovieRepository(
         }
     }
 
+    // Hàm lấy chi tiết một bộ phim từ API
+    suspend fun getMovieById(id: String): Result<MovieResponse> {
+        return try {
+            val response = apiService.getMovieById(id)
+            Result.success(response)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
 
     // ==========================================
     // 2. PHẦN XỬ LÝ DANH SÁCH YÊU THÍCH (ROOM DB)
@@ -69,6 +79,8 @@ class MovieRepository(
     // Kiểm tra xem phim này đã được lưu trong Room chưa
     suspend fun isMovieFavorite(movieId: Int, userId: String): Boolean {
         return movieDao.getMovieById(movieId, userId) != null
+    suspend fun isMovieFavorite(movieId: String): Boolean {
+        return movieDao.getMovieById(movieId) != null
     }
 
 

@@ -31,7 +31,7 @@ sealed class Screen(val route: String, val title: String, val icon: ImageVector?
         }
     }
     object Detail : Screen("detail/{movieId}", "Chi tiết") {
-        fun createRoute(movieId: Int) = "detail/$movieId"
+        fun createRoute(movieId: String) = "detail/$movieId"
     }
 }
 

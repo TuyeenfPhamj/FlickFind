@@ -15,7 +15,7 @@ import kotlinx.coroutines.launch
 // 1. Định nghĩa trạng thái giao diện (UI State) theo chuẩn UDF
 data class HomeUiState(
     val movies: List<MovieResponse> = emptyList(), // Danh sách phim cho trang chủ (phân trang)
-    val favoriteMovieIds: Set<Int> = emptySet(),
+    val favoriteMovieIds: Set<String> = emptySet(),
     val isLoading: Boolean = false,
     val errorMessage: String? = null,
     val currentPage: Int = 1,

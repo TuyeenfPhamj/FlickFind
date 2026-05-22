@@ -7,40 +7,49 @@ import com.example.flickfind_ltttbdd.data.MovieRepository
 import com.example.flickfind_ltttbdd.data.local.AppDatabase
 import com.example.flickfind_ltttbdd.data.remote.RetrofitClient
 
-class AppViewModelProvider(
-    private val context: Context,
-    private val movieId: Int? = null
-) : ViewModelProvider.Factory {
-    override fun <T : ViewModel> create(modelClass: Class<T>): T {
-        val database = AppDatabase.getDatabase(context)
-        val repository = MovieRepository(
-            apiService = RetrofitClient.instance,
-            movieDao = database.movieDao(),
-            userDao = database.userDao(),
-        )
+class AppViewModelProvider(private val context: Context) : ViewModelProvider.Factory {
 
-        return when {
-            modelClass.isAssignableFrom(HomeViewModel::class.java) -> {
-                @Suppress("UNCHECKED_CAST")
-                HomeViewModel(repository) as T
+    companion object {
+        @Volatile
+        private var repository: MovieRepository? = null
+
+        fun getRepository(context: Context): MovieRepository {
+            return repository ?: synchronized(this) {
+                val database = AppDatabase.getDatabase(context)
+                val repo = MovieRepository(
+                    apiService = RetrofitClient.instance,
+                    movieDao = database.movieDao(),
+                    userDao = database.userDao()
+                )
+                repository = repo
+                repo
             }
-            modelClass.isAssignableFrom(ProfileViewModel::class.java) -> {
-                @Suppress("UNCHECKED_CAST")
-                ProfileViewModel(repository) as T
-            }
-            modelClass.isAssignableFrom(DetailViewModel::class.java) -> {
-                @Suppress("UNCHECKED_CAST")
-                DetailViewModel(repository, movieId ?: 0) as T
-            }
-            modelClass.isAssignableFrom(SearchViewModel::class.java) -> {
-                @Suppress("UNCHECKED_CAST")
-                SearchViewModel(repository) as T
-            }
-            modelClass.isAssignableFrom(AuthViewModel::class.java) -> {
-                @Suppress("UNCHECKED_CAST")
-                AuthViewModel(repository) as T
-            }
-            else -> throw IllegalArgumentException("Unknown ViewModel class: ${modelClass.name}")
         }
+    }
+
+    override fun <T : ViewModel> create(modelClass: Class<T>): T {
+        val repo = getRepository(context)
+
+        if (modelClass.isAssignableFrom(HomeViewModel::class.java)) {
+            @Suppress("UNCHECKED_CAST")
+            return HomeViewModel(repo) as T
+        }
+
+        if (modelClass.isAssignableFrom(SearchViewModel::class.java)) {
+            @Suppress("UNCHECKED_CAST")
+            return SearchViewModel(repo) as T
+        }
+
+        if (modelClass.isAssignableFrom(DetailViewModel::class.java)) {
+            @Suppress("UNCHECKED_CAST")
+            return DetailViewModel(repo) as T
+        }
+
+        if (modelClass.isAssignableFrom(ProfileViewModel::class.java)) {
+            @Suppress("UNCHECKED_CAST")
+            return ProfileViewModel(repo) as T
+        }
+
+        throw IllegalArgumentException("Unknown ViewModel class")
     }
 }

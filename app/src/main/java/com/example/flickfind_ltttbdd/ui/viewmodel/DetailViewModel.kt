@@ -5,133 +5,83 @@ import androidx.lifecycle.viewModelScope
 import com.example.flickfind_ltttbdd.data.MovieRepository
 import com.example.flickfind_ltttbdd.data.local.FavoriteMovieEntity
 import com.example.flickfind_ltttbdd.data.remote.MovieResponse
-import com.google.firebase.auth.FirebaseAuth
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
-data class DetailUiState(
-    val movie: MovieResponse? = null,
-    val isFavorite: Boolean = false,
-    val isLoading: Boolean = false,
-    val errorMessage: String? = null
-)
+class DetailViewModel(private val repository: MovieRepository) : ViewModel() {
 
-class DetailViewModel(
-    private val repository: MovieRepository,
-    private val movieId: Int
-) : ViewModel() {
+    private val _movie = MutableStateFlow<MovieResponse?>(null)
+    val movie: StateFlow<MovieResponse?> = _movie.asStateFlow()
 
-    private val auth = FirebaseAuth.getInstance()
-    private val currentUserId = auth.currentUser?.uid ?: ""
+    private val _isLoading = MutableStateFlow(false)
+    val isLoading: StateFlow<Boolean> = _isLoading.asStateFlow()
 
-    private val _uiState = MutableStateFlow(DetailUiState())
-    val uiState: StateFlow<DetailUiState> = _uiState.asStateFlow()
+    private val _errorMessage = MutableStateFlow<String?>(null)
+    val errorMessage: StateFlow<String?> = _errorMessage.asStateFlow()
 
-    init {
-        loadMovieDetails()
-    }
+    private val _isFavorite = MutableStateFlow(false)
+    val isFavorite: StateFlow<Boolean> = _isFavorite.asStateFlow()
 
-    private fun loadMovieDetails() {
-        viewModelScope.launch {
-            _uiState.update { it.copy(isLoading = true, errorMessage = null) }
-            
-            // 1. Kiểm tra trạng thái yêu thích trước (Dùng để hiển thị tim ngay lập tức)
-            val isFav = if (currentUserId.isNotEmpty()) {
-                repository.isMovieFavorite(movieId, currentUserId)
-            } else false
-            _uiState.update { it.copy(isFavorite = isFav) }
-
-            // 2. Lấy dữ liệu chi tiết từ API
-            val result = repository.getMovieByIdFromApi(movieId)
-            result.onSuccess { movie ->
-                _uiState.update { 
-                    it.copy(
-                        isLoading = false, 
-                        movie = movie, 
-                        errorMessage = null
-                    ) 
-                }
-            }.onFailure { error ->
-                // Xử lý khi API lỗi 404 (Thường do MockAPI bị giới hạn dữ liệu chi tiết)
-                
-                // Cố gắng tìm thông tin phim từ danh sách phim trang chủ đã tải (nếu có)
-                // Hoặc từ danh sách yêu thích
-                val localData = if (isFav) {
-                    repository.getAllFavorites(currentUserId).first().find { it.id == movieId }
-                } else null
-
-                if (localData != null) {
-                    _uiState.update {
-                        it.copy(
-                            isLoading = false,
-                            movie = MovieResponse(
-                                id = localData.id,
-                                title = localData.title,
-                                posterPath = localData.posterPath,
-                                backdropPath = localData.backdropPath,
-                                genres = localData.genre.split(",").map { g -> g.trim() },
-                                rating = localData.rating,
-                                runtime = localData.runtime,
-                                director = "Không có dữ liệu",
-                                cast = "Không có dữ liệu",
-                                releaseDate = "",
-                                overview = "Thông tin chi tiết hiện không khả dụng từ máy chủ, nhưng bạn vẫn có thể xem thông tin cơ bản của phim này."
-                            )
-                        )
-                    }
-                } else {
-                    // Nếu không có trong database, ta vẫn thử lấy thông tin từ list 100 phim để hiển thị
-                    // nhằm tránh hiện lỗi 404 gây khó chịu cho người dùng
-                    repository.getMoviesFromApi(1, 100).onSuccess { allMovies ->
-                        val movieInList = allMovies.find { it.id == movieId }
-                        if (movieInList != null) {
-                            _uiState.update {
-                                it.copy(
-                                    isLoading = false,
-                                    movie = movieInList,
-                                    errorMessage = null
-                                )
-                            }
-                        } else {
-                            val msg = error.localizedMessage ?: "Lỗi kết nối máy chủ (404)"
-                            _uiState.update { it.copy(isLoading = false, errorMessage = msg) }
-                        }
-                    }.onFailure {
-                        val msg = error.localizedMessage ?: "Không tìm thấy phim này (404)"
-                        _uiState.update { it.copy(isLoading = false, errorMessage = msg) }
-                    }
-                }
-            }
-        }
-    }
-
-    fun toggleFavorite() {
-        val currentMovie = _uiState.value.movie ?: return
-        if (currentUserId.isEmpty()) {
-            _uiState.update { it.copy(errorMessage = "Vui lòng đăng nhập để lưu phim yêu thích") }
+    fun getMovieById(id: String) {
+        if (id.isBlank()) {
+            _errorMessage.value = "ID phim không hợp lệ"
             return
         }
 
         viewModelScope.launch {
-            val isFav = _uiState.value.isFavorite
-            val entity = FavoriteMovieEntity(
-                id = currentMovie.id,
-                userId = currentUserId,
-                title = currentMovie.title,
-                posterPath = currentMovie.posterPath,
-                backdropPath = currentMovie.backdropPath,
-                genre = currentMovie.genres.joinToString(", "),
-                rating = currentMovie.rating,
-                runtime = currentMovie.runtime,
-                isWatched = false
-            )
+            _isLoading.value = true
+            _errorMessage.value = null
+            
+            // Thay vì gọi trực tiếp endpoint /{id} (dễ bị 404 trên MockAPI), 
+            // chúng ta lấy danh sách và lọc theo trường id trong JSON.
+            repository.getMoviesFromApi(page = 1, limit = 100)
+                .onSuccess { movies ->
+                    val foundMovie = movies.find { it.id == id }
+                    if (foundMovie != null) {
+                        _movie.value = foundMovie
+                        observeFavoriteStatus(foundMovie.id)
+                        _isLoading.value = false
+                    } else {
+                        _errorMessage.value = "Không tìm thấy phim có ID: $id"
+                        _isLoading.value = false
+                    }
+                }
+                .onFailure { exception ->
+                    android.util.Log.e("DetailViewModel", "Lỗi tải phim", exception)
+                    _errorMessage.value = "Lỗi kết nối hoặc không tìm thấy phim"
+                    _isLoading.value = false
+                }
+        }
+    }
 
-            if (isFav) {
-                repository.removeFromFavorite(entity)
-            } else {
-                repository.addToFavorite(entity)
+    private fun observeFavoriteStatus(movieId: String) {
+        viewModelScope.launch {
+            repository.getAllFavorites().collect { favorites ->
+                _isFavorite.value = favorites.any { it.id == movieId }
             }
-            _uiState.update { it.copy(isFavorite = !isFav) }
+        }
+    }
+
+    fun toggleFavorite(movie: MovieResponse) {
+        viewModelScope.launch {
+            val favoriteMovie = FavoriteMovieEntity(
+                id = movie.id,
+                title = movie.title,
+                posterPath = movie.posterPath,
+                backdropPath = movie.backdropPath,
+                genre = movie.genres.joinToString(", "),
+                rating = movie.rating,
+                runtime = movie.runtime
+            )
+            if (_isFavorite.value) {
+                repository.removeFromFavorite(favoriteMovie)
+                _isFavorite.value = false
+            } else {
+                repository.addToFavorite(favoriteMovie)
+                _isFavorite.value = true
+            }
         }
     }
 }
