@@ -13,10 +13,10 @@ import androidx.compose.ui.platform.LocalContext
 
 private val DarkColorScheme = darkColorScheme(
     primary = CyanAccent,
-    onPrimary = NavyDark,
-    secondary = CyanSecondary,
-    onSecondary = NavyDark,
-    background = NavyDark,
+    onPrimary = NavyBackground,
+    secondary = CyanAccent,
+    onSecondary = NavyBackground,
+    background = NavyBackground,
     onBackground = WhiteText,
     surface = NavySurface,
     onSurface = WhiteText,
@@ -27,16 +27,16 @@ private val DarkColorScheme = darkColorScheme(
 )
 
 private val LightColorScheme = lightColorScheme(
-    primary = BlueDarkPrimary,
+    primary = LightPrimary,
     onPrimary = Color.White,
-    secondary = BlueMuted,
+    secondary = LightTextMuted,
     onSecondary = Color.White,
-    background = BlueGrayLight,
+    background = LightBackground,
     onBackground = Color(0xFF0F172A),
-    surface = WhiteSurface,
+    surface = LightSurface,
     onSurface = Color(0xFF1E293B),
     surfaceVariant = Color(0xFFE2E8F0),
-    onSurfaceVariant = BlueMuted,
+    onSurfaceVariant = LightTextMuted,
     error = ErrorRed,
     onError = Color.White
 )
