@@ -38,7 +38,7 @@ class AppViewModelProvider(
             }
             modelClass.isAssignableFrom(AuthViewModel::class.java) -> {
                 @Suppress("UNCHECKED_CAST")
-                AuthViewModel() as T
+                AuthViewModel(repository) as T
             }
             else -> throw IllegalArgumentException("Unknown ViewModel class: ${modelClass.name}")
         }

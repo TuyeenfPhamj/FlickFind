@@ -16,7 +16,7 @@ sealed class Screen(val route: String, val title: String, val icon: ImageVector?
     object Profile : Screen("profile", "Cá nhân", Icons.Default.Person)
     object About : Screen("about", "Giới thiệu", Icons.Default.Info)
 
-    // Màn hình phụ
+    // Màn hình phụ không xuất hiện trên Bottom Bar
     object Login : Screen("login", "Đăng nhập")
     object Register : Screen("register", "Đăng ký")
     object Filter : Screen("filter", "Lọc phim")

@@ -2,7 +2,7 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.compose)
     id("com.google.devtools.ksp")
-    id("com.google.gms.google-services")
+    alias(libs.plugins.google.services)
 }
 
 ksp {
@@ -51,6 +51,11 @@ dependencies {
     implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.8.7")
     implementation("androidx.lifecycle:lifecycle-runtime-compose:2.8.7")
 
+    // 1.5. Firebase
+    implementation(platform(libs.firebase.bom))
+    implementation(libs.firebase.auth)
+    implementation(libs.kotlinx.coroutines.play.services)
+
     // 2. Mạng (Retrofit để gọi MockAPI)
     implementation("com.squareup.retrofit2:retrofit:2.11.0")
     implementation("com.squareup.retrofit2:converter-gson:2.11.0")
@@ -65,13 +70,9 @@ dependencies {
 
     // 4. Hiển thị ảnh từ URL (Coil)
     implementation("io.coil-kt:coil-compose:2.6.0")
-    implementation("androidx.compose.material:material-icons-extended")
 
-    // 6. Firebase (Cho đăng ký/đăng nhập)
-    implementation(platform("com.google.firebase:firebase-bom:33.1.0"))
-    implementation("com.google.firebase:firebase-auth-ktx")
-    implementation("com.google.firebase:firebase-firestore-ktx")
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.8.1")
+    //5. Hiển thị icon nâng cao cho nav
+    implementation("androidx.compose.material:material-icons-extended")
 
 
     implementation(libs.androidx.core.ktx)

@@ -4,13 +4,13 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
@@ -18,9 +18,10 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import coil.compose.AsyncImage
 import com.example.flickfind_ltttbdd.R
 import com.example.flickfind_ltttbdd.ui.viewmodel.AuthViewModel
-import androidx.compose.ui.tooling.preview.Preview
+import com.google.firebase.auth.FirebaseAuth
 
 @Composable
 fun LoginScreen(
@@ -31,7 +32,6 @@ fun LoginScreen(
     val uiState by viewModel.uiState.collectAsState()
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
-    val scrollState = rememberScrollState()
 
     LaunchedEffect(uiState.isSuccess) {
         if (uiState.isSuccess) {
@@ -43,25 +43,42 @@ fun LoginScreen(
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color(0xFF0B101B))
+            .background(Color(0xFF0B101B)),
+        contentAlignment = Alignment.Center
     ) {
         Column(
             modifier = Modifier
-                .fillMaxSize()
-                .verticalScroll(scrollState)
+                .fillMaxWidth()
                 .padding(24.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            // Logo - Xóa phông (Bỏ Box bao quanh)
-            Image(
-                painter = painterResource(id = R.drawable.logo_v1),
-                contentDescription = "Logo",
-                modifier = Modifier.size(150.dp),
-                contentScale = ContentScale.Fit
-            )
+            // Hiển thị Avatar nếu đã từng đăng nhập, ngược lại hiện Logo
+            val photoUrl = FirebaseAuth.getInstance().currentUser?.photoUrl?.toString()
 
-            Spacer(modifier = Modifier.height(30.dp))
+            Box(
+                modifier = Modifier
+                    .size(150.dp)
+                    .background(Color(0xFF172033), RoundedCornerShape(16.dp)),
+                contentAlignment = Alignment.Center
+            ) {
+                if (!photoUrl.isNullOrEmpty()) {
+                    AsyncImage(
+                        model = photoUrl,
+                        contentDescription = "User Avatar",
+                        modifier = Modifier.size(120.dp).clip(CircleShape),
+                        contentScale = ContentScale.Crop
+                    )
+                } else {
+                    Image(
+                        painter = painterResource(id = R.drawable.logo_v1),
+                        contentDescription = "Logo",
+                        modifier = Modifier.size(100.dp),
+                        contentScale = ContentScale.Fit
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(40.dp))
 
             // Login Card
             Card(
@@ -91,9 +108,7 @@ fun LoginScreen(
                             focusedTextColor = Color.White,
                             unfocusedTextColor = Color.White,
                             focusedBorderColor = Color.Cyan,
-                            unfocusedBorderColor = Color.Gray,
-                            focusedLabelColor = Color.Cyan,
-                            unfocusedLabelColor = Color.Gray
+                            unfocusedBorderColor = Color.Gray
                         )
                     )
 
@@ -109,23 +124,24 @@ fun LoginScreen(
                             focusedTextColor = Color.White,
                             unfocusedTextColor = Color.White,
                             focusedBorderColor = Color.Cyan,
-                            unfocusedBorderColor = Color.Gray,
-                            focusedLabelColor = Color.Cyan,
-                            unfocusedLabelColor = Color.Gray
+                            unfocusedBorderColor = Color.Gray
                         )
                     )
 
                     Spacer(modifier = Modifier.height(16.dp))
-                    Row {
+
+                    Row(verticalAlignment = Alignment.CenterVertically)
+                    {
                         Text(
                             text = "Bạn chưa có tài khoản? ",
                             color = Color.Gray,
-                            fontSize = 14.sp,
+                            fontSize = 14.sp
                         )
                         Text(
                             text = "Đăng ký ngay!",
                             color = Color.Cyan,
                             fontSize = 14.sp,
+                            fontWeight = FontWeight.Bold,
                             modifier = Modifier.clickable { onNavigateToRegister() }
                         )
                     }
@@ -161,10 +177,10 @@ fun RegisterScreen(
     onRegisterSuccess: () -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    var name by remember { mutableStateOf("") }
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var confirmPassword by remember { mutableStateOf("") }
-    val scrollState = rememberScrollState()
 
     LaunchedEffect(uiState.isSuccess) {
         if (uiState.isSuccess) {
@@ -176,25 +192,42 @@ fun RegisterScreen(
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color(0xFF0B101B))
+            .background(Color(0xFF0B101B)),
+        contentAlignment = Alignment.Center
     ) {
         Column(
             modifier = Modifier
-                .fillMaxSize()
-                .verticalScroll(scrollState)
+                .fillMaxWidth()
                 .padding(24.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            // Logo - Xóa phông
-            Image(
-                painter = painterResource(id = R.drawable.logo_v1),
-                contentDescription = "Logo",
-                modifier = Modifier.size(150.dp),
-                contentScale = ContentScale.Fit
-            )
+            // Hiển thị Avatar nếu đã từng đăng nhập, ngược lại hiện Logo
+            val photoUrl = FirebaseAuth.getInstance().currentUser?.photoUrl?.toString()
 
-            Spacer(modifier = Modifier.height(30.dp))
+            Box(
+                modifier = Modifier
+                    .size(150.dp)
+                    .background(Color(0xFF172033), RoundedCornerShape(16.dp)),
+                contentAlignment = Alignment.Center
+            ) {
+                if (!photoUrl.isNullOrEmpty()) {
+                    AsyncImage(
+                        model = photoUrl,
+                        contentDescription = "User Avatar",
+                        modifier = Modifier.size(120.dp).clip(CircleShape),
+                        contentScale = ContentScale.Crop
+                    )
+                } else {
+                    Image(
+                        painter = painterResource(id = R.drawable.logo_v1),
+                        contentDescription = "Logo",
+                        modifier = Modifier.size(100.dp),
+                        contentScale = ContentScale.Fit
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(20.dp))
 
             // Register Card
             Card(
@@ -213,7 +246,22 @@ fun RegisterScreen(
                         fontWeight = FontWeight.Bold
                     )
 
-                    Spacer(modifier = Modifier.height(24.dp))
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    OutlinedTextField(
+                        value = name,
+                        onValueChange = { name = it },
+                        label = { Text("Tên tài khoản") },
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedTextColor = Color.White,
+                            unfocusedTextColor = Color.White,
+                            focusedBorderColor = Color.Cyan,
+                            unfocusedBorderColor = Color.Gray
+                        )
+                    )
+
+                    Spacer(modifier = Modifier.height(12.dp))
 
                     OutlinedTextField(
                         value = email,
@@ -224,13 +272,11 @@ fun RegisterScreen(
                             focusedTextColor = Color.White,
                             unfocusedTextColor = Color.White,
                             focusedBorderColor = Color.Cyan,
-                            unfocusedBorderColor = Color.Gray,
-                            focusedLabelColor = Color.Cyan,
-                            unfocusedLabelColor = Color.Gray
+                            unfocusedBorderColor = Color.Gray
                         )
                     )
 
-                    Spacer(modifier = Modifier.height(16.dp))
+                    Spacer(modifier = Modifier.height(12.dp))
 
                     OutlinedTextField(
                         value = password,
@@ -242,13 +288,11 @@ fun RegisterScreen(
                             focusedTextColor = Color.White,
                             unfocusedTextColor = Color.White,
                             focusedBorderColor = Color.Cyan,
-                            unfocusedBorderColor = Color.Gray,
-                            focusedLabelColor = Color.Cyan,
-                            unfocusedLabelColor = Color.Gray
+                            unfocusedBorderColor = Color.Gray
                         )
                     )
 
-                    Spacer(modifier = Modifier.height(16.dp))
+                    Spacer(modifier = Modifier.height(12.dp))
 
                     OutlinedTextField(
                         value = confirmPassword,
@@ -260,28 +304,35 @@ fun RegisterScreen(
                             focusedTextColor = Color.White,
                             unfocusedTextColor = Color.White,
                             focusedBorderColor = Color.Cyan,
-                            unfocusedBorderColor = Color.Gray,
-                            focusedLabelColor = Color.Cyan,
-                            unfocusedLabelColor = Color.Gray
+                            unfocusedBorderColor = Color.Gray
                         )
                     )
 
                     Spacer(modifier = Modifier.height(16.dp))
 
-                    Text(
-                        text = "Nhấn để đăng nhập!",
-                        color = Color.Cyan,
-                        fontSize = 14.sp,
-                        modifier = Modifier.clickable { onNavigateToLogin() }
-                    )
+                    Row(verticalAlignment = Alignment.CenterVertically)
+                    {
+                        Text(
+                            text = "Đã có tài khoản? ",
+                            color = Color.Gray,
+                            fontSize = 14.sp
+                        )
+                        Text(
+                            text = "Đăng nhập ngay!",
+                            color = Color.Cyan,
+                            fontSize = 14.sp,
+                            fontWeight = FontWeight.Bold,
+                            modifier = Modifier.clickable { onNavigateToLogin() }
+                        )
+                    }
 
-                    Spacer(modifier = Modifier.height(24.dp))
+                    Spacer(modifier = Modifier.height(16.dp))
 
                     if (uiState.isLoading) {
                         CircularProgressIndicator(color = Color.Cyan)
                     } else {
                         Button(
-                            onClick = { viewModel.register(email, password, confirmPassword) },
+                            onClick = { viewModel.register(name, email, password, confirmPassword) },
                             colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF23304B)),
                             modifier = Modifier.fillMaxWidth(),
                             shape = RoundedCornerShape(8.dp)
@@ -293,33 +344,6 @@ fun RegisterScreen(
                     uiState.errorMessage?.let {
                         Text(it, color = Color.Red, fontSize = 12.sp, modifier = Modifier.padding(top = 8.dp))
                     }
-                }
-            }
-        }
-    }
-}
-
-@Preview
-@Composable
-fun LoginScreenPreview() {
-    Box(modifier = Modifier.fillMaxSize().background(Color(0xFF0B101B))) {
-        Column(modifier = Modifier.padding(24.dp).align(Alignment.Center), horizontalAlignment = Alignment.CenterHorizontally) {
-             Image(
-                painter = painterResource(id = R.drawable.logo_v1),
-                contentDescription = "Logo",
-                modifier = Modifier.size(100.dp),
-                contentScale = ContentScale.Fit
-            )
-            Spacer(modifier = Modifier.height(20.dp))
-            Card(colors = CardDefaults.cardColors(containerColor = Color(0xFF172033))) {
-                Column(modifier = Modifier.padding(24.dp), horizontalAlignment = Alignment.CenterHorizontally) {
-                    Text("Đăng nhập", color = Color.White, fontSize = 22.sp, fontWeight = FontWeight.Bold)
-                    Spacer(modifier = Modifier.height(20.dp))
-                    OutlinedTextField(value = "", onValueChange = {}, label = { Text("Tên đăng nhập") })
-                    Spacer(modifier = Modifier.height(10.dp))
-                    OutlinedTextField(value = "", onValueChange = {}, label = { Text("Mật khẩu") })
-                    Spacer(modifier = Modifier.height(20.dp))
-                    Button(onClick = {}, modifier = Modifier.fillMaxWidth()) { Text("Đăng nhập") }
                 }
             }
         }

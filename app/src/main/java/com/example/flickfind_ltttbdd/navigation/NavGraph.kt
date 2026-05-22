@@ -20,6 +20,7 @@ import com.example.flickfind_ltttbdd.ui.viewmodel.AppViewModelProvider
 import com.example.flickfind_ltttbdd.ui.viewmodel.HomeViewModel
 import com.example.flickfind_ltttbdd.ui.viewmodel.ProfileViewModel
 import com.example.flickfind_ltttbdd.ui.viewmodel.DetailViewModel
+
 import com.example.flickfind_ltttbdd.ui.viewmodel.SearchViewModel
 import com.example.flickfind_ltttbdd.ui.viewmodel.AuthViewModel
 import com.example.flickfind_ltttbdd.ui.screens.*
@@ -35,16 +36,16 @@ fun MainNavGraph() {
         bottomBar = { 
             val navBackStackEntry by navController.currentBackStackEntryAsState()
             val currentRoute = navBackStackEntry?.destination?.route
-            // Hiển thị BottomBar ở các màn hình chính và cả login/register
-            val mainRoutes = listOf(Screen.Home.route, Screen.Profile.route, Screen.About.route, Screen.Register.route)
-            if (currentRoute in mainRoutes) {
+            // Hiện Bottom Bar ở các màn chính, ẩn ở Login/Register nếu cần, hoặc hiện tất cả
+            val hideBottomBarRoutes = listOf(Screen.Login.route, Screen.Register.route)
+            if (currentRoute !in hideBottomBarRoutes) {
                 AppBottomNavigationBar(navController) 
             }
         }
     ) { innerPadding ->
         NavHost(
             navController = navController,
-            startDestination = Screen.Home.route, // Mặc định vào Trang chủ
+            startDestination = Screen.Home.route,
             modifier = Modifier.padding(innerPadding)
         ) {
             // Màn hình 1: Trang chủ
@@ -53,7 +54,7 @@ fun MainNavGraph() {
                 HomeScreen(viewModel = homeViewModel, navController = navController)
             }
 
-            // Màn hình 2: Cá nhân (Cửa ngõ đăng nhập)
+            // Màn hình 2: Cá nhân (Kiểm tra đăng nhập ở đây)
             composable(Screen.Profile.route) {
                 if (authState.isLoggedIn) {
                     val profileViewModel: ProfileViewModel = viewModel(factory = AppViewModelProvider(context))
@@ -62,6 +63,9 @@ fun MainNavGraph() {
                         navController = navController, 
                         onLogout = {
                             authViewModel.logout()
+                            navController.navigate(Screen.Home.route) {
+                                popUpTo(0)
+                            }
                         }
                     )
                 } else {
@@ -69,7 +73,7 @@ fun MainNavGraph() {
                         viewModel = authViewModel,
                         onNavigateToRegister = { navController.navigate(Screen.Register.route) },
                         onLoginSuccess = {
-                            // Khi đăng nhập thành công, UI sẽ tự động recompose và hiện ProfileScreen
+                            // Tự động chuyển sang Profile khi đăng nhập xong nhờ Recomposition
                         }
                     )
                 }
