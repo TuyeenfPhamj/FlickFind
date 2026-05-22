@@ -1,13 +1,10 @@
 package com.example.flickfind_ltttbdd.navigation
 
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
@@ -23,17 +20,28 @@ import com.example.flickfind_ltttbdd.ui.viewmodel.AppViewModelProvider
 import com.example.flickfind_ltttbdd.ui.viewmodel.HomeViewModel
 import com.example.flickfind_ltttbdd.ui.viewmodel.ProfileViewModel
 import com.example.flickfind_ltttbdd.ui.viewmodel.DetailViewModel
-import com.example.flickfind_ltttbdd.ui.screens.ProfileScreen
-import com.example.flickfind_ltttbdd.ui.screens.HomeScreen
-import com.example.flickfind_ltttbdd.ui.screens.AboutScreen
-import com.example.flickfind_ltttbdd.ui.screens.DetailScreen
+
+import com.example.flickfind_ltttbdd.ui.viewmodel.SearchViewModel
+import com.example.flickfind_ltttbdd.ui.viewmodel.AuthViewModel
+import com.example.flickfind_ltttbdd.ui.screens.*
 
 @Composable
 fun MainNavGraph() {
     val navController = rememberNavController()
+    val context = LocalContext.current
+    val authViewModel: AuthViewModel = viewModel(factory = AppViewModelProvider(context))
+    val authState by authViewModel.uiState.collectAsState()
 
     Scaffold(
-        bottomBar = { AppBottomNavigationBar(navController) }
+        bottomBar = { 
+            val navBackStackEntry by navController.currentBackStackEntryAsState()
+            val currentRoute = navBackStackEntry?.destination?.route
+            // Hiện Bottom Bar ở các màn chính, ẩn ở Login/Register nếu cần, hoặc hiện tất cả
+            val hideBottomBarRoutes = listOf(Screen.Login.route, Screen.Register.route)
+            if (currentRoute !in hideBottomBarRoutes) {
+                AppBottomNavigationBar(navController) 
+            }
+        }
     ) { innerPadding ->
         NavHost(
             navController = navController,
@@ -42,20 +50,46 @@ fun MainNavGraph() {
         ) {
             // Màn hình 1: Trang chủ
             composable(Screen.Home.route) {
-                val context = LocalContext.current
-                val homeViewModel: HomeViewModel = viewModel(
-                    factory = AppViewModelProvider(context)
-                )
+                val homeViewModel: HomeViewModel = viewModel(factory = AppViewModelProvider(context))
                 HomeScreen(viewModel = homeViewModel, navController = navController)
             }
 
-            // Màn hình 2: Cá nhân
+            // Màn hình 2: Cá nhân (Kiểm tra đăng nhập ở đây)
             composable(Screen.Profile.route) {
-                val context = LocalContext.current
-                val profileViewModel: ProfileViewModel = viewModel(
-                    factory = AppViewModelProvider(context)
+                if (authState.isLoggedIn) {
+                    val profileViewModel: ProfileViewModel = viewModel(factory = AppViewModelProvider(context))
+                    ProfileScreen(
+                        viewModel = profileViewModel, 
+                        navController = navController, 
+                        onLogout = {
+                            authViewModel.logout()
+                            navController.navigate(Screen.Home.route) {
+                                popUpTo(0)
+                            }
+                        }
+                    )
+                } else {
+                    LoginScreen(
+                        viewModel = authViewModel,
+                        onNavigateToRegister = { navController.navigate(Screen.Register.route) },
+                        onLoginSuccess = {
+                            // Tự động chuyển sang Profile khi đăng nhập xong nhờ Recomposition
+                        }
+                    )
+                }
+            }
+
+            // Màn hình Đăng ký
+            composable(Screen.Register.route) {
+                RegisterScreen(
+                    viewModel = authViewModel,
+                    onNavigateToLogin = { navController.popBackStack() },
+                    onRegisterSuccess = {
+                        navController.navigate(Screen.Profile.route) {
+                            popUpTo(Screen.Home.route)
+                        }
+                    }
                 )
-                ProfileScreen(viewModel = profileViewModel, navController = navController)
             }
 
             // Màn hình 3: Giới thiệu
@@ -71,11 +105,33 @@ fun MainNavGraph() {
                 )
             ) { backStackEntry ->
                 val movieId = backStackEntry.arguments?.getInt("movieId") ?: 0
-                val context = LocalContext.current
-                val detailViewModel: DetailViewModel = viewModel(
-                    factory = AppViewModelProvider(context, movieId)
-                )
+                val detailViewModel: DetailViewModel = viewModel(factory = AppViewModelProvider(context, movieId))
                 DetailScreen(viewModel = detailViewModel, navController = navController)
+            }
+
+            // Màn hình 5: Lọc phim
+            composable(Screen.Filter.route) {
+                FilterScreen(
+                    navController = navController,
+                    onApplyFilters = { genre, yearRange ->
+                        navController.navigate(Screen.SearchResult.createRoute(genre = genre, yearRange = yearRange))
+                    }
+                )
+            }
+
+            // Màn hình 6: Kết quả tìm kiếm
+            composable(
+                route = Screen.SearchResult.route,
+                arguments = Screen.SearchResult.arguments
+            ) { backStackEntry ->
+                val query = backStackEntry.arguments?.getString("query")
+                val genre = backStackEntry.arguments?.getString("genre")
+                val yearRange = backStackEntry.arguments?.getString("yearRange")
+                val searchViewModel: SearchViewModel = viewModel(factory = AppViewModelProvider(context))
+                SearchResultScreen(
+                    query = query, genre = genre, yearRange = yearRange,
+                    viewModel = searchViewModel, navController = navController
+                )
             }
         }
     }
@@ -83,20 +139,13 @@ fun MainNavGraph() {
 
 @Composable
 fun AppBottomNavigationBar(navController: NavHostController) {
-    val navigationItems = listOf(
-        Screen.Home,
-        Screen.Profile,
-        Screen.About
-    )
+    val navigationItems = listOf(Screen.Home, Screen.Profile, Screen.About)
     val appSurface = Color(0xFF171E30)
     val appIndicator = Color(0xFF1A2844)
     val textActive = Color(0xFFFFFFFF)
     val textInactive = Color(0xFF8E9AA6)
     
-    NavigationBar(
-        containerColor = appSurface,
-        tonalElevation = 0.dp
-    ) {
+    NavigationBar(containerColor = appSurface, tonalElevation = 0.dp) {
         val navBackStackEntry by navController.currentBackStackEntryAsState()
         val currentRoute = navBackStackEntry?.destination?.route
 
@@ -108,20 +157,13 @@ fun AppBottomNavigationBar(navController: NavHostController) {
                 onClick = {
                     if (currentRoute != screen.route) {
                         navController.navigate(screen.route) {
-                            popUpTo(navController.graph.findStartDestination().id) {
-                                saveState = true
-                            }
+                            popUpTo(navController.graph.findStartDestination().id) { saveState = true }
                             launchSingleTop = true
                             restoreState = true
                         }
                     }
                 },
-                label = {
-                    Text(
-                        text = screen.title,
-                        color = if (isSelected) textActive else textInactive
-                    )
-                },
+                label = { Text(text = screen.title, color = if (isSelected) textActive else textInactive) },
                 icon = {
                     Icon(
                         imageVector = screen.icon ?: Icons.Default.Home,
@@ -129,9 +171,7 @@ fun AppBottomNavigationBar(navController: NavHostController) {
                         tint = if (isSelected) textActive else textInactive
                     )
                 },
-                colors = NavigationBarItemDefaults.colors(
-                    indicatorColor = appIndicator
-                )
+                colors = NavigationBarItemDefaults.colors(indicatorColor = appIndicator)
             )
         }
     }

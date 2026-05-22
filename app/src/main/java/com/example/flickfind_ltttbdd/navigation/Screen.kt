@@ -17,6 +17,8 @@ sealed class Screen(val route: String, val title: String, val icon: ImageVector?
     object About : Screen("about", "Giới thiệu", Icons.Default.Info)
 
     // Màn hình phụ không xuất hiện trên Bottom Bar
+    object Login : Screen("login", "Đăng nhập")
+    object Register : Screen("register", "Đăng ký")
     object Filter : Screen("filter", "Lọc phim")
     object SearchResult : Screen("search_result?query={query}&genre={genre}&yearRange={yearRange}", "Kết quả tìm kiếm") {
         val arguments = listOf(

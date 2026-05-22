@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.example.flickfind_ltttbdd.data.MovieRepository
 import com.example.flickfind_ltttbdd.data.local.FavoriteMovieEntity
 import com.example.flickfind_ltttbdd.data.remote.MovieResponse
+import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -24,6 +25,9 @@ data class HomeUiState(
 
 class HomeViewModel(private val repository: MovieRepository) : ViewModel() {
 
+    private val auth = FirebaseAuth.getInstance()
+    private var currentUserId: String = auth.currentUser?.uid ?: ""
+
     private val _uiState = MutableStateFlow(HomeUiState())
     val uiState: StateFlow<HomeUiState> = _uiState.asStateFlow()
 
@@ -32,8 +36,16 @@ class HomeViewModel(private val repository: MovieRepository) : ViewModel() {
 
     init {
         loadNextMovies()
-        observeFavorites()
         fetchAllMoviesForSuggestions()
+        
+        // Theo dõi trạng thái đăng nhập để cập nhật currentUserId và danh sách yêu thích ngay lập tức
+        auth.addAuthStateListener { firebaseAuth ->
+            val newUser = firebaseAuth.currentUser
+            if (newUser?.uid != currentUserId) {
+                currentUserId = newUser?.uid ?: ""
+                observeFavorites() // Tải lại danh sách yêu thích của user mới
+            }
+        }
     }
 
     private fun fetchAllMoviesForSuggestions() {
@@ -97,8 +109,12 @@ class HomeViewModel(private val repository: MovieRepository) : ViewModel() {
 
     // 3. Theo dõi danh sách phim đã lưu trong Room DB
     private fun observeFavorites() {
+        if (currentUserId.isEmpty()) {
+            _uiState.update { it.copy(favoriteMovieIds = emptySet()) }
+            return
+        }
         viewModelScope.launch {
-            repository.getAllFavorites().collect { favoriteEntities ->
+            repository.getAllFavorites(currentUserId).collect { favoriteEntities ->
                 _uiState.update { currentState ->
                     // Chuyển danh sách thực thể thành một bộ Set<Int> chứa ID để tìm kiếm siêu nhanh (O(1))
                     currentState.copy(favoriteMovieIds = favoriteEntities.map { it.id }.toSet())
@@ -109,11 +125,16 @@ class HomeViewModel(private val repository: MovieRepository) : ViewModel() {
 
     // 4. Tính năng Click vào nút "Thích" (CRUD - Thêm/Xóa khỏi Room DB trực tiếp từ danh sách)
     fun toggleFavorite(movie: MovieResponse) {
+        if (currentUserId.isEmpty()) {
+            _uiState.update { it.copy(errorMessage = "Vui lòng đăng nhập để lưu phim yêu thích") }
+            return
+        }
         viewModelScope.launch {
-            val isFav = repository.isMovieFavorite(movie.id)
+            val isFav = repository.isMovieFavorite(movie.id, currentUserId)
             // Chuyển đổi dữ liệu từ dạng API Response sang thực thể Room DB
             val entity = FavoriteMovieEntity(
                 id = movie.id,
+                userId = currentUserId,
                 title = movie.title,
                 posterPath = movie.posterPath,
                 backdropPath = movie.backdropPath,
