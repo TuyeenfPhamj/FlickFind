@@ -18,7 +18,11 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
-
+import com.example.flickfind_ltttbdd.ui.viewmodel.AppViewModelProvider
+import com.example.flickfind_ltttbdd.ui.viewmodel.HomeViewModel
+import com.example.flickfind_ltttbdd.ui.viewmodel.ProfileViewModel
+import com.example.flickfind_ltttbdd.ui.screens.ProfileScreen
+import com.example.flickfind_ltttbdd.ui.screens.HomeScreen
 
 @Composable
 fun MainNavGraph() {
@@ -36,12 +40,20 @@ fun MainNavGraph() {
         )  {
             // Màn hình 1: Khám phá (Trang chủ của bạn)
             composable(Screen.Home.route) {
-                Text("Màn hình Khám phá - Đang xây dựng")
+                val context = LocalContext.current
+                val homeViewModel: HomeViewModel = viewModel(
+                    factory = AppViewModelProvider(context)
+                )
+                HomeScreen(viewModel = homeViewModel, navController = navController)
             }
 
             // Màn hình 2: Cá nhân (Giao diện phụ trách của thành viên khác)
             composable(Screen.Profile.route) {
-                Text("Màn hình Cá nhân - Đang xây dựng")
+                val context = LocalContext.current
+                val profileViewModel: ProfileViewModel = viewModel(
+                    factory = AppViewModelProvider(context)
+                )
+                ProfileScreen(viewModel = profileViewModel)
             }
 
             // Màn hình 3: Cài đặt
