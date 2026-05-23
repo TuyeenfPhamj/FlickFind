@@ -29,7 +29,7 @@ import com.example.flickfind_ltttbdd.ui.viewmodel.DetailViewModel
 
 @Composable
 fun DetailScreen(
-    movieId: Int?,
+    movieId: String?,
     onBackClick: () -> Unit,
     viewModel: DetailViewModel = viewModel(factory = AppViewModelProvider(LocalContext.current))
 ) {

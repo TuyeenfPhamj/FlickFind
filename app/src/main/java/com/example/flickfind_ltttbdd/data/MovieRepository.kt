@@ -35,7 +35,7 @@ class MovieRepository(
     }
 
     // Lấy chi tiết một bộ phim từ API theo ID
-    suspend fun getMovieByIdFromApi(movieId: Int): Result<MovieResponse> {
+    suspend fun getMovieByIdFromApi(movieId: String): Result<MovieResponse> {
         return try {
             val response = apiService.getMovieById(movieId)
             Result.success(response)

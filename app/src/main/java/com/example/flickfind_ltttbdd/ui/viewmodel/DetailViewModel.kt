@@ -9,7 +9,10 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 
-class DetailViewModel(private val repository: MovieRepository) : ViewModel() {
+class DetailViewModel(
+    private val repository: MovieRepository,
+    private val userId: String
+) : ViewModel() {
 
     private val _movie = MutableStateFlow<MovieResponse?>(null)
     val movie: StateFlow<MovieResponse?> = _movie
@@ -23,9 +26,7 @@ class DetailViewModel(private val repository: MovieRepository) : ViewModel() {
     private val _error = MutableStateFlow<String?>(null)
     val error: StateFlow<String?> = _error
 
-    private val userId = "user_1" // Mặc định userId
-
-    fun getMovieById(movieId: Int) {
+    fun getMovieById(movieId: String) {
         viewModelScope.launch {
             _isLoading.value = true
             _error.value = null
