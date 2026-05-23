@@ -17,14 +17,34 @@ class DetailViewModel(private val repository: MovieRepository) : ViewModel() {
     private val _isFavorite = MutableStateFlow(false)
     val isFavorite: StateFlow<Boolean> = _isFavorite
 
-    fun setMovie(movie: MovieResponse) {
-        _movie.value = movie
-        checkIfFavorite(movie.id)
+    private val _isLoading = MutableStateFlow(false)
+    val isLoading: StateFlow<Boolean> = _isLoading
+
+    private val _error = MutableStateFlow<String?>(null)
+    val error: StateFlow<String?> = _error
+
+    private val userId = "user_1" // Mặc định userId
+
+    fun getMovieById(movieId: Int) {
+        viewModelScope.launch {
+            _isLoading.value = true
+            _error.value = null
+            repository.getMovieByIdFromApi(movieId)
+                .onSuccess {
+                    _movie.value = it
+                    checkIfFavorite(it.id)
+                    _isLoading.value = false
+                }
+                .onFailure {
+                    _error.value = "Không thể tải thông tin phim"
+                    _isLoading.value = false
+                }
+        }
     }
 
     private fun checkIfFavorite(movieId: Int) {
         viewModelScope.launch {
-            _isFavorite.value = repository.isMovieFavorite(movieId)
+            _isFavorite.value = repository.isMovieFavorite(movieId, userId)
         }
     }
 
@@ -32,6 +52,7 @@ class DetailViewModel(private val repository: MovieRepository) : ViewModel() {
         viewModelScope.launch {
             val favoriteMovie = FavoriteMovieEntity(
                 id = movie.id,
+                userId = userId,
                 title = movie.title,
                 posterPath = movie.posterPath,
                 backdropPath = movie.backdropPath,

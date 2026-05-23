@@ -6,7 +6,6 @@ import androidx.lifecycle.ViewModelProvider
 import com.example.flickfind_ltttbdd.data.MovieRepository
 import com.example.flickfind_ltttbdd.data.local.AppDatabase
 import com.example.flickfind_ltttbdd.data.remote.RetrofitClient
-import kotlin.jvm.java
 
 class AppViewModelProvider(private val context: Context) : ViewModelProvider.Factory {
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
@@ -17,11 +16,13 @@ class AppViewModelProvider(private val context: Context) : ViewModelProvider.Fac
             userDao = database.userDao()
         )
 
-//        if (modelClass.isAssignableFrom(HomeViewModel::class.java)) {
-//            @Suppress("UNCHECKED_CAST")
-//            return HomeViewModel(repository) as T
-//        }
-
-        throw IllegalArgumentException("Unknown ViewModel class")
+        return when {
+            modelClass.isAssignableFrom(DetailViewModel::class.java) -> {
+                @Suppress("UNCHECKED_CAST")
+                DetailViewModel(repository) as T
+            }
+            // Thêm các ViewModel khác ở đây nếu cần
+            else -> throw IllegalArgumentException("Unknown ViewModel class: ${modelClass.name}")
+        }
     }
 }
