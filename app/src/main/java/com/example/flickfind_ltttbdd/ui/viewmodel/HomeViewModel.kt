@@ -22,12 +22,15 @@ data class HomeUiState(
     val searchSuggestions: List<MovieResponse> = emptyList() // Danh sách gợi ý tìm kiếm
 )
 
-class HomeViewModel(private val repository: MovieRepository) : ViewModel() {
+class HomeViewModel(
+    private val repository: MovieRepository,
+    private val userId: String = "guest_user"
+) : ViewModel() {
 
     private val _uiState = MutableStateFlow(HomeUiState())
     val uiState: StateFlow<HomeUiState> = _uiState.asStateFlow()
 
-    private val PAGE_LIMIT = 10
+    private val pageLimit = 10
     private var allMoviesForSuggestions: List<MovieResponse> = emptyList()
 
     init {
@@ -72,7 +75,7 @@ class HomeViewModel(private val repository: MovieRepository) : ViewModel() {
         viewModelScope.launch {
             val result = repository.getMoviesFromApi(
                 page = _uiState.value.currentPage,
-                limit = PAGE_LIMIT
+                limit = pageLimit
             )
 
             result.onSuccess { newMovies ->
@@ -84,7 +87,7 @@ class HomeViewModel(private val repository: MovieRepository) : ViewModel() {
                         // Tăng số trang lên 1 để chuẩn bị cho lần cuộn tiếp theo
                         currentPage = currentState.currentPage + 1,
                         // Nếu API trả về ít hơn giới hạn nghĩa là đã chạm đáy danh sách
-                        isEndReached = newMovies.size < PAGE_LIMIT
+                        isEndReached = newMovies.size < pageLimit
                     )
                 }
             } .onFailure { exception ->
@@ -95,10 +98,10 @@ class HomeViewModel(private val repository: MovieRepository) : ViewModel() {
         }
     }
 
-    // 3. Theo dõi danh sách phim đã lưu trong Room DB
+    // 3. Theo dõi danh sách phim đã lưu trong Room DB theo userId
     private fun observeFavorites() {
         viewModelScope.launch {
-            repository.getAllFavorites().collect { favoriteEntities ->
+            repository.getAllFavorites(userId).collect { favoriteEntities ->
                 _uiState.update { currentState ->
                     // Chuyển danh sách thực thể thành một bộ Set<Int> chứa ID để tìm kiếm siêu nhanh (O(1))
                     currentState.copy(favoriteMovieIds = favoriteEntities.map { it.id }.toSet())
@@ -110,10 +113,11 @@ class HomeViewModel(private val repository: MovieRepository) : ViewModel() {
     // 4. Tính năng Click vào nút "Thích" (CRUD - Thêm/Xóa khỏi Room DB trực tiếp từ danh sách)
     fun toggleFavorite(movie: MovieResponse) {
         viewModelScope.launch {
-            val isFav = repository.isMovieFavorite(movie.id)
+            val isFav = repository.isMovieFavorite(movie.id, userId)
             // Chuyển đổi dữ liệu từ dạng API Response sang thực thể Room DB
             val entity = FavoriteMovieEntity(
                 id = movie.id,
+                userId = userId,
                 title = movie.title,
                 posterPath = movie.posterPath,
                 backdropPath = movie.backdropPath,

@@ -57,7 +57,7 @@ fun MainNavGraph() {
         NavHost(
             navController = navController,
             startDestination = Screen.Home.route,
-            modifier = Modifier.padding(innerPadding)
+            modifier = Modifier.padding(bottom = innerPadding.calculateBottomPadding())
         ) {
             composable(Screen.Home.route) {
                 HomeScreen(viewModel = homeViewModel, navController = navController)
@@ -79,7 +79,7 @@ fun MainNavGraph() {
                 val query = backStackEntry.arguments?.getString("query")
                 val genre = backStackEntry.arguments?.getString("genre")
                 val yearRange = backStackEntry.arguments?.getString("yearRange")
-                
+
                 SearchResultScreen(
                     query = query,
                     genre = genre,
@@ -96,7 +96,7 @@ fun MainNavGraph() {
             composable(Screen.About.route) {
 
             }
-            
+
             composable(Screen.Detail.route) {
                 Text("Màn hình Chi tiết - Đang xây dựng")
             }
@@ -111,13 +111,10 @@ fun AppBottomNavigationBar(navController: NavHostController) {
         Screen.Profile,
         Screen.About
     )
-    val AppSurface = Color(0xFF171E30)    // Màu thanh điều hướng (trùng màu ô tìm kiếm của bạn)
-    val AppIndicator = Color(0xFF1A2844)  // Màu vòng bo (viên nhộng) bọc Icon khi được chọn
-    val TextActive = Color(0xFFFFFFFF)    // Chữ và Icon sáng trắng khi Active
-    val TextInactive = Color(0xFF8E9AA6)
+
     NavigationBar(
-        containerColor = AppSurface,
-        tonalElevation = 0.dp
+        containerColor = MaterialTheme.colorScheme.surface,
+        tonalElevation = 8.dp
     ) {
         // Lấy trạng thái màn hình hiện tại để check làm sáng nút
         val navBackStackEntry by navController.currentBackStackEntryAsState()
@@ -143,19 +140,20 @@ fun AppBottomNavigationBar(navController: NavHostController) {
                 label = {
                     Text(
                         text = screen.title,
-                        color = if (isSelected) TextActive else TextInactive
+                        color = if (isSelected) MaterialTheme.colorScheme.primary
+                                else MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 },
                 icon = {
                     Icon(
-                        // Sửa lỗi ImageVector? bằng cách thêm toán tử dự phòng ?:
                         imageVector = screen.icon ?: Icons.Default.Home,
                         contentDescription = screen.title,
-                        tint = if (isSelected) TextActive else TextInactive
+                        tint = if (isSelected) MaterialTheme.colorScheme.primary
+                               else MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 },
                 colors = NavigationBarItemDefaults.colors(
-                    indicatorColor = AppIndicator
+                    indicatorColor = MaterialTheme.colorScheme.secondaryContainer
                 )
             )
         }

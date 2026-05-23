@@ -23,7 +23,10 @@ data class SearchUiState(
     val isEndReached: Boolean = false
 )
 
-class SearchViewModel(private val repository: MovieRepository) : ViewModel() {
+class SearchViewModel(
+    private val repository: MovieRepository,
+    private val userId: String = "guest_user"
+) : ViewModel() {
 
     private val _uiState = MutableStateFlow(SearchUiState())
     val uiState: StateFlow<SearchUiState> = _uiState.asStateFlow()
@@ -36,7 +39,7 @@ class SearchViewModel(private val repository: MovieRepository) : ViewModel() {
 
     private fun observeFavorites() {
         viewModelScope.launch {
-            repository.getAllFavorites().collect { favoriteEntities ->
+            repository.getAllFavorites(userId).collect { favoriteEntities ->
                 _uiState.update { currentState ->
                     currentState.copy(favoriteMovieIds = favoriteEntities.map { it.id }.toSet())
                 }
@@ -133,9 +136,10 @@ class SearchViewModel(private val repository: MovieRepository) : ViewModel() {
 
     fun toggleFavorite(movie: MovieResponse) {
         viewModelScope.launch {
-            val isFav = repository.isMovieFavorite(movie.id)
+            val isFav = repository.isMovieFavorite(movie.id, userId)
             val entity = FavoriteMovieEntity(
                 id = movie.id,
+                userId = userId,
                 title = movie.title,
                 posterPath = movie.posterPath,
                 backdropPath = movie.backdropPath,

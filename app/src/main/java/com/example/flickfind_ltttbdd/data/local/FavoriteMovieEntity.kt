@@ -3,14 +3,15 @@ package com.example.flickfind_ltttbdd.data.local
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 
-@Entity(tableName = "favorite_movies")
+@Entity(tableName = "favorite_movies", primaryKeys = ["id", "userId"])
 data class FavoriteMovieEntity(
-    @PrimaryKey val id: Int, // Đồng bộ kiểu Int với API
+    val id: Int,
+    val userId: String, // ID của user từ Firebase
     val title: String,
-    val posterPath: String,  // Đồng bộ tên biến với API cho dễ quản lý
+    val posterPath: String,
     val backdropPath: String,
-    val genre: String,       // Lưu dưới dạng chuỗi gộp (VD: "Hành động, Viễn tưởng") để vẽ biểu đồ dễ dàng
+    val genre: String,
     val rating: Float,
-    val runtime: Int,        // Đồng bộ đổi tên duration thành runtime giống API
+    val runtime: Int,
     val isWatched: Boolean = false
 )

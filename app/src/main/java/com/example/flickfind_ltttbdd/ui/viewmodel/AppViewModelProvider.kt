@@ -29,15 +29,18 @@ class AppViewModelProvider(private val context: Context) : ViewModelProvider.Fac
 
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
         val repo = getRepository(context)
+        // Trong thực tế, bạn sẽ lấy userId từ FirebaseAuth.
+        // Ví dụ: val userId = FirebaseAuth.getInstance().currentUser?.uid ?: "guest_user"
+        val userId = "guest_user" 
 
         if (modelClass.isAssignableFrom(HomeViewModel::class.java)) {
             @Suppress("UNCHECKED_CAST")
-            return HomeViewModel(repo) as T
+            return HomeViewModel(repo, userId) as T
         }
 
         if (modelClass.isAssignableFrom(SearchViewModel::class.java)) {
             @Suppress("UNCHECKED_CAST")
-            return SearchViewModel(repo) as T
+            return SearchViewModel(repo, userId) as T
         }
 
         throw IllegalArgumentException("Unknown ViewModel class")

@@ -5,9 +5,14 @@ import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
 
+import androidx.sqlite.db.SupportSQLiteDatabase
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+
 @Database(
     entities = [FavoriteMovieEntity::class, UserEntity::class],
-    version = 1,
+    version = 2,
     exportSchema = false
 )
 abstract class AppDatabase : RoomDatabase() {
@@ -29,10 +34,27 @@ abstract class AppDatabase : RoomDatabase() {
                     "flick_find_database" // Tên file database lưu trên điện thoại
                 )
                     .fallbackToDestructiveMigration()
+                    .addCallback(object : RoomDatabase.Callback() {
+                        override fun onCreate(db: SupportSQLiteDatabase) {
+                            super.onCreate(db)
+                            // Chèn dữ liệu mẫu khi database được tạo lần đầu
+                            CoroutineScope(Dispatchers.IO).launch {
+                                // Lấy instance vừa tạo để seed data
+                                getDatabase(context).let { database ->
+                                    seedDatabase(database.userDao(), database.movieDao())
+                                }
+                            }
+                        }
+                    })
                     .build()
                 INSTANCE = instance
                 instance
             }
+        }
+
+        private suspend fun seedDatabase(userDao: UserDao, movieDao: MovieDao) {
+            // Seed data hiện tại không cần thiết cho hệ thống đa người dùng dùng Firebase ID
+            // Hoặc có thể tạo một user mặc định nếu muốn
         }
     }
 }
