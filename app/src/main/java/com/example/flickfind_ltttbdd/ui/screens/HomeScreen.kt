@@ -1,13 +1,16 @@
 package com.example.flickfind_ltttbdd.ui.screens
 
+import android.content.res.Configuration
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.GridItemSpan
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.itemsIndexed
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Favorite
@@ -21,6 +24,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.foundation.text.KeyboardActions
@@ -47,6 +51,11 @@ fun HomeScreen(
     var searchQuery by remember { mutableStateOf("") }
     var isSuggestionsVisible by remember { mutableStateOf(false) }
 
+    // Kiểm tra hướng màn hình để quyết định số cột (Dọc: 1 cột, Ngang: 2 cột)
+    val configuration = LocalConfiguration.current
+    val isLandscape = configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
+    val columns = if (isLandscape) 2 else 1
+
     // Xử lý Debounce tìm kiếm: Chỉ tìm khi nhập > 3 ký tự và dừng gõ 2 giây
     LaunchedEffect(searchQuery) {
         if (searchQuery.length > 3) {
@@ -59,15 +68,17 @@ fun HomeScreen(
         }
     }
 
-    // Giao diện tổng thể sử dụng LazyColumn để cuộn mượt mà toàn bộ trang chủ
+    // Giao diện tổng thể sử dụng LazyVerticalGrid để hỗ trợ hiển thị lưới khi xoay ngang
     Box(modifier = Modifier.fillMaxSize().background(Color(0xFF0B121F))) {
-        LazyColumn(
+        LazyVerticalGrid(
+            columns = GridCells.Fixed(columns),
             modifier = Modifier.fillMaxSize(),
             contentPadding = PaddingValues(16.dp),
-            verticalArrangement = Arrangement.spacedBy(20.dp)
+            verticalArrangement = Arrangement.spacedBy(16.dp),
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            // 1. KHỐI LOGO (Căn giữa)
-            item {
+            // 1. KHỐI LOGO (Căn giữa) - Chiếm hết số cột
+            item(span = { GridItemSpan(columns) }) {
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -85,8 +96,8 @@ fun HomeScreen(
                 }
             }
 
-            // 2. THANH TÌM KIẾM (Search Bar)
-            item {
+            // 2. THANH TÌM KIẾM (Search Bar) - Chiếm hết số cột
+            item(span = { GridItemSpan(columns) }) {
                 Column(modifier = Modifier.fillMaxWidth()) {
                     OutlinedTextField(
                         value = searchQuery,
@@ -189,18 +200,32 @@ fun HomeScreen(
             // Giao diện trang chủ không thay đổi theo searchQuery (Dùng uiState.movies gốc)
             val allMovies = uiState.movies
 
-            // 3. MỤC PHIM PHỔ BIẾN
+            // 3. MỤC PHIM PHỔ BIẾN - Chiếm hết số cột
             if (allMovies.isNotEmpty()) {
-                item {
-                    Text(
-                        text = "Phim Phổ Biến",
-                        color = Color.White,
-                        fontSize = 18.sp,
-                        fontWeight = FontWeight.Bold,
-                        modifier = Modifier.padding(bottom = 8.dp)
-                    )
+                item(span = { GridItemSpan(columns) }) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = "Phim Phổ Biến",
+                            color = Color.White,
+                            fontSize = 18.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+                        Text(
+                            text = "xem thêm...",
+                            color = Color(0xFF38B6FF),
+                            fontSize = 14.sp,
+                            modifier = Modifier.clickable {
+                                // Điều hướng tới trang kết quả tìm kiếm và yêu cầu sắp xếp theo đánh giá cao nhất
+                                navController.navigate(Screen.SearchResult.createRoute(sortBy = "rating"))
+                            }
+                        )
+                    }
 
-                    val popularMovies = allMovies.take(5)
+                    val popularMovies = uiState.popularMovies
                     LazyRow(
                         horizontalArrangement = Arrangement.spacedBy(14.dp)
                     ) {
@@ -220,7 +245,7 @@ fun HomeScreen(
 
             // 4. MỤC PHIM HOT
             if (allMovies.isNotEmpty()) {
-                item {
+                item(span = { GridItemSpan(columns) }) {
                     Text(
                         text = "Phim Hot",
                         color = Color.White,
@@ -250,9 +275,9 @@ fun HomeScreen(
                 }
             }
 
-            // 5. TRẠNG THÁI LOADING
+            // 5. TRẠNG THÁI LOADING - Chiếm hết số cột
             if (uiState.isLoading) {
-                item {
+                item(span = { GridItemSpan(columns) }) {
                     Box(
                         modifier = Modifier.fillMaxWidth().padding(16.dp),
                         contentAlignment = Alignment.Center
@@ -263,7 +288,7 @@ fun HomeScreen(
             }
 
             uiState.errorMessage?.let { error ->
-                item {
+                item(span = { GridItemSpan(columns) }) {
                     Text(
                         text = error,
                         color = Color.Red,

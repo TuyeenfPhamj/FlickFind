@@ -19,14 +19,15 @@ sealed class Screen(val route: String, val title: String, val icon: ImageVector?
 
     // Màn hình phụ không xuất hiện trên Bottom Bar
     object Filter : Screen("filter", "Lọc phim")
-    object SearchResult : Screen("search_result?query={query}&genre={genre}&yearRange={yearRange}", "Kết quả tìm kiếm") {
+    object SearchResult : Screen("search_result?query={query}&genre={genre}&yearRange={yearRange}&sortBy={sortBy}", "Kết quả tìm kiếm") {
         val arguments = listOf(
             navArgument("query") { type = NavType.StringType; nullable = true; defaultValue = null },
             navArgument("genre") { type = NavType.StringType; nullable = true; defaultValue = null },
-            navArgument("yearRange") { type = NavType.StringType; nullable = true; defaultValue = null }
+            navArgument("yearRange") { type = NavType.StringType; nullable = true; defaultValue = null },
+            navArgument("sortBy") { type = NavType.StringType; nullable = true; defaultValue = null }
         )
-        fun createRoute(query: String? = null, genre: String? = null, yearRange: String? = null): String {
-            return "search_result?query=${query ?: ""}&genre=${genre ?: ""}&yearRange=${yearRange ?: ""}"
+        fun createRoute(query: String? = null, genre: String? = null, yearRange: String? = null, sortBy: String? = null): String {
+            return "search_result?query=${query ?: ""}&genre=${genre ?: ""}&yearRange=${yearRange ?: ""}&sortBy=${sortBy ?: ""}"
         }
     }
     object Detail : Screen("detail/{movieId}", "Chi tiết") {

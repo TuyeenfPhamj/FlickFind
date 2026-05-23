@@ -1,7 +1,6 @@
 package com.example.flickfind_ltttbdd.navigation
 
 
-import android.net.http.SslCertificate.saveState
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Home
@@ -36,7 +35,7 @@ fun MainNavGraph() {
     val showBottomBar = currentRoute in listOf(
         Screen.Home.route,
         Screen.Profile.route,
-        Screen.About.route
+        Screen.Settings.route
     )
 
     Scaffold(
@@ -74,16 +73,18 @@ fun MainNavGraph() {
 
             composable(
                 route = Screen.SearchResult.route,
-                arguments = Screen.SearchResult.arguments // Tôi sẽ cập nhật Screen.kt để định nghĩa arguments này
+                arguments = Screen.SearchResult.arguments
             ) { backStackEntry ->
                 val query = backStackEntry.arguments?.getString("query")
                 val genre = backStackEntry.arguments?.getString("genre")
                 val yearRange = backStackEntry.arguments?.getString("yearRange")
+                val sortBy = backStackEntry.arguments?.getString("sortBy")
 
                 SearchResultScreen(
                     query = query,
                     genre = genre,
                     yearRange = yearRange,
+                    sortBy = sortBy,
                     viewModel = searchViewModel,
                     navController = navController
                 )

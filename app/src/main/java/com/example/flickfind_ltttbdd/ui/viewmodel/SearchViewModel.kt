@@ -20,6 +20,7 @@ data class SearchUiState(
     val query: String? = null,
     val genre: String? = null,
     val yearRange: String? = null,
+    val sortBy: String? = null,
     val isEndReached: Boolean = false
 )
 
@@ -47,17 +48,19 @@ class SearchViewModel(
         }
     }
 
-    fun setFiltersAndSearch(query: String?, genre: String?, yearRange: String?) {
+    fun setFiltersAndSearch(query: String?, genre: String?, yearRange: String?, sortBy: String? = null) {
         // Chuẩn hóa: Nếu chuỗi rỗng hoặc chỉ có khoảng trắng thì coi như null
         val cleanQuery = query?.takeIf { it.isNotBlank() }
         val cleanGenre = genre?.takeIf { it.isNotBlank() }
         val cleanYear = yearRange?.takeIf { it.isNotBlank() }
+        val cleanSort = sortBy?.takeIf { it.isNotBlank() }
 
         _uiState.update { 
             it.copy(
                 query = cleanQuery, 
                 genre = cleanGenre, 
                 yearRange = cleanYear,
+                sortBy = cleanSort,
                 movies = emptyList(),
                 isEndReached = false,
                 isLoading = false,
@@ -102,9 +105,16 @@ class SearchViewModel(
                 matchQuery && matchGenre && matchYear
             }
 
+            // Sắp xếp nếu có yêu cầu
+            val sorted = if (_uiState.value.sortBy == "rating") {
+                filtered.sortedByDescending { it.rating }
+            } else {
+                filtered
+            }
+
             _uiState.update { it.copy(
                 isLoading = false, 
-                movies = filtered,
+                movies = sorted,
                 isEndReached = true // Đã hoàn thành tải và lọc toàn bộ kho phim
             ) }
         }.onFailure { e ->

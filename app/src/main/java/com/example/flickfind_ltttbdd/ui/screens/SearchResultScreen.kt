@@ -1,9 +1,12 @@
 package com.example.flickfind_ltttbdd.ui.screens
 
+import android.content.res.Configuration
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.GridItemSpan
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.*
@@ -11,6 +14,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -24,14 +28,20 @@ fun SearchResultScreen(
     query: String?,
     genre: String?,
     yearRange: String?,
+    sortBy: String?,
     viewModel: SearchViewModel,
     navController: NavController
 ) {
     val uiState by viewModel.uiState.collectAsState()
 
+    // Kiểm tra hướng màn hình để quyết định số cột (Dọc: 1 cột, Ngang: 2 cột)
+    val configuration = LocalConfiguration.current
+    val isLandscape = configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
+    val columns = if (isLandscape) 2 else 1
+
     // Gọi API lọc mới mỗi khi tham số đầu vào thay đổi
-    LaunchedEffect(query, genre, yearRange) {
-        viewModel.setFiltersAndSearch(query, genre, yearRange)
+    LaunchedEffect(query, genre, yearRange, sortBy) {
+        viewModel.setFiltersAndSearch(query, genre, yearRange, sortBy)
     }
 
     // Tự động tải thêm khi cuộn gần tới cuối danh sách
@@ -64,16 +74,18 @@ fun SearchResultScreen(
         containerColor = Color(0xFF0B121F)
     ) { padding ->
         if (movies.isEmpty() && !uiState.isLoading) {
-            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+            Box(modifier = Modifier.fillMaxSize().padding(padding), contentAlignment = Alignment.Center) {
                 Text("Không tìm thấy phim nào phù hợp", color = Color.Gray)
             }
         } else {
-            LazyColumn(
+            LazyVerticalGrid(
+                columns = GridCells.Fixed(columns),
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(padding),
                 contentPadding = PaddingValues(16.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp)
+                verticalArrangement = Arrangement.spacedBy(16.dp),
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 items(movies) { movie ->
                     MovieHorizontalRowItem(
@@ -86,17 +98,17 @@ fun SearchResultScreen(
                     )
                 }
 
-                // Hiển thị loading khi tải trang tiếp theo
+                // Hiển thị loading khi tải trang tiếp theo - Chiếm hết số cột
                 if (uiState.isLoading) {
-                    item {
-                        Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+                    item(span = { GridItemSpan(columns) }) {
+                        Box(modifier = Modifier.fillMaxWidth().padding(8.dp), contentAlignment = Alignment.Center) {
                             CircularProgressIndicator(color = Color(0xFF38B6FF))
                         }
                     }
                 }
 
-                // Trigger tải thêm phim khi cuộn tới cuối
-                item {
+                // Trigger tải thêm phim khi cuộn tới cuối - Chiếm hết số cột
+                item(span = { GridItemSpan(columns) }) {
                     LaunchedEffect(Unit) {
                         if (!uiState.isEndReached && !uiState.isLoading) {
                             viewModel.loadNextMovies()

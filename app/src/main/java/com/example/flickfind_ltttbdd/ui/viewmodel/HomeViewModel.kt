@@ -14,6 +14,7 @@ import kotlinx.coroutines.launch
 // 1. Định nghĩa trạng thái giao diện (UI State) theo chuẩn UDF
 data class HomeUiState(
     val movies: List<MovieResponse> = emptyList(), // Danh sách phim cho trang chủ (phân trang)
+    val popularMovies: List<MovieResponse> = emptyList(), // Danh sách 10 phim phổ biến (điểm cao)
     val favoriteMovieIds: Set<Int> = emptySet(),
     val isLoading: Boolean = false,
     val errorMessage: String? = null,
@@ -41,9 +42,12 @@ class HomeViewModel(
 
     private fun fetchAllMoviesForSuggestions() {
         viewModelScope.launch {
-            // Tải 100 phim một lần để phục vụ gợi ý tìm kiếm tức thì
+            // Tải 100 phim một lần để phục vụ gợi ý tìm kiếm tức thì và lấy phim phổ biến
             repository.getMoviesFromApi(page = 1, limit = 100).onSuccess { all ->
                 allMoviesForSuggestions = all
+                // Lấy 10 phim có rating cao nhất làm phim phổ biến
+                val popular = all.sortedByDescending { it.rating }.take(10)
+                _uiState.update { it.copy(popularMovies = popular) }
             }
         }
     }
