@@ -2,6 +2,7 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.compose)
     id("com.google.devtools.ksp")
+    alias(libs.plugins.google.services)
 }
 
 ksp {
@@ -68,6 +69,10 @@ dependencies {
     //5. Hiển thị icon nâng cao cho nav
     implementation("androidx.compose.material:material-icons-extended")
 
+    // 6. Firebase
+    implementation(platform(libs.firebase.bom))
+    implementation(libs.firebase.auth)
+    implementation(libs.kotlinx.coroutines.play.services)
 
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)

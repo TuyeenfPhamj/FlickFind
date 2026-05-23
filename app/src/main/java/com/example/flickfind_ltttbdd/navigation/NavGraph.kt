@@ -27,27 +27,32 @@ import com.example.flickfind_ltttbdd.ui.screens.HomeScreen
 @Composable
 fun MainNavGraph() {
     val navController = rememberNavController()
+    val navBackStackEntry by navController.currentBackStackEntryAsState()
+    val currentRoute = navBackStackEntry?.destination?.route
+
+    // Chỉ hiển thị Bottom Bar ở 3 màn hình chính
+    val showBottomBar = currentRoute in listOf(
+        Screen.Home.route,
+        Screen.Profile.route,
+        Screen.Settings.route
+    )
 
     Scaffold(
         bottomBar = { AppBottomNavigationBar(navController) }
     ) { innerPadding ->
-
-        // Khung NavHost liên kết các màn hình theo cấu trúc của bạn
-        NavHost(navController = navController,
+        NavHost(
+            navController = navController,
             startDestination = Screen.Home.route,
-            // Thay vì padding toàn bộ, hãy chỉ padding bottom để không đè lên BottomBar
-            modifier = Modifier.padding(bottom = innerPadding.calculateBottomPadding())
-        )  {
-            // Màn hình 1: Khám phá (Trang chủ của bạn)
+            modifier = Modifier.padding(if (showBottomBar) innerPadding else PaddingValues(0.dp))
+        ) {
+            // 1. Màn hình Trang chủ
             composable(Screen.Home.route) {
                 val context = LocalContext.current
-                val homeViewModel: HomeViewModel = viewModel(
-                    factory = AppViewModelProvider(context)
-                )
+                val homeViewModel: HomeViewModel = viewModel(factory = AppViewModelProvider(context))
                 HomeScreen(viewModel = homeViewModel, navController = navController)
             }
 
-            // Màn hình 2: Cá nhân (Giao diện phụ trách của thành viên khác)
+            // 2. Màn hình Cá nhân (Tích hợp Đăng nhập/Đăng ký tại chỗ)
             composable(Screen.Profile.route) {
                 val context = LocalContext.current
                 val profileViewModel: ProfileViewModel = viewModel(
@@ -100,7 +105,7 @@ fun AppBottomNavigationBar(navController: NavHostController) {
                 label = {
                     Text(
                         text = screen.title,
-                        color = if (isSelected) MaterialTheme.colorScheme.primary 
+                        color = if (isSelected) MaterialTheme.colorScheme.primary
                                 else MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 },
@@ -108,7 +113,7 @@ fun AppBottomNavigationBar(navController: NavHostController) {
                     Icon(
                         imageVector = screen.icon ?: Icons.Default.Home,
                         contentDescription = screen.title,
-                        tint = if (isSelected) MaterialTheme.colorScheme.primary 
+                        tint = if (isSelected) MaterialTheme.colorScheme.primary
                                else MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 },
