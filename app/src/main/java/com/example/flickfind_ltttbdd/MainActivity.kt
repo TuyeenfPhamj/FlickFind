@@ -11,37 +11,27 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
+import com.example.flickfind_ltttbdd.navigation.MainNavGraph
 import com.example.flickfind_ltttbdd.ui.theme.FlickFindLTTTBDDTheme
-
+import android.view.WindowManager
+import androidx.core.view.WindowCompat
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        // 1. Kích hoạt Edge-to-Edge
         enableEdgeToEdge()
+
+        // 2. Cho phép tràn vào vùng tai thỏ khi xoay ngang
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.P) {
+            window.attributes.layoutInDisplayCutoutMode =
+                WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES
+        }
+
         setContent {
             FlickFindLTTTBDDTheme {
-                Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-                    Greeting(
-                        name = "Android",
-                        modifier = Modifier.padding(innerPadding)
-                    )
-                }
+                MainNavGraph()
             }
         }
-    }
-}
-
-@Composable
-fun Greeting(name: String, modifier: Modifier = Modifier) {
-    Text(
-        text = "Hello $name!",
-        modifier = modifier
-    )
-}
-
-@Preview(showBackground = true)
-@Composable
-fun GreetingPreview() {
-    FlickFindLTTTBDDTheme {
-        Greeting("Android")
     }
 }
