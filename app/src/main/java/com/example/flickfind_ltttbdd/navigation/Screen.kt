@@ -6,6 +6,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.ui.graphics.vector.ImageVector
 
 // Định nghĩa các màn hình trong ứng dụng
@@ -14,7 +15,7 @@ sealed class Screen(val route: String, val title: String, val icon: ImageVector?
     // 3 Màn hình chính xuất hiện trên Bottom Navigation Bar
     object Home : Screen("home", "Khám phá", Icons.Default.Home)
     object Profile : Screen("profile", "Cá nhân", Icons.Default.Person)
-    object About : Screen("about", "Giới thiệu", Icons.Default.Info)
+    object Settings : Screen("settings", "Cài đặt", Icons.Default.Settings)
 
     // Màn hình phụ không xuất hiện trên Bottom Bar
     object Filter : Screen("filter", "Lọc phim")
@@ -37,5 +38,5 @@ sealed class Screen(val route: String, val title: String, val icon: ImageVector?
 val bottomNavItems = listOf(
     Screen.Home,
     Screen.Profile,
-    Screen.About
+    Screen.Settings
 )
