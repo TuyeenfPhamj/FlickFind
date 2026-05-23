@@ -50,9 +50,9 @@ fun MainNavGraph() {
                 Text("Màn hình Cá nhân - Đang xây dựng")
             }
 
-            // Màn hình 3: Giới thiệu (Giao diện phụ trách của thành viên khác)
-            composable(Screen.About.route) {
-                Text("Màn hình Giới thiệu - Đang xây dựng")
+            // Màn hình 3: Cài đặt
+            composable(Screen.Settings.route) {
+                Text("Màn hình Cài đặt - Đang xây dựng")
             }
         }
     }
@@ -63,7 +63,7 @@ fun AppBottomNavigationBar(navController: NavHostController) {
     val navigationItems = listOf(
         Screen.Home,
         Screen.Profile,
-        Screen.About
+        Screen.Settings
     )
 
     NavigationBar(
