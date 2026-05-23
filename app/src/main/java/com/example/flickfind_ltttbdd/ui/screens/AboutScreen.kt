@@ -2,13 +2,11 @@ package com.example.flickfind_ltttbdd.ui.screens
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Description
-import androidx.compose.material.icons.filled.Group
+import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -17,159 +15,114 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.flickfind_ltttbdd.R
 
 @Composable
-fun AboutScreen() {
-    val backgroundColor = Color(0xFF0D1724)
-    val cardColor = Color(0xFF1B2A3E)
-    val primaryColor = Color(0xFF155074)
+fun AboutScreen(
+    isDarkTheme: Boolean,
+    onThemeToggle: () -> Unit,
+    onNavigateToDeveloperInfo: () -> Unit
+) {
+    val backgroundColor = if (isDarkTheme) Color(0xFF050B18) else Color(0xFFF0F4F8)
+    val cardColor = if (isDarkTheme) Color(0xFF1B2A3E) else Color(0xFFFFFFFF)
+    val textColor = if (isDarkTheme) Color.White else Color.Black
 
     Column(
         modifier = Modifier
             .fillMaxSize()
             .background(backgroundColor)
-            .verticalScroll(rememberScrollState())
-            .padding(horizontal = 20.dp, vertical = 8.dp),
+            .padding(16.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        // 1. Tiêu đề
-        Text(
-            text = "About & Help",
-            color = Color.White,
-            fontSize = 22.sp,
-            fontWeight = FontWeight.ExtraBold,
-            modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
-            textAlign = TextAlign.Start
-        )
+        Spacer(modifier = Modifier.height(40.dp))
 
-        // 2. Cụm Logo và Version (Nhỏ gọn, tinh tế)
-        Box(
+        // 1. LOGO
+        Image(
+            painter = painterResource(id = if (isDarkTheme) R.drawable.logo_v2 else R.drawable.logo_v4),
+            contentDescription = "Logo",
             modifier = Modifier
-                .fillMaxWidth()
-                .height(130.dp),
-            contentAlignment = Alignment.TopCenter
-        ) {
-            Image(
-                painter = painterResource(id = R.drawable.logo_v2),
-                contentDescription = "App Logo",
-                modifier = Modifier.size(80.dp),
-                contentScale = ContentScale.Fit
-            )
-            
-            Column(
-                horizontalAlignment = Alignment.CenterHorizontally,
-                modifier = Modifier.align(Alignment.BottomCenter)
-            ) {
-                Text(
-                    text = "FlickFind App",
-                    color = Color.White,
-                    fontSize = 24.sp,
-                    fontWeight = FontWeight.Bold
-                )
-                Text(
-                    text = "Version 1.0.0",
-                    color = Color.Gray,
-                    fontSize = 13.sp
-                )
-            }
-        }
-
-        Spacer(modifier = Modifier.height(12.dp))
-
-        // 3. Thẻ Giới thiệu (Theo ảnh mẫu)
-        Card(
-            modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(16.dp),
-            colors = CardDefaults.cardColors(containerColor = cardColor)
-        ) {
-            Column(modifier = Modifier.padding(20.dp)) {
-                Text(
-                    text = "Giới thiệu",
-                    color = Color.White,
-                    fontSize = 20.sp,
-                    fontWeight = FontWeight.Bold
-                )
-                Spacer(modifier = Modifier.height(10.dp))
-                Text(
-                    text = "Dự án FlickFind được phát triển nhằm mang lại trải nghiệm tìm kiếm và quản lý phim tốt nhất cho người dùng.",
-                    color = Color.LightGray,
-                    fontSize = 16.sp,
-                    lineHeight = 22.sp
-                )
-            }
-        }
+                .size(150.dp)
+                .padding(8.dp),
+            contentScale = ContentScale.Fit
+        )
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        // 4. Thẻ Đội ngũ phát triển (Theo ảnh mẫu - Dọc xuống)
-        Card(
-            modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(16.dp),
-            colors = CardDefaults.cardColors(containerColor = cardColor)
-        ) {
-            Column(modifier = Modifier.padding(20.dp)) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(
-                        imageVector = Icons.Default.Group,
-                        contentDescription = null,
-                        tint = Color.White,
-                        modifier = Modifier.size(24.dp)
-                    )
-                    Spacer(modifier = Modifier.width(12.dp))
-                    Text(
-                        text = "Đội ngũ phát triển",
-                        color = Color.White,
-                        fontSize = 20.sp,
-                        fontWeight = FontWeight.Bold
-                    )
-                }
-                
-                Spacer(modifier = Modifier.height(16.dp))
+        // 2. Tên logo (Flick Find)
+        Text(
+            text = "Flick Find",
+            color = textColor,
+            fontSize = 20.sp,
+            fontWeight = FontWeight.Bold,
+            modifier = Modifier.padding(vertical = 8.dp)
+        )
 
-                val members = listOf(
-                    "Phạm Văn Tuyền",
-                    "Nguyễn Thế Lực",
-                    "Ngô Bá Vĩnh",
-                    "Nguyễn Thành Đạt"
-                )
-                
-                members.forEachIndexed { index, name ->
-                    Text(
-                        text = "Thành viên ${index + 1}: $name",
-                        color = Color.White,
-                        fontSize = 17.sp,
-                        modifier = Modifier.padding(vertical = 5.dp)
-                    )
-                }
-            }
-        }
+        Spacer(modifier = Modifier.height(32.dp))
 
-        Spacer(modifier = Modifier.height(24.dp))
-
-        // 5. Nút User Guide
-        Button(
-            onClick = { /* Xử lý sự kiện */ },
+        // 3. Thanh giới thiệu nhà phát triển & Menu
+        Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(56.dp),
-            shape = RoundedCornerShape(16.dp),
-            colors = ButtonDefaults.buttonColors(containerColor = primaryColor)
+                .height(56.dp)
+                .background(if (isDarkTheme) Color(0xFF162534) else Color(0xFFD1D9E6), RoundedCornerShape(8.dp)),
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Icon(Icons.Default.Description, contentDescription = null)
-                Spacer(modifier = Modifier.width(10.dp))
+            Box(
+                modifier = Modifier
+                    .weight(1f)
+                    .fillMaxHeight()
+                    .clickable { onNavigateToDeveloperInfo() }
+                    .padding(horizontal = 16.dp),
+                contentAlignment = Alignment.CenterStart
+            ) {
                 Text(
-                    text = "User Guide (PDF)",
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.SemiBold
+                    text = "Giới thiệu nhà phát triển",
+                    color = textColor,
+                    fontSize = 16.sp
+                )
+            }
+            
+            IconButton(
+                onClick = { /* Menu action */ },
+                modifier = Modifier
+                    .fillMaxHeight()
+                    .width(56.dp)
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Menu,
+                    contentDescription = "Menu",
+                    tint = textColor.copy(alpha = 0.6f),
+                    modifier = Modifier.size(28.dp)
                 )
             }
         }
-        
+
         Spacer(modifier = Modifier.height(24.dp))
+
+        // 4. Bật tắt ánh sáng
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Switch(
+                checked = isDarkTheme,
+                onCheckedChange = { onThemeToggle() },
+                colors = SwitchDefaults.colors(
+                    checkedThumbColor = Color(0xFF4A6592),
+                    checkedTrackColor = Color(0xFF2C4162)
+                )
+            )
+            
+            Spacer(modifier = Modifier.width(16.dp))
+            
+            Text(
+                text = "Bật tắt ánh sáng",
+                color = textColor,
+                fontSize = 16.sp,
+                modifier = Modifier.padding(12.dp)
+            )
+        }
     }
 }
