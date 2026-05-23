@@ -1,74 +1,52 @@
 package com.example.flickfind_ltttbdd.navigation
 
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.fillMaxSize
+
+import android.net.http.SslCertificate.saveState
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
-import com.example.flickfind_ltttbdd.ui.screens.AboutScreen
-import com.example.flickfind_ltttbdd.ui.screens.DeveloperInfoScreen
+
 
 @Composable
-fun MainNavGraph(
-    isDarkTheme: Boolean,
-    onThemeToggle: () -> Unit
-) {
+fun MainNavGraph() {
     val navController = rememberNavController()
-    val navBackStackEntry by navController.currentBackStackEntryAsState()
-    val currentRoute = navBackStackEntry?.destination?.route
-
-    // Chỉ hiện BottomBar ở các màn hình chính
-    val showBottomBar = currentRoute in bottomNavItems.map { it.route }
 
     Scaffold(
-        bottomBar = {
-            if (showBottomBar) {
-                AppBottomNavigationBar(navController)
-            }
-        }
+        bottomBar = { AppBottomNavigationBar(navController) }
     ) { innerPadding ->
-        NavHost(
-            navController = navController,
-            startDestination = Screen.Settings.route,
-            modifier = Modifier.padding(innerPadding)
-        ) {
+
+        // Khung NavHost liên kết các màn hình theo cấu trúc của bạn
+        NavHost(navController = navController,
+            startDestination = Screen.Home.route,
+            // Thay vì padding toàn bộ, hãy chỉ padding bottom để không đè lên BottomBar
+            modifier = Modifier.padding(bottom = innerPadding.calculateBottomPadding())
+        )  {
+            // Màn hình 1: Khám phá (Trang chủ của bạn)
             composable(Screen.Home.route) {
-                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    Text("Màn hình Trang chủ - Đang phát triển")
-                }
+                Text("Màn hình Khám phá - Đang xây dựng")
             }
 
+            // Màn hình 2: Cá nhân (Giao diện phụ trách của thành viên khác)
             composable(Screen.Profile.route) {
-                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    Text("Màn hình Cá nhân - Đang phát triển")
-                }
+                Text("Màn hình Cá nhân - Đang xây dựng")
             }
 
+            // Màn hình 3: Cài đặt
             composable(Screen.Settings.route) {
-                AboutScreen(
-                    isDarkTheme = isDarkTheme,
-                    onThemeToggle = onThemeToggle,
-                    onNavigateToDeveloperInfo = {
-                        navController.navigate(Screen.DeveloperInfo.route)
-                    }
-                )
-            }
-
-            composable(Screen.DeveloperInfo.route) {
-                DeveloperInfoScreen(
-                    onBack = { navController.popBackStack() }
-                )
+                Text("Màn hình Cài đặt - Đang xây dựng")
             }
         }
     }
@@ -76,6 +54,12 @@ fun MainNavGraph(
 
 @Composable
 fun AppBottomNavigationBar(navController: NavHostController) {
+    val navigationItems = listOf(
+        Screen.Home,
+        Screen.Profile,
+        Screen.Settings
+    )
+
     NavigationBar(
         containerColor = MaterialTheme.colorScheme.surface,
         tonalElevation = 8.dp
@@ -84,7 +68,7 @@ fun AppBottomNavigationBar(navController: NavHostController) {
         val navBackStackEntry by navController.currentBackStackEntryAsState()
         val currentRoute = navBackStackEntry?.destination?.route
 
-        bottomNavItems.forEach { screen ->
+        navigationItems.forEach { screen ->
             // ĐIỀU KIỆN LÀM SÁNG: Nếu route trùng khớp thì mục đó sẽ sáng lên
             val isSelected = currentRoute == screen.route
 
@@ -101,13 +85,24 @@ fun AppBottomNavigationBar(navController: NavHostController) {
                         }
                     }
                 },
-                label = { Text(text = screen.title) },
+                label = {
+                    Text(
+                        text = screen.title,
+                        color = if (isSelected) MaterialTheme.colorScheme.primary 
+                                else MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                },
                 icon = {
                     Icon(
                         imageVector = screen.icon ?: Icons.Default.Home,
-                        contentDescription = screen.title
+                        contentDescription = screen.title,
+                        tint = if (isSelected) MaterialTheme.colorScheme.primary 
+                               else MaterialTheme.colorScheme.onSurfaceVariant
                     )
-                }
+                },
+                colors = NavigationBarItemDefaults.colors(
+                    indicatorColor = MaterialTheme.colorScheme.secondaryContainer
+                )
             )
         }
     }
