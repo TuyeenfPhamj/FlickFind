@@ -74,6 +74,5 @@ class ProfileViewModel(private val repository: MovieRepository) : ViewModel() {
     fun deleteFavorite(movie: FavoriteMovieEntity) {
         viewModelScope.launch {
             repository.removeFromFavorite(movie)
-        }
-    }
+        }    }
 }

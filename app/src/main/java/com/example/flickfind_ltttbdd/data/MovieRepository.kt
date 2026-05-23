@@ -18,6 +18,7 @@ class MovieRepository(
     // 1. PHẦN XỬ LÝ MOCK API (REMOTE)
     // ==========================================
 
+    // Hàm lấy danh sách phim phân trang từ API có kèm bộ lọc, bọc trong Result để bắt lỗi mạng
     // Hàm lấy danh sách phim phân trang từ API, bọc trong Result để bắt lỗi mạng (nếu có)
     suspend fun getMoviesFromApi(page: Int, limit: Int): Result<List<MovieResponse>> {
         return try {

@@ -3,6 +3,7 @@ package com.example.flickfind_ltttbdd.data.local
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 
+
 @Entity(tableName = "favorite_movies")
 data class FavoriteMovieEntity(
     @PrimaryKey val id: Int, // Đồng bộ kiểu Int với API
