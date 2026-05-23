@@ -33,11 +33,11 @@ fun MainNavGraph() {
     ) { innerPadding ->
 
         // Khung NavHost liên kết các màn hình theo cấu trúc của bạn
-        NavHost(
-            navController = navController,
+        NavHost(navController = navController,
             startDestination = Screen.Home.route,
-            modifier = Modifier.padding(innerPadding)
-        ) {
+            // Thay vì padding toàn bộ, hãy chỉ padding bottom để không đè lên BottomBar
+            modifier = Modifier.padding(bottom = innerPadding.calculateBottomPadding())
+        )  {
             // Màn hình 1: Khám phá (Trang chủ của bạn)
             composable(Screen.Home.route) {
                 val context = LocalContext.current
@@ -56,9 +56,9 @@ fun MainNavGraph() {
                 ProfileScreen(viewModel = profileViewModel)
             }
 
-            // Màn hình 3: Giới thiệu (Giao diện phụ trách của thành viên khác)
-            composable(Screen.About.route) {
-                Text("Màn hình Giới thiệu - Đang xây dựng")
+            // Màn hình 3: Cài đặt
+            composable(Screen.Settings.route) {
+                Text("Màn hình Cài đặt - Đang xây dựng")
             }
         }
     }
@@ -69,15 +69,12 @@ fun AppBottomNavigationBar(navController: NavHostController) {
     val navigationItems = listOf(
         Screen.Home,
         Screen.Profile,
-        Screen.About
+        Screen.Settings
     )
-    val AppSurface = Color(0xFF171E30)    // Màu thanh điều hướng (trùng màu ô tìm kiếm của bạn)
-    val AppIndicator = Color(0xFF1A2844)  // Màu vòng bo (viên nhộng) bọc Icon khi được chọn
-    val TextActive = Color(0xFFFFFFFF)    // Chữ và Icon sáng trắng khi Active
-    val TextInactive = Color(0xFF8E9AA6)
+
     NavigationBar(
-        containerColor = AppSurface,
-        tonalElevation = 0.dp
+        containerColor = MaterialTheme.colorScheme.surface,
+        tonalElevation = 8.dp
     ) {
         // Lấy trạng thái màn hình hiện tại để check làm sáng nút
         val navBackStackEntry by navController.currentBackStackEntryAsState()
@@ -103,19 +100,20 @@ fun AppBottomNavigationBar(navController: NavHostController) {
                 label = {
                     Text(
                         text = screen.title,
-                        color = if (isSelected) TextActive else TextInactive
+                        color = if (isSelected) MaterialTheme.colorScheme.primary 
+                                else MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 },
                 icon = {
                     Icon(
-                        // Sửa lỗi ImageVector? bằng cách thêm toán tử dự phòng ?:
                         imageVector = screen.icon ?: Icons.Default.Home,
                         contentDescription = screen.title,
-                        tint = if (isSelected) TextActive else TextInactive
+                        tint = if (isSelected) MaterialTheme.colorScheme.primary 
+                               else MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 },
                 colors = NavigationBarItemDefaults.colors(
-                    indicatorColor = AppIndicator
+                    indicatorColor = MaterialTheme.colorScheme.secondaryContainer
                 )
             )
         }
