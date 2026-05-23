@@ -28,14 +28,14 @@ class ProfileViewModel(private val repository: MovieRepository) : ViewModel() {
     private fun loadProfileData() {
         // Theo dõi thông tin User
         viewModelScope.launch {
-            repository.getUserProfile().collect { user ->
+            repository.getUserProfile("").collect { user ->
                 _uiState.update { it.copy(user = user) }
             }
         }
 
         // Theo dõi danh sách phim yêu thích và tính toán thống kê
         viewModelScope.launch {
-            repository.getAllFavorites().collect { favorites ->
+            repository.getAllFavorites("").collect { favorites ->
                 val watchedMovies = favorites.filter { it.isWatched }
                 
                 // 1. Tính tổng thời gian đã xem (phút)

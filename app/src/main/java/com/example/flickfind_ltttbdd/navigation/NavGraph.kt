@@ -17,6 +17,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import com.example.flickfind_ltttbdd.ui.screens.AboutScreen
 import com.example.flickfind_ltttbdd.ui.viewmodel.AppViewModelProvider
 import com.example.flickfind_ltttbdd.ui.viewmodel.HomeViewModel
 import com.example.flickfind_ltttbdd.ui.viewmodel.SearchViewModel
@@ -25,10 +26,13 @@ import com.example.flickfind_ltttbdd.ui.screens.FilterScreen
 import com.example.flickfind_ltttbdd.ui.screens.SearchResultScreen
 import com.example.flickfind_ltttbdd.ui.screens.ProfileScreen
 import com.example.flickfind_ltttbdd.ui.viewmodel.ProfileViewModel
-
+import com.example.flickfind_ltttbdd.ui.screens.DeveloperInfoScreen
 
 @Composable
-fun MainNavGraph() {
+fun MainNavGraph(
+    isDarkTheme: Boolean,
+    onThemeToggle: () -> Unit
+) {
     val navController = rememberNavController()
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
@@ -103,7 +107,19 @@ fun MainNavGraph() {
 
             // Màn hình 3: Cài đặt
             composable(Screen.Settings.route) {
-                Text("Màn hình Cài đặt - Đang xây dựng")
+                AboutScreen(
+                    isDarkTheme = isDarkTheme,
+                    onThemeToggle = onThemeToggle,
+                    onNavigateToDeveloperInfo = {
+                        navController.navigate(Screen.DeveloperInfo.route)
+                    }
+                )
+            }
+
+            composable(Screen.DeveloperInfo.route) {
+                DeveloperInfoScreen(
+                    onBack = { navController.popBackStack() }
+                )
             }
         }
     }

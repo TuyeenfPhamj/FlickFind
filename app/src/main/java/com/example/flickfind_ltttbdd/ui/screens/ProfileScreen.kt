@@ -271,49 +271,49 @@ fun FavoriteMovieItem(
     }
 }
 
-@Preview(showBackground = true, backgroundColor = 0xFF0B101B)
-@Composable
-fun ProfileScreenPreview() {
-    val dummyUser = UserEntity(name = "Nguyễn Văn A", avatarUrl = "")
-    val dummyMovies = listOf(
-        FavoriteMovieEntity(
-            id = 1,
-            title = "Inception",
-            posterPath = "/edv5bs1pUQC67SWHqcYf67OQ97R.jpg",
-            backdropPath = "",
-            genre = "Hành động, Khoa học viễn tưởng",
-            rating = 8.8f,
-            runtime = 148,
-            isWatched = true
-        ),
-        FavoriteMovieEntity(
-            id = 2,
-            title = "The Dark Knight",
-            posterPath = "/qJ2tW6WMUDp9QmSJJIVP6YFZO8r.jpg",
-            backdropPath = "",
-            genre = "Hành động, Hình sự",
-            rating = 9.0f,
-            runtime = 152,
-            isWatched = false
-        )
-    )
-
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(Color(0xFF0B101B))
-            .padding(16.dp)
-    ) {
-        ProfileHeader(name = dummyUser.name, avatarUrl = dummyUser.avatarUrl, onLogout = {})
-        Spacer(modifier = Modifier.height(20.dp))
-        StatsSection(mostWatched = "Hành động", leastWatched = "Kinh dị", totalTime = 300)
-        Spacer(modifier = Modifier.height(20.dp))
-        Text("Danh sách yêu thích", color = Color.White, fontSize = 20.sp, fontWeight = FontWeight.Bold)
-        Spacer(modifier = Modifier.height(12.dp))
-        LazyColumn(verticalArrangement = Arrangement.spacedBy(16.dp)) {
-            items(dummyMovies) { movie ->
-                FavoriteMovieItem(movie = movie, onToggleWatched = {}, onDelete = {})
-            }
-        }
-    }
-}
+//@Preview(showBackground = true, backgroundColor = 0xFF0B101B)
+//@Composable
+//fun ProfileScreenPreview() {
+//    val dummyUser = UserEntity(name = "Nguyễn Văn A", avatarUrl = "")
+//    val dummyMovies = listOf(
+//        FavoriteMovieEntity(
+//            id = 1,
+//            title = "Inception",
+//            posterPath = "/edv5bs1pUQC67SWHqcYf67OQ97R.jpg",
+//            backdropPath = "",
+//            genre = "Hành động, Khoa học viễn tưởng",
+//            rating = 8.8f,
+//            runtime = 148,
+//            isWatched = true
+//        ),
+//        FavoriteMovieEntity(
+//            id = 2,
+//            title = "The Dark Knight",
+//            posterPath = "/qJ2tW6WMUDp9QmSJJIVP6YFZO8r.jpg",
+//            backdropPath = "",
+//            genre = "Hành động, Hình sự",
+//            rating = 9.0f,
+//            runtime = 152,
+//            isWatched = false
+//        )
+//    )
+//
+//    Column(
+//        modifier = Modifier
+//            .fillMaxSize()
+//            .background(Color(0xFF0B101B))
+//            .padding(16.dp)
+//    ) {
+//        ProfileHeader(name = dummyUser.name, avatarUrl = dummyUser.avatarUrl, onLogout = {})
+//        Spacer(modifier = Modifier.height(20.dp))
+//        StatsSection(mostWatched = "Hành động", leastWatched = "Kinh dị", totalTime = 300)
+//        Spacer(modifier = Modifier.height(20.dp))
+//        Text("Danh sách yêu thích", color = Color.White, fontSize = 20.sp, fontWeight = FontWeight.Bold)
+//        Spacer(modifier = Modifier.height(12.dp))
+//        LazyColumn(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+//            items(dummyMovies) { movie ->
+//                FavoriteMovieItem(movie = movie, onToggleWatched = {}, onDelete = {})
+//            }
+//        }
+//    }
+//}
