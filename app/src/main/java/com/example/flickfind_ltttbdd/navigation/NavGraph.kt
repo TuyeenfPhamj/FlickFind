@@ -1,23 +1,19 @@
 package com.example.flickfind_ltttbdd.navigation
 
-
-import android.net.http.SslCertificate.saveState
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavHostController
-import androidx.navigation.compose.NavHost
-import androidx.navigation.compose.composable
-import androidx.navigation.compose.currentBackStackEntryAsState
-import androidx.navigation.compose.rememberNavController
+import androidx.navigation.NavType
+import androidx.navigation.compose.*
+import androidx.navigation.navArgument
 import com.example.flickfind_ltttbdd.ui.viewmodel.AppViewModelProvider
 import com.example.flickfind_ltttbdd.ui.viewmodel.HomeViewModel
 import com.example.flickfind_ltttbdd.ui.viewmodel.ProfileViewModel
@@ -31,19 +27,24 @@ fun MainNavGraph() {
     val currentRoute = navBackStackEntry?.destination?.route
 
     // Chỉ hiển thị Bottom Bar ở 3 màn hình chính
-    val showBottomBar = currentRoute in listOf(
+    val rootScreens = listOf(
         Screen.Home.route,
         Screen.Profile.route,
         Screen.Settings.route
     )
+    val showBottomBar = currentRoute in rootScreens
 
     Scaffold(
-        bottomBar = { AppBottomNavigationBar(navController) }
+        bottomBar = {
+            if (showBottomBar) {
+                AppBottomNavigationBar(navController)
+            }
+        }
     ) { innerPadding ->
         NavHost(
             navController = navController,
             startDestination = Screen.Home.route,
-            modifier = Modifier.padding(if (showBottomBar) innerPadding else PaddingValues(0.dp))
+            modifier = Modifier.padding(innerPadding)
         ) {
             // 1. Màn hình Trang chủ
             composable(Screen.Home.route) {
@@ -52,21 +53,43 @@ fun MainNavGraph() {
                 HomeScreen(viewModel = homeViewModel, navController = navController)
             }
 
-            // 2. Màn hình Cá nhân (Tích hợp Đăng nhập/Đăng ký tại chỗ)
+            // 2. Màn hình Cá nhân
             composable(Screen.Profile.route) {
                 val context = LocalContext.current
                 val profileViewModel: ProfileViewModel = viewModel(
                     factory = AppViewModelProvider(context)
                 )
-                ProfileScreen(viewModel = profileViewModel)
+                ProfileScreen(
+                    viewModel = profileViewModel,
+                    navController = navController
+                )
             }
 
-            // Màn hình 3: Cài đặt
+            // 3. Màn hình Cài đặt
             composable(Screen.Settings.route) {
-                Text("Màn hình Cài đặt - Đang xây dựng")
+                SettingsScreen(navController = navController)
+            }
+
+            // 4. Màn hình Chi tiết phim
+            composable(
+                route = Screen.Detail.route,
+                arguments = listOf(navArgument("movieId") { type = NavType.IntType })
+            ) { backStackEntry ->
+                val movieId = backStackEntry.arguments?.getInt("movieId") ?: 0
+                MovieDetailScreen(movieId = movieId, navController = navController)
             }
         }
     }
+}
+
+@Composable
+fun SettingsScreen(navController: NavHostController) {
+    Text("Màn hình Cài đặt - Đang xây dựng")
+}
+
+@Composable
+fun MovieDetailScreen(movieId: Int, navController: NavHostController) {
+    Text("Chi tiết phim ID: $movieId")
 }
 
 @Composable
@@ -81,12 +104,10 @@ fun AppBottomNavigationBar(navController: NavHostController) {
         containerColor = MaterialTheme.colorScheme.surface,
         tonalElevation = 8.dp
     ) {
-        // Lấy trạng thái màn hình hiện tại để check làm sáng nút
         val navBackStackEntry by navController.currentBackStackEntryAsState()
         val currentRoute = navBackStackEntry?.destination?.route
 
         navigationItems.forEach { screen ->
-            // ĐIỀU KIỆN LÀM SÁNG: Nếu route trùng khớp thì mục đó sẽ sáng lên
             val isSelected = currentRoute == screen.route
 
             NavigationBarItem(

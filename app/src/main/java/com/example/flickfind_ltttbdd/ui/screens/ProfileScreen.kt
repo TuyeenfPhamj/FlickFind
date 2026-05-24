@@ -169,7 +169,7 @@ fun ProfileScreen(
                 onDelete = { viewModel.deleteFavorite(movie) },
                 onClick = {
                     if (!isEditMode) {
-                        navController.navigate(Screen.Detail.createRoute(movie.id.toString()))
+                        navController.navigate(Screen.Detail.createRoute(movie.id))
                     }
                 }
             )
