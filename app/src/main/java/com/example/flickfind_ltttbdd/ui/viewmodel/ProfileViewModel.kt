@@ -5,12 +5,16 @@ import androidx.lifecycle.viewModelScope
 import com.example.flickfind_ltttbdd.data.MovieRepository
 import com.example.flickfind_ltttbdd.data.local.FavoriteMovieEntity
 import com.example.flickfind_ltttbdd.data.local.UserEntity
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.auth.UserProfileChangeRequest
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.tasks.await
 
 data class ProfileUiState(
     val user: UserEntity? = null,
     val favoriteMovies: List<FavoriteMovieEntity> = emptyList(),
+    val genreDistribution: Map<String, Int> = emptyMap(),
     val totalWatchTime: Int = 0,
     val mostWatchedGenre: String = "Chưa có",
     val leastWatchedGenre: String = "Chưa có"
@@ -29,6 +33,8 @@ class ProfileViewModel(
     }
 
     private fun loadProfileData() {
+        val userId = FirebaseAuth.getInstance().currentUser?.uid ?: return
+        
         // Theo dõi thông tin User
         viewModelScope.launch {
             repository.getUserProfile(userId).collect { user ->
@@ -58,6 +64,7 @@ class ProfileViewModel(
                     it.copy(
                         favoriteMovies = favorites,
                         totalWatchTime = totalTime,
+                        genreDistribution = genreCounts,
                         mostWatchedGenre = mostWatched,
                         leastWatchedGenre = leastWatched
                     )
@@ -77,5 +84,58 @@ class ProfileViewModel(
     fun deleteFavorite(movie: FavoriteMovieEntity) {
         viewModelScope.launch {
             repository.removeFromFavorite(movie)
-        }    }
+        }
+    }
+
+    fun updateAvatar(url: String) {
+        val currentUser = FirebaseAuth.getInstance().currentUser ?: return
+        
+        viewModelScope.launch {
+            try {
+                // 1. Cập nhật Firebase Auth profile
+                currentUser.updateProfile(
+                    UserProfileChangeRequest.Builder()
+                        .setPhotoUri(android.net.Uri.parse(url))
+                        .build()
+                ).await()
+                
+                // 2. Cập nhật Local Room Database
+                repository.insertOrUpdateUser(
+                    UserEntity(
+                        id = currentUser.uid,
+                        name = currentUser.displayName ?: "Người dùng",
+                        avatarUrl = url
+                    )
+                )
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+        }
+    }
+
+    fun updateName(name: String) {
+        val currentUser = FirebaseAuth.getInstance().currentUser ?: return
+        
+        viewModelScope.launch {
+            try {
+                // 1. Cập nhật Firebase Auth profile
+                currentUser.updateProfile(
+                    UserProfileChangeRequest.Builder()
+                        .setDisplayName(name)
+                        .build()
+                ).await()
+                
+                // 2. Cập nhật Local Room Database
+                repository.insertOrUpdateUser(
+                    UserEntity(
+                        id = currentUser.uid,
+                        name = name,
+                        avatarUrl = currentUser.photoUrl?.toString() ?: ""
+                    )
+                )
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+        }
+    }
 }
