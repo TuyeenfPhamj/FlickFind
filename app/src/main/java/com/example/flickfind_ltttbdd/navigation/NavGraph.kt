@@ -101,16 +101,22 @@ fun MainNavGraph(
                 )
             }
 
-            // Màn hình Chi tiết phim (Thêm vào đây để sửa lỗi crash)
+            // Màn hình Chi tiết phim
             composable(
                 route = Screen.Detail.route,
                 arguments = listOf(navArgument("movieId") { type = NavType.StringType })
             ) { backStackEntry ->
                 val movieId = backStackEntry.arguments?.getString("movieId")
-                DetailScreen(
-                    movieId = movieId,
-                    onBackClick = { navController.popBackStack() }
-                )
+                val context = LocalContext.current
+                val detailViewModel: DetailViewModel = viewModel(factory = AppViewModelProvider(context))
+
+                if (!movieId.isNullOrEmpty()) {
+                    DetailScreen(
+                        movieId = movieId,
+                        viewModel = detailViewModel,
+                        onBackClick = { navController.popBackStack() }
+                    )
+                }
             }
 
             composable(Screen.Profile.route) {

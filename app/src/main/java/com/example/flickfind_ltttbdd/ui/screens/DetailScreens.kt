@@ -4,75 +4,78 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.Favorite
-import androidx.compose.material.icons.outlined.FavoriteBorder
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Favorite
+import androidx.compose.material.icons.filled.FavoriteBorder
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
-import com.example.flickfind_ltttbdd.ui.viewmodel.AppViewModelProvider
+import com.example.flickfind_ltttbdd.data.remote.MovieResponse
 import com.example.flickfind_ltttbdd.ui.viewmodel.DetailViewModel
 
 @Composable
 fun DetailScreen(
-    movieId: String?,
-    onBackClick: () -> Unit,
-    viewModel: DetailViewModel = viewModel(factory = AppViewModelProvider(LocalContext.current))
+    movieId: String,
+    viewModel: DetailViewModel,
+    onBackClick: () -> Unit
 ) {
     val movie by viewModel.movie.collectAsState()
     val isLoading by viewModel.isLoading.collectAsState()
     val error by viewModel.error.collectAsState()
     val isFavorite by viewModel.isFavorite.collectAsState()
 
-    // Tự động tải dữ liệu khi vào màn hình
     LaunchedEffect(movieId) {
-        if (movieId != null) {
-            viewModel.getMovieById(movieId)
-        }
+        viewModel.getMovieById(movieId)
     }
 
     Surface(
         modifier = Modifier.fillMaxSize(),
-        color = Color(0xFF0B121F) // Màu Navy đồng bộ với Home
+        color = Color(0xFF0B121F) // Màu Navy đồng bộ toàn app
     ) {
         Box(modifier = Modifier.fillMaxSize()) {
-            if (isLoading) {
-                CircularProgressIndicator(
-                    modifier = Modifier.align(Alignment.Center),
-                    color = Color(0xFF38B6FF)
-                )
-            } else if (error != null) {
-                Column(
-                    modifier = Modifier.align(Alignment.Center),
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                    Text(text = error ?: "Đã xảy ra lỗi", color = Color.White)
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Button(onClick = { movieId?.let { viewModel.getMovieById(it) } }) {
-                        Text("Thử lại")
+            when {
+                isLoading -> {
+                    CircularProgressIndicator(
+                        modifier = Modifier.align(Alignment.Center),
+                        color = Color(0xFF38B6FF)
+                    )
+                }
+                error != null -> {
+                    Column(
+                        modifier = Modifier.align(Alignment.Center),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Text(text = error!!, color = Color.White)
+                        Spacer(modifier = Modifier.height(16.dp))
+                        Button(
+                            onClick = { viewModel.getMovieById(movieId) },
+                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF38B6FF))
+                        ) {
+                            Text("Thử lại")
+                        }
                     }
                 }
-            } else {
-                movie?.let { movieData ->
+                movie != null -> {
                     MovieDetailContent(
-                        movieData = movieData,
+                        movie = movie!!,
                         isFavorite = isFavorite,
-                        onBackClick = onBackClick,
-                        onToggleFavorite = { viewModel.toggleFavorite(movieData) }
+                        onToggleFavorite = { viewModel.toggleFavorite(movie!!) },
+                        onBackClick = onBackClick
                     )
                 }
             }
@@ -82,180 +85,161 @@ fun DetailScreen(
 
 @Composable
 fun MovieDetailContent(
-    movieData: com.example.flickfind_ltttbdd.data.remote.MovieResponse,
+    movie: MovieResponse,
     isFavorite: Boolean,
-    onBackClick: () -> Unit,
-    onToggleFavorite: () -> Unit
+    onToggleFavorite: () -> Unit,
+    onBackClick: () -> Unit
 ) {
     Column(
         modifier = Modifier
             .fillMaxSize()
             .verticalScroll(rememberScrollState())
     ) {
-        // --- PHẦN 1: HEADER (BACKDROP + POSTER + BACK + FAVORITE) ---
+        // --- PHẦN 1: HEADER (BACKDROP + NÚT BACK + NÚT YÊU THÍCH + POSTER) ---
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(320.dp)
+                .height(380.dp) // Chiều cao Header cố định
         ) {
-            // 1.1 Ảnh Background (Backdrop)
+            // 1.1 Ảnh Background (Backdrop) - Phủ kín toàn bộ Header để Poster không bị "rơi" ra ngoài
             AsyncImage(
-                model = movieData.backdropPath,
+                model = movie.backdropPath,
                 contentDescription = null,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(260.dp),
+                modifier = Modifier.fillMaxSize(),
                 contentScale = ContentScale.Crop
             )
 
-            // Hiệu ứng mờ (Gradient) chuyển tiếp xuống nội dung
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(260.dp)
-                    .background(
-                        Brush.verticalGradient(
-                            colors = listOf(Color.Transparent, Color(0xFF0B121F)),
-                            startY = 400f
-                        )
-                    )
-            )
-
-            // 1.2 Nút Quay lại (Góc trên trái)
+            // 1.2 Nút Back (Mũi tên) - Góc trái trên
             IconButton(
                 onClick = onBackClick,
                 modifier = Modifier
+                    .padding(16.dp)
                     .statusBarsPadding()
-                    .padding(12.dp)
-                    .align(Alignment.TopStart)
-                    .background(Color.Black.copy(alpha = 0.5f), RoundedCornerShape(50))
+                    .background(Color.Black.copy(alpha = 0.3f), CircleShape)
             ) {
                 Icon(
                     imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                    contentDescription = "Back",
+                    contentDescription = "Quay lại",
                     tint = Color.White
                 )
             }
 
-            // 1.3 Ảnh Poster (Đè lên ảnh nền, lệch trái)
-            AsyncImage(
-                model = movieData.posterPath,
-                contentDescription = null,
-                modifier = Modifier
-                    .padding(start = 24.dp)
-                    .width(130.dp)
-                    .height(190.dp)
-                    .align(Alignment.BottomStart)
-                    .clip(RoundedCornerShape(12.dp))
-                    .background(Color.DarkGray),
-                contentScale = ContentScale.Crop
-            )
-
-            // 1.4 Nút Yêu thích (Hình trái tim - Góc dưới phải Header)
+            // 1.3 Nút yêu thích (Trái tim) - Căn góc phải dưới của Backdrop
             IconButton(
                 onClick = onToggleFavorite,
                 modifier = Modifier
-                    .padding(end = 24.dp, bottom = 10.dp)
+                    .padding(16.dp)
+                    .padding(bottom = 8.dp) // Nâng nhẹ nút lên khỏi mép
                     .align(Alignment.BottomEnd)
-                    .background(Color.Black.copy(alpha = 0.5f), RoundedCornerShape(50))
+                    .background(Color(0xFF1E293B), CircleShape)
+                    .border(1.dp, Color(0xFF38B6FF), CircleShape)
             ) {
                 Icon(
-                    imageVector = if (isFavorite) Icons.Filled.Favorite else Icons.Outlined.FavoriteBorder,
-                    contentDescription = "Favorite",
-                    tint = if (isFavorite) Color.Red else Color.White,
-                    modifier = Modifier.size(32.dp)
+                    imageVector = if (isFavorite) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
+                    contentDescription = "Yêu thích",
+                    tint = if (isFavorite) Color.Red else Color.White
+                )
+            }
+
+            // 1.4 Ảnh Poster - Thu nhỏ và nằm gọn trong ảnh nền
+            Card(
+                modifier = Modifier
+                    .padding(start = 24.dp, bottom = 12.dp) // Cách đáy 12dp để không bị "tràn" xuống nội dung
+                    .width(100.dp)
+                    .height(150.dp)
+                    .align(Alignment.BottomStart),
+                shape = RoundedCornerShape(8.dp),
+                elevation = CardDefaults.cardElevation(16.dp)
+            ) {
+                AsyncImage(
+                    model = movie.posterPath,
+                    contentDescription = movie.title,
+                    modifier = Modifier.fillMaxSize(),
+                    contentScale = ContentScale.Crop
                 )
             }
         }
 
-        // --- PHẦN 2: THÔNG TIN CHI TIẾT ---
-        Column(modifier = Modifier.padding(20.dp)) {
-            Text(
-                text = movieData.title,
-                color = Color.White,
-                fontSize = 28.sp,
-                fontWeight = FontWeight.Bold,
-                modifier = Modifier.padding(horizontal = 4.dp)
-            )
-
-            Spacer(modifier = Modifier.height(24.dp))
-
-            // Khung Nội dung
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .background(Color(0xFF111C2F), RoundedCornerShape(16.dp))
-                    .border(1.dp, Color.White.copy(alpha = 0.1f), RoundedCornerShape(16.dp))
-                    .padding(16.dp)
-            ) {
+        // --- PHẦN 2: KHUNG NỘI DUNG (Lên trên) ---
+        Box(
+            modifier = Modifier
+                .padding(16.dp)
+                .fillMaxWidth()
+                .border(1.dp, Color(0xFF38B6FF), RoundedCornerShape(12.dp))
+                .background(Color(0xFF131C2E).copy(alpha = 0.7f), RoundedCornerShape(12.dp))
+                .padding(16.dp)
+        ) {
+            Column(modifier = Modifier.fillMaxWidth()) {
                 Text(
-                    text = "Nội dung",
-                    color = Color(0xFF38B6FF),
-                    fontSize = 18.sp,
-                    fontWeight = FontWeight.SemiBold
+                    text = movie.title,
+                    color = Color.White,
+                    fontSize = 22.sp,
+                    fontWeight = FontWeight.Bold
                 )
                 Spacer(modifier = Modifier.height(8.dp))
                 Text(
-                    text = movieData.overview,
-                    color = Color.LightGray,
-                    fontSize = 15.sp,
-                    lineHeight = 24.sp
-                )
-            }
-
-            Spacer(modifier = Modifier.height(20.dp))
-
-            // Khung Chi tiết
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .background(Color(0xFF111C2F), RoundedCornerShape(16.dp))
-                    .border(1.dp, Color.White.copy(alpha = 0.1f), RoundedCornerShape(16.dp))
-                    .padding(16.dp)
-            ) {
-                Text(
-                    text = "Thông tin phim",
+                    text = "Nội dung:",
                     color = Color(0xFF38B6FF),
-                    fontSize = 18.sp,
+                    fontSize = 16.sp,
                     fontWeight = FontWeight.SemiBold
                 )
-                Spacer(modifier = Modifier.height(12.dp))
-
-                DetailItemRow("⭐ Đánh giá", "${movieData.rating}/10")
-                DetailItemRow("🕒 Thời lượng", "${movieData.runtime} phút")
-                DetailItemRow("🎭 Thể loại", movieData.genres.joinToString(", "))
-                DetailItemRow("🎬 Đạo diễn", movieData.director)
-                DetailItemRow("👥 Diễn viên", movieData.cast)
-                DetailItemRow("📅 Ngày ra mắt", movieData.releaseDate)
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(
+                    text = movie.overview,
+                    color = Color.LightGray,
+                    fontSize = 14.sp,
+                    lineHeight = 20.sp,
+                    textAlign = TextAlign.Justify
+                )
             }
-            
-            Spacer(modifier = Modifier.height(24.dp))
+        }
+
+        // --- PHẦN 3: KHUNG THÔNG TIN CHI TIẾT (Xuống dưới) ---
+        Column(
+            modifier = Modifier
+                .padding(horizontal = 16.dp)
+                .padding(bottom = 32.dp)
+                .fillMaxWidth()
+                .border(1.dp, Color(0xFF38B6FF), RoundedCornerShape(12.dp))
+                .background(Color(0xFF131C2E).copy(alpha = 0.7f), RoundedCornerShape(12.dp))
+                .padding(16.dp)
+        ) {
+            Text(
+                text = "Thông tin chi tiết",
+                color = Color.White,
+                fontSize = 16.sp,
+                fontWeight = FontWeight.Bold
+            )
+            HorizontalDivider(modifier = Modifier.padding(vertical = 12.dp), color = Color(0xFF233044))
+
+            DetailInfoRow("Thời lượng", "${movie.runtime} phút")
+            DetailInfoRow("Đánh giá", "★ ${movie.rating}/10")
+            DetailInfoRow("Thể loại", movie.genres.joinToString(", "))
+            DetailInfoRow("Đạo diễn", movie.director)
+            DetailInfoRow("Diễn viên", movie.cast)
+            DetailInfoRow("Ngày ra mắt", movie.releaseDate)
         }
     }
 }
 
 @Composable
-fun DetailItemRow(label: String, value: String) {
+fun DetailInfoRow(label: String, value: String) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .padding(vertical = 6.dp),
-        verticalAlignment = Alignment.Top
+        horizontalArrangement = Arrangement.SpaceBetween
     ) {
-        Text(
-            text = "$label: ",
-            color = Color.Gray,
-            fontSize = 14.sp,
-            modifier = Modifier.width(110.dp)
-        )
+        Text(text = label, color = Color.Gray, fontSize = 14.sp)
         Text(
             text = value,
             color = Color.White,
             fontSize = 14.sp,
-            fontWeight = FontWeight.Medium,
-            modifier = Modifier.weight(1f)
+            fontWeight = FontWeight.SemiBold,
+            modifier = Modifier.widthIn(max = 220.dp),
+            textAlign = TextAlign.End,
+            maxLines = 2,
+            overflow = TextOverflow.Ellipsis
         )
     }
 }
-
-

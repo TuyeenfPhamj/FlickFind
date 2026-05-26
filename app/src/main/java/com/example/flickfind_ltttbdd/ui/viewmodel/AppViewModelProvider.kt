@@ -50,6 +50,11 @@ class AppViewModelProvider(private val context: Context) : ViewModelProvider.Fac
             return DetailViewModel(repo, userId) as T
         }
 
+        if (modelClass.isAssignableFrom(ProfileViewModel::class.java)) {
+            @Suppress("UNCHECKED_CAST")
+            return ProfileViewModel(repo, userId) as T
+        }
+
         throw IllegalArgumentException("Unknown ViewModel class")
     }
 }

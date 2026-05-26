@@ -7,6 +7,7 @@ import com.example.flickfind_ltttbdd.data.local.FavoriteMovieEntity
 import com.example.flickfind_ltttbdd.data.remote.MovieResponse
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
 class DetailViewModel(
@@ -27,25 +28,41 @@ class DetailViewModel(
     val error: StateFlow<String?> = _error
 
     fun getMovieById(movieId: String) {
+        if (movieId.isBlank()) {
+            _error.value = "ID phim không hợp lệ"
+            return
+        }
         viewModelScope.launch {
             _isLoading.value = true
             _error.value = null
-            repository.getMovieByIdFromApi(movieId)
-                .onSuccess {
-                    _movie.value = it
-                    checkIfFavorite(it.id)
-                    _isLoading.value = false
+
+            // Thay vì gọi trực tiếp endpoint /{id} (dễ bị 404 trên MockAPI),
+            // chúng ta lấy danh sách và lọc theo trường id trong JSON.
+            repository.getMoviesFromApi(page = 1, limit = 100)
+                .onSuccess { movies ->
+                    val foundMovie = movies.find { it.id == movieId }
+                    if (foundMovie != null) {
+                        _movie.value = foundMovie
+                        observeFavoriteStatus(foundMovie.id)
+                        _isLoading.value = false
+                    } else {
+                        _error.value = "Không tìm thấy phim có ID: $movieId"
+                        _isLoading.value = false
+                    }
                 }
-                .onFailure {
-                    _error.value = "Không thể tải thông tin phim"
+                .onFailure { exception ->
+                    android.util.Log.e("DetailViewModel", "Lỗi tải phim", exception)
+                    _error.value = "Lỗi kết nối hoặc không tìm thấy phim"
                     _isLoading.value = false
                 }
         }
     }
 
-    private fun checkIfFavorite(movieId: Int) {
+    private fun observeFavoriteStatus(movieId: String) {
         viewModelScope.launch {
-            _isFavorite.value = repository.isMovieFavorite(movieId, userId)
+            repository.getAllFavorites(userId).collect { favorites ->
+                _isFavorite.value = favorites.any { it.id == movieId }
+            }
         }
     }
 
@@ -63,10 +80,8 @@ class DetailViewModel(
             )
             if (_isFavorite.value) {
                 repository.removeFromFavorite(favoriteMovie)
-                _isFavorite.value = false
             } else {
                 repository.addToFavorite(favoriteMovie)
-                _isFavorite.value = true
             }
         }
     }

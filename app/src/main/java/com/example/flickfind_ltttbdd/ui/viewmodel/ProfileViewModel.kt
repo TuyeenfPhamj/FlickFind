@@ -16,7 +16,10 @@ data class ProfileUiState(
     val leastWatchedGenre: String = "Chưa có"
 )
 
-class ProfileViewModel(private val repository: MovieRepository) : ViewModel() {
+class ProfileViewModel(
+    private val repository: MovieRepository,
+    private val userId: String
+) : ViewModel() {
 
     private val _uiState = MutableStateFlow(ProfileUiState())
     val uiState: StateFlow<ProfileUiState> = _uiState.asStateFlow()
@@ -28,14 +31,14 @@ class ProfileViewModel(private val repository: MovieRepository) : ViewModel() {
     private fun loadProfileData() {
         // Theo dõi thông tin User
         viewModelScope.launch {
-            repository.getUserProfile("").collect { user ->
+            repository.getUserProfile(userId).collect { user ->
                 _uiState.update { it.copy(user = user) }
             }
         }
 
         // Theo dõi danh sách phim yêu thích và tính toán thống kê
         viewModelScope.launch {
-            repository.getAllFavorites("").collect { favorites ->
+            repository.getAllFavorites(userId).collect { favorites ->
                 val watchedMovies = favorites.filter { it.isWatched }
                 
                 // 1. Tính tổng thời gian đã xem (phút)
