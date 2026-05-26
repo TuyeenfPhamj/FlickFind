@@ -9,7 +9,10 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
@@ -41,7 +44,7 @@ fun MainNavGraph(
         NavHost(
             navController = navController,
             startDestination = Screen.Settings.route,
-            modifier = Modifier.padding(innerPadding)
+            modifier = Modifier.padding(bottom = innerPadding.calculateBottomPadding())
         ) {
             composable(Screen.Home.route) {
                 Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
@@ -49,6 +52,7 @@ fun MainNavGraph(
                 }
             }
 
+            // Màn hình 2: Cá nhân (Giao diện phụ trách của thành viên khác)
             composable(Screen.Profile.route) {
                 Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                     Text("Màn hình Cá nhân - Đang phát triển")
@@ -76,6 +80,12 @@ fun MainNavGraph(
 
 @Composable
 fun AppBottomNavigationBar(navController: NavHostController) {
+    val navigationItems = listOf(
+        Screen.Home,
+        Screen.Profile,
+        Screen.Settings
+    )
+
     NavigationBar(
         containerColor = MaterialTheme.colorScheme.surface,
         tonalElevation = 8.dp
@@ -104,6 +114,7 @@ fun AppBottomNavigationBar(navController: NavHostController) {
                 label = { Text(text = screen.title) },
                 icon = {
                     Icon(
+                        // Sửa lỗi ImageVector? bằng cách thêm toán tử dự phòng ?:
                         imageVector = screen.icon ?: Icons.Default.Home,
                         contentDescription = screen.title
                     )
