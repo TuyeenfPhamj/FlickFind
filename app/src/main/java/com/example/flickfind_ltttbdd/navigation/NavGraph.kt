@@ -17,14 +17,17 @@ import androidx.navigation.navArgument
 import com.example.flickfind_ltttbdd.ui.viewmodel.AppViewModelProvider
 import com.example.flickfind_ltttbdd.ui.viewmodel.HomeViewModel
 import com.example.flickfind_ltttbdd.ui.viewmodel.ProfileViewModel
-import com.example.flickfind_ltttbdd.ui.screens.ProfileScreen
-import com.example.flickfind_ltttbdd.ui.screens.HomeScreen
+import com.example.flickfind_ltttbdd.ui.viewmodel.AuthViewModel
+import com.example.flickfind_ltttbdd.ui.screens.*
 
 @Composable
 fun MainNavGraph() {
     val navController = rememberNavController()
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
+    val context = LocalContext.current
+    val authViewModel: AuthViewModel = viewModel(factory = AppViewModelProvider(context))
+    val authUiState by authViewModel.uiState.collectAsState()
 
     // Chỉ hiển thị Bottom Bar ở 3 màn hình chính
     val rootScreens = listOf(
@@ -32,7 +35,7 @@ fun MainNavGraph() {
         Screen.Profile.route,
         Screen.Settings.route
     )
-    val showBottomBar = currentRoute in rootScreens
+    val showBottomBar = currentRoute in rootScreens || currentRoute == Screen.Register.route
 
     Scaffold(
         bottomBar = {
@@ -46,26 +49,51 @@ fun MainNavGraph() {
             startDestination = Screen.Home.route,
             modifier = Modifier.padding(innerPadding)
         ) {
-            // 1. Màn hình Trang chủ
+            // 0. Màn hình Auth
+            composable(Screen.Login.route) {
+                LoginScreen(
+                    viewModel = authViewModel,
+                    onNavigateToRegister = { navController.navigate(Screen.Register.route) }
+                )
+            }
+            
+            composable(Screen.Register.route) {
+                RegisterScreen(
+                    viewModel = authViewModel,
+                    onNavigateToLogin = { navController.popBackStack() }
+                )
+            }
+
+            // 1. Màn hình Trang chủ (Công khai)
             composable(Screen.Home.route) {
-                val context = LocalContext.current
                 val homeViewModel: HomeViewModel = viewModel(factory = AppViewModelProvider(context))
                 HomeScreen(viewModel = homeViewModel, navController = navController)
             }
 
-            // 2. Màn hình Cá nhân
+            // 2. Màn hình Cá nhân (Yêu cầu đăng nhập)
             composable(Screen.Profile.route) {
-                val context = LocalContext.current
-                val profileViewModel: ProfileViewModel = viewModel(
-                    factory = AppViewModelProvider(context)
-                )
-                ProfileScreen(
-                    viewModel = profileViewModel,
-                    navController = navController
-                )
+                if (authUiState.isLoggedIn) {
+                    // Nếu đã đăng nhập -> Hiện trang cá nhân
+                    val profileViewModel: ProfileViewModel = viewModel(
+                        factory = AppViewModelProvider(context)
+                    )
+                    ProfileScreen(
+                        viewModel = profileViewModel,
+                        navController = navController,
+                        onLogout = {
+                            authViewModel.logout()
+                        }
+                    )
+                } else {
+                    // Nếu chưa đăng nhập -> Hiện trang đăng nhập ngay tại tab Cá nhân
+                    LoginScreen(
+                        viewModel = authViewModel,
+                        onNavigateToRegister = { navController.navigate(Screen.Register.route) }
+                    )
+                }
             }
 
-            // 3. Màn hình Cài đặt
+            // 3. Màn hình Cài đặt (Công khai)
             composable(Screen.Settings.route) {
                 SettingsScreen(navController = navController)
             }

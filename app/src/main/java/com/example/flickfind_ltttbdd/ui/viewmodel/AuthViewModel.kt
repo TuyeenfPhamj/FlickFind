@@ -94,6 +94,17 @@ class AuthViewModel(private val repository: MovieRepository) : ViewModel() {
                         .build()
                 )?.await()
 
+                // Đồng bộ thông tin user vào Room Database ngay khi đăng ký
+                if (user != null) {
+                    repository.insertOrUpdateUser(
+                        UserEntity(
+                            id = user.uid,
+                            name = name,
+                            avatarUrl = ""
+                        )
+                    )
+                }
+
                 _uiState.update { it.copy(isLoading = false, isSuccess = true, isLoggedIn = true) }
             } catch (e: Exception) {
                 _uiState.update { it.copy(isLoading = false, errorMessage = e.localizedMessage) }
