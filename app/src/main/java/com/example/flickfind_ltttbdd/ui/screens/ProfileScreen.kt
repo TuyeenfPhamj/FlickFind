@@ -452,8 +452,8 @@ fun NameEditDialog(currentName: String, onDismiss: () -> Unit, onConfirm: (Strin
 fun ProfileScreenPreview() {
     val dummyUser = UserEntity(id = "1", name = "Nguyễn Văn A", avatarUrl = "")
     val dummyMovies = listOf(
-        FavoriteMovieEntity(1, "1", "Inception", "/edv5bs1pUQC67SWHqcYf67OQ97R.jpg", "", "Hành động", 8.8f, 148, true),
-        FavoriteMovieEntity(2, "1", "The Dark Knight", "/qJ2tW6WMUDp9QmSJJIVP6YFZO8r.jpg", "", "Hành động", 9.0f, 152, true),
+        FavoriteMovieEntity("1", "1", "Inception", "/edv5bs1pUQC67SWHqcYf67OQ97R.jpg", "", "Hành động", 8.8f, 148, true),
+        FavoriteMovieEntity("2", "1", "The Dark Knight", "/qJ2tW6WMUDp9QmSJJIVP6YFZO8r.jpg", "", "Hành động", 9.0f, 152, true),
     )
     
     LazyColumn(
