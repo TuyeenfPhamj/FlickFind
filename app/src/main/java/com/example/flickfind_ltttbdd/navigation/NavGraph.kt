@@ -1,15 +1,12 @@
 package com.example.flickfind_ltttbdd.navigation
 
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.fillMaxSize
+
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -19,20 +16,26 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
-import com.example.flickfind_ltttbdd.ui.screens.AboutScreen
-import com.example.flickfind_ltttbdd.ui.screens.DeveloperInfoScreen
+
+import com.example.flickfind_ltttbdd.ui.viewmodel.AppViewModelProvider
+import com.example.flickfind_ltttbdd.ui.viewmodel.HomeViewModel
+import com.example.flickfind_ltttbdd.ui.viewmodel.SearchViewModel
+import com.example.flickfind_ltttbdd.ui.screens.HomeScreen
+import com.example.flickfind_ltttbdd.ui.screens.FilterScreen
+import com.example.flickfind_ltttbdd.ui.screens.SearchResultScreen
 
 @Composable
-fun MainNavGraph(
-    isDarkTheme: Boolean,
-    onThemeToggle: () -> Unit
-) {
+fun MainNavGraph(isDarkTheme: Boolean, onThemeToggle: () -> Unit) {
     val navController = rememberNavController()
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
 
-    // Chỉ hiện BottomBar ở các màn hình chính
-    val showBottomBar = currentRoute in bottomNavItems.map { it.route }
+    // Chỉ hiển thị Bottom Bar ở 3 màn hình chính
+    val showBottomBar = currentRoute in listOf(
+        Screen.Home.route,
+        Screen.Profile.route,
+        Screen.Settings.route
+    )
 
     Scaffold(
         bottomBar = {
@@ -41,38 +44,58 @@ fun MainNavGraph(
             }
         }
     ) { innerPadding ->
+        val context = LocalContext.current
+        val homeViewModel: HomeViewModel = viewModel(
+            factory = AppViewModelProvider(context)
+        )
+        val searchViewModel: SearchViewModel = viewModel(
+            factory = AppViewModelProvider(context)
+        )
+
         NavHost(
             navController = navController,
-            startDestination = Screen.Settings.route,
+            startDestination = Screen.Home.route,
             modifier = Modifier.padding(bottom = innerPadding.calculateBottomPadding())
         ) {
             composable(Screen.Home.route) {
-                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    Text("Màn hình Trang chủ - Đang phát triển")
-                }
+                HomeScreen(viewModel = homeViewModel, navController = navController)
             }
 
-            // Màn hình 2: Cá nhân (Giao diện phụ trách của thành viên khác)
-            composable(Screen.Profile.route) {
-                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    Text("Màn hình Cá nhân - Đang phát triển")
-                }
-            }
-
-            composable(Screen.Settings.route) {
-                AboutScreen(
-                    isDarkTheme = isDarkTheme,
-                    onThemeToggle = onThemeToggle,
-                    onNavigateToDeveloperInfo = {
-                        navController.navigate(Screen.DeveloperInfo.route)
+            composable(Screen.Filter.route) {
+                FilterScreen(
+                    navController = navController,
+                    onApplyFilters = { genre, yearRange ->
+                        navController.navigate(Screen.SearchResult.createRoute(genre = genre, yearRange = yearRange))
                     }
                 )
             }
 
-            composable(Screen.DeveloperInfo.route) {
-                DeveloperInfoScreen(
-                    onBack = { navController.popBackStack() }
+            composable(
+                route = Screen.SearchResult.route,
+                arguments = Screen.SearchResult.arguments
+            ) { backStackEntry ->
+                val query = backStackEntry.arguments?.getString("query")
+                val genre = backStackEntry.arguments?.getString("genre")
+                val yearRange = backStackEntry.arguments?.getString("yearRange")
+                val sortBy = backStackEntry.arguments?.getString("sortBy")
+
+                SearchResultScreen(
+                    query = query,
+                    genre = genre,
+                    yearRange = yearRange,
+                    sortBy = sortBy,
+                    viewModel = searchViewModel,
+                    navController = navController
                 )
+            }
+
+            composable(Screen.Profile.route) {
+
+            }
+
+            // Màn hình 3: Cài đặt
+            composable(Screen.Settings.route) {
+                Text("Màn hình Cài đặt - Đang xây dựng")
             }
         }
     }
@@ -94,7 +117,7 @@ fun AppBottomNavigationBar(navController: NavHostController) {
         val navBackStackEntry by navController.currentBackStackEntryAsState()
         val currentRoute = navBackStackEntry?.destination?.route
 
-        bottomNavItems.forEach { screen ->
+        navigationItems.forEach { screen ->
             // ĐIỀU KIỆN LÀM SÁNG: Nếu route trùng khớp thì mục đó sẽ sáng lên
             val isSelected = currentRoute == screen.route
 
@@ -111,14 +134,24 @@ fun AppBottomNavigationBar(navController: NavHostController) {
                         }
                     }
                 },
-                label = { Text(text = screen.title) },
+                label = {
+                    Text(
+                        text = screen.title,
+                        color = if (isSelected) MaterialTheme.colorScheme.primary
+                                else MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                },
                 icon = {
                     Icon(
-                        // Sửa lỗi ImageVector? bằng cách thêm toán tử dự phòng ?:
                         imageVector = screen.icon ?: Icons.Default.Home,
-                        contentDescription = screen.title
+                        contentDescription = screen.title,
+                        tint = if (isSelected) MaterialTheme.colorScheme.primary
+                               else MaterialTheme.colorScheme.onSurfaceVariant
                     )
-                }
+                },
+                colors = NavigationBarItemDefaults.colors(
+                    indicatorColor = MaterialTheme.colorScheme.secondaryContainer
+                )
             )
         }
     }
