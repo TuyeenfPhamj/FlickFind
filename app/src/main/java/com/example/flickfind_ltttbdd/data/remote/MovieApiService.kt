@@ -1,11 +1,12 @@
 package com.example.flickfind_ltttbdd.data.remote
 
 import retrofit2.http.GET
+import retrofit2.http.Path
 import retrofit2.http.Query
 
 interface MovieApiService {
 
-    // Hàm gọi API lấy danh sách phim có áp dụng phân trang và bộ lọc (Tìm kiếm, Thể loại, Năm)
+    // Hàm gọi API lấy danh sách phim có áp dụng phân trang
     @GET("api/v1/movies")
     suspend fun getMovies(
         @Query("page") page: Int,
@@ -17,7 +18,5 @@ interface MovieApiService {
 
     // Lấy chi tiết một bộ phim theo ID
     @GET("api/v1/movies/{id}")
-    suspend fun getMovieById(
-        @retrofit2.http.Path("id") id: Int
-    ): MovieResponse
+    suspend fun getMovieById(@Path("id") id: String): MovieResponse
 }

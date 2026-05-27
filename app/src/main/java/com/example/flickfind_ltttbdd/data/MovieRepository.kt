@@ -35,9 +35,9 @@ class MovieRepository(
     }
 
     // Lấy chi tiết một bộ phim từ API theo ID
-    suspend fun getMovieByIdFromApi(movieId: Int): Result<MovieResponse> {
+    suspend fun getMovieById(id: String): Result<MovieResponse> {
         return try {
-            val response = apiService.getMovieById(movieId)
+            val response = apiService.getMovieById(id)
             Result.success(response)
         } catch (e: Exception) {
             Result.failure(e)
@@ -63,7 +63,7 @@ class MovieRepository(
     }
 
     // Kiểm tra xem phim này đã được lưu trong Room chưa
-    suspend fun isMovieFavorite(movieId: Int, userId: String): Boolean {
+    suspend fun isMovieFavorite(movieId: String, userId: String): Boolean {
         return movieDao.getMovieById(movieId, userId) != null
     }
 

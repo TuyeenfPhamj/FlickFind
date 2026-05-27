@@ -4,7 +4,7 @@ import com.google.gson.annotations.SerializedName
 
 
 data class MovieResponse(
-    @SerializedName("id") val id: Int, // Chuyển thành Int theo JSON mẫu
+    @SerializedName("id") val id: String, // Chuyển thành String theo yêu cầu
     @SerializedName("title") val title: String,
     @SerializedName("poster_path") val posterPath: String,   // Khớp với JSON
     @SerializedName("backdrop_path") val backdropPath: String, // Khớp với JSON

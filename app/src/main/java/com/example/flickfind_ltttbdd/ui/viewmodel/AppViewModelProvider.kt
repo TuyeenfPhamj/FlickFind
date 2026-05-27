@@ -6,6 +6,7 @@ import androidx.lifecycle.ViewModelProvider
 import com.example.flickfind_ltttbdd.data.MovieRepository
 import com.example.flickfind_ltttbdd.data.local.AppDatabase
 import com.example.flickfind_ltttbdd.data.remote.RetrofitClient
+import kotlin.jvm.java
 
 class AppViewModelProvider(private val context: Context) : ViewModelProvider.Factory {
 
@@ -21,6 +22,7 @@ class AppViewModelProvider(private val context: Context) : ViewModelProvider.Fac
                     movieDao = database.movieDao(),
                     userDao = database.userDao()
                 )
+
                 repository = repo
                 repo
             }
@@ -31,7 +33,7 @@ class AppViewModelProvider(private val context: Context) : ViewModelProvider.Fac
         val repo = getRepository(context)
         // Trong thực tế, bạn sẽ lấy userId từ FirebaseAuth.
         // Ví dụ: val userId = FirebaseAuth.getInstance().currentUser?.uid ?: "guest_user"
-        val userId = "guest_user" 
+        val userId = "guest_user"
 
         if (modelClass.isAssignableFrom(HomeViewModel::class.java)) {
             @Suppress("UNCHECKED_CAST")
@@ -41,6 +43,21 @@ class AppViewModelProvider(private val context: Context) : ViewModelProvider.Fac
         if (modelClass.isAssignableFrom(SearchViewModel::class.java)) {
             @Suppress("UNCHECKED_CAST")
             return SearchViewModel(repo, userId) as T
+        }
+        //đoạn sửa
+        if(modelClass.isAssignableFrom(DetailViewModel::class.java)) {
+            @Suppress("UNCHECKED_CAST")
+            return DetailViewModel(repo, userId) as T
+        }
+
+        if (modelClass.isAssignableFrom(ProfileViewModel::class.java)) {
+            @Suppress("UNCHECKED_CAST")
+            return ProfileViewModel(repo, userId) as T
+        }
+
+        if (modelClass.isAssignableFrom(AuthViewModel::class.java)) {
+            @Suppress("UNCHECKED_CAST")
+            return AuthViewModel(repo) as T
         }
 
         throw IllegalArgumentException("Unknown ViewModel class")

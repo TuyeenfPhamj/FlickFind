@@ -15,7 +15,7 @@ import kotlinx.coroutines.launch
 data class HomeUiState(
     val movies: List<MovieResponse> = emptyList(), // Danh sách phim cho trang chủ (phân trang)
     val popularMovies: List<MovieResponse> = emptyList(), // Danh sách 10 phim phổ biến (điểm cao)
-    val favoriteMovieIds: Set<Int> = emptySet(),
+    val favoriteMovieIds: Set<String> = emptySet(),
     val isLoading: Boolean = false,
     val errorMessage: String? = null,
     val currentPage: Int = 1,
