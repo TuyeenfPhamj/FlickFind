@@ -30,21 +30,25 @@ fun SearchResultScreen(
     yearRange: String?,
     sortBy: String?,
     viewModel: SearchViewModel,
-    navController: NavController
+    navController: NavController,
+    isDarkTheme: Boolean
 ) {
+    // [GHI CHÚ]: Đồng bộ màu sắc theo theme Sáng/Tối
+    val backgroundColor = if (isDarkTheme) Color(0xFF0B101B) else Color(0xFFF0F4F8)
+    val cardColor = if (isDarkTheme) Color(0xFF172033) else Color.White
+    val textColor = if (isDarkTheme) Color.White else Color.Black
+    val primaryColor = Color(0xFF38B6FF)
+
     val uiState by viewModel.uiState.collectAsState()
 
-    // Kiểm tra hướng màn hình để quyết định số cột (Dọc: 1 cột, Ngang: 2 cột)
     val configuration = LocalConfiguration.current
     val isLandscape = configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
     val columns = if (isLandscape) 2 else 1
 
-    // Gọi API lọc mới mỗi khi tham số đầu vào thay đổi
     LaunchedEffect(query, genre, yearRange, sortBy) {
         viewModel.setFiltersAndSearch(query, genre, yearRange, sortBy)
     }
 
-    // Tự động tải thêm khi cuộn gần tới cuối danh sách
     val movies = uiState.movies
 
     Scaffold(
@@ -52,26 +56,26 @@ fun SearchResultScreen(
             TopAppBar(
                 title = { 
                     Column {
-                        Text("Kết quả tìm kiếm", color = Color.White, fontSize = 18.sp)
+                        Text("Kết quả tìm kiếm", color = textColor, fontSize = 18.sp)
                         val filterText = listOfNotNull(
                             query?.takeIf { it.isNotBlank() }?.let { "Từ khóa: $it" },
                             genre?.takeIf { it.isNotBlank() }?.let { "Thể loại: $it" },
                             yearRange?.takeIf { it.isNotBlank() }?.let { "Năm: $it" }
                         ).joinToString(" | ")
                         if (filterText.isNotBlank()) {
-                            Text(filterText, color = Color.Gray, fontSize = 12.sp)
+                            Text(filterText, color = if (isDarkTheme) Color.Gray else Color.DarkGray, fontSize = 12.sp)
                         }
                     }
                 },
                 navigationIcon = {
                     IconButton(onClick = { navController.popBackStack() }) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back", tint = Color.White)
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back", tint = textColor)
                     }
                 },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = Color(0xFF0B121F))
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = backgroundColor)
             )
         },
-        containerColor = Color(0xFF0B121F)
+        containerColor = backgroundColor
     ) { padding ->
         if (movies.isEmpty() && !uiState.isLoading) {
             Box(modifier = Modifier.fillMaxSize().padding(padding), contentAlignment = Alignment.Center) {
@@ -91,6 +95,8 @@ fun SearchResultScreen(
                     MovieHorizontalRowItem(
                         movie = movie,
                         isFavorite = uiState.favoriteMovieIds.contains(movie.id),
+                        cardColor = cardColor,
+                        textColor = textColor,
                         onFavoriteClick = { viewModel.toggleFavorite(movie) },
                         onCardClick = {
                             navController.navigate(Screen.Detail.createRoute(movie.id))
@@ -98,16 +104,14 @@ fun SearchResultScreen(
                     )
                 }
 
-                // Hiển thị loading khi tải trang tiếp theo - Chiếm hết số cột
                 if (uiState.isLoading) {
                     item(span = { GridItemSpan(columns) }) {
                         Box(modifier = Modifier.fillMaxWidth().padding(8.dp), contentAlignment = Alignment.Center) {
-                            CircularProgressIndicator(color = Color(0xFF38B6FF))
+                            CircularProgressIndicator(color = primaryColor)
                         }
                     }
                 }
 
-                // Trigger tải thêm phim khi cuộn tới cuối - Chiếm hết số cột
                 item(span = { GridItemSpan(columns) }) {
                     LaunchedEffect(Unit) {
                         if (!uiState.isEndReached && !uiState.isLoading) {

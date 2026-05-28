@@ -44,19 +44,23 @@ import com.example.flickfind_ltttbdd.ui.viewmodel.HomeViewModel
 @Composable
 fun HomeScreen(
     viewModel: HomeViewModel,
-    navController: NavController
+    navController: NavController,
+    isDarkTheme: Boolean
 ) {
-    // Lắng nghe trạng thái UI State từ ViewModel phát ra
+    // [GHI CHÚ]: Đồng bộ màu sắc theo theme Sáng/Tối
+    val backgroundColor = if (isDarkTheme) Color(0xFF0B101B) else Color(0xFFF0F4F8)
+    val cardColor = if (isDarkTheme) Color(0xFF172033) else Color.White
+    val textColor = if (isDarkTheme) Color.White else Color.Black
+    val searchBarColor = if (isDarkTheme) Color(0xFF131C2E) else Color.White
+
     val uiState by viewModel.uiState.collectAsState()
     var searchQuery by remember { mutableStateOf("") }
     var isSuggestionsVisible by remember { mutableStateOf(false) }
 
-    // Kiểm tra hướng màn hình để quyết định số cột (Dọc: 1 cột, Ngang: 2 cột)
     val configuration = LocalConfiguration.current
     val isLandscape = configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
     val columns = if (isLandscape) 2 else 1
 
-    // Xử lý Debounce tìm kiếm: Chỉ tìm khi nhập > 3 ký tự và dừng gõ 2 giây
     LaunchedEffect(searchQuery) {
         if (searchQuery.length > 3) {
             kotlinx.coroutines.delay(2000)
@@ -68,8 +72,7 @@ fun HomeScreen(
         }
     }
 
-    // Giao diện tổng thể sử dụng LazyVerticalGrid để hỗ trợ hiển thị lưới khi xoay ngang
-    Box(modifier = Modifier.fillMaxSize().background(Color(0xFF0B121F))) {
+    Box(modifier = Modifier.fillMaxSize().background(backgroundColor)) {
         LazyVerticalGrid(
             columns = GridCells.Fixed(columns),
             modifier = Modifier.fillMaxSize(),
@@ -77,7 +80,6 @@ fun HomeScreen(
             verticalArrangement = Arrangement.spacedBy(16.dp),
             horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            // 1. KHỐI LOGO (Căn giữa) - Chiếm hết số cột
             item(span = { GridItemSpan(columns) }) {
                 Box(
                     modifier = Modifier
@@ -86,7 +88,7 @@ fun HomeScreen(
                     contentAlignment = Alignment.Center
                 ) {
                     Image(
-                        painter = painterResource(id = R.drawable.logo_v1),
+                        painter = painterResource(id = if (isDarkTheme) R.drawable.logo_v1 else R.drawable.logo_v4),
                         contentDescription = "Logo FlickFind",
                         modifier = Modifier
                             .width(340.dp)
@@ -96,15 +98,12 @@ fun HomeScreen(
                 }
             }
 
-            // 2. THANH TÌM KIẾM (Search Bar) - Chiếm hết số cột
             item(span = { GridItemSpan(columns) }) {
                 Column(modifier = Modifier.fillMaxWidth()) {
                     OutlinedTextField(
                         value = searchQuery,
                         onValueChange = {
                             searchQuery = it
-                            // Trình điều khiển hiển thị gợi ý đã được xử lý bởi LaunchedEffect (Debounce)
-                            // Tuy nhiên, khi xóa text về <= 3 thì ẩn ngay lập tức cho trải nghiệm mượt mà
                             if (it.length <= 3) {
                                 isSuggestionsVisible = false
                             }
@@ -132,11 +131,11 @@ fun HomeScreen(
                         shape = RoundedCornerShape(8.dp),
                         colors = OutlinedTextFieldDefaults.colors(
                             focusedBorderColor = Color(0xFF38B6FF),
-                            unfocusedBorderColor = Color(0xFF233044),
-                            focusedContainerColor = Color(0xFF131C2E),
-                            unfocusedContainerColor = Color(0xFF131C2E),
-                            focusedTextColor = Color.White,
-                            unfocusedTextColor = Color.White
+                            unfocusedBorderColor = if (isDarkTheme) Color(0xFF233044) else Color.LightGray,
+                            focusedContainerColor = searchBarColor,
+                            unfocusedContainerColor = searchBarColor,
+                            focusedTextColor = textColor,
+                            unfocusedTextColor = textColor
                         ),
                         singleLine = true,
                         keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
@@ -150,13 +149,12 @@ fun HomeScreen(
                         )
                     )
 
-                    // Hiển thị danh sách gợi ý ngay bên dưới thanh tìm kiếm (Dropdown overlay style)
                     if (isSuggestionsVisible && uiState.searchSuggestions.isNotEmpty()) {
                         Card(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .padding(top = 4.dp),
-                            colors = CardDefaults.cardColors(containerColor = Color(0xFF131C2E)),
+                            colors = CardDefaults.cardColors(containerColor = searchBarColor),
                             shape = RoundedCornerShape(8.dp),
                             elevation = CardDefaults.cardElevation(8.dp)
                         ) {
@@ -164,7 +162,7 @@ fun HomeScreen(
                                 uiState.searchSuggestions.forEach { movie ->
                                     Text(
                                         text = movie.title,
-                                        color = Color.White,
+                                        color = textColor,
                                         modifier = Modifier
                                             .fillMaxWidth()
                                             .clickable {
@@ -174,10 +172,9 @@ fun HomeScreen(
                                             .padding(12.dp),
                                         fontSize = 14.sp
                                     )
-                                    HorizontalDivider(color = Color(0xFF0B121F), thickness = 1.dp)
+                                    HorizontalDivider(color = backgroundColor, thickness = 1.dp)
                                 }
 
-                                // Nút màu xanh (Xem tất cả kết quả)
                                 Button(
                                     onClick = {
                                         navController.navigate(Screen.SearchResult.createRoute(query = searchQuery))
@@ -186,7 +183,7 @@ fun HomeScreen(
                                     modifier = Modifier
                                         .fillMaxWidth()
                                         .height(40.dp),
-                                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF4CAF50)), // Màu xanh lá như yêu cầu
+                                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF4CAF50)),
                                     shape = RoundedCornerShape(bottomStart = 8.dp, bottomEnd = 8.dp)
                                 ) {
                                     Text("Xem tất cả kết quả", color = Color.White, fontSize = 12.sp)
@@ -197,10 +194,8 @@ fun HomeScreen(
                 }
             }
 
-            // Giao diện trang chủ không thay đổi theo searchQuery (Dùng uiState.movies gốc)
             val allMovies = uiState.movies
 
-            // 3. MỤC PHIM PHỔ BIẾN - Chiếm hết số cột
             if (allMovies.isNotEmpty()) {
                 item(span = { GridItemSpan(columns) }) {
                     Row(
@@ -210,7 +205,7 @@ fun HomeScreen(
                     ) {
                         Text(
                             text = "Phim Phổ Biến",
-                            color = Color.White,
+                            color = textColor,
                             fontSize = 18.sp,
                             fontWeight = FontWeight.Bold
                         )
@@ -219,7 +214,6 @@ fun HomeScreen(
                             color = Color(0xFF38B6FF),
                             fontSize = 14.sp,
                             modifier = Modifier.clickable {
-                                // Điều hướng tới trang kết quả tìm kiếm và yêu cầu sắp xếp theo đánh giá cao nhất
                                 navController.navigate(Screen.SearchResult.createRoute(sortBy = "rating"))
                             }
                         )
@@ -233,6 +227,8 @@ fun HomeScreen(
                             MovieItemCard(
                                 movie = movie,
                                 isFavorite = uiState.favoriteMovieIds.contains(movie.id),
+                                cardColor = cardColor,
+                                textColor = textColor,
                                 onFavoriteClick = { viewModel.toggleFavorite(movie) },
                                 onCardClick = {
                                     navController.navigate(Screen.Detail.createRoute(movie.id))
@@ -243,12 +239,11 @@ fun HomeScreen(
                 }
             }
 
-            // 4. MỤC PHIM HOT
             if (allMovies.isNotEmpty()) {
                 item(span = { GridItemSpan(columns) }) {
                     Text(
                         text = "Phim Hot",
-                        color = Color.White,
+                        color = textColor,
                         fontSize = 18.sp,
                         fontWeight = FontWeight.Bold,
                         modifier = Modifier.padding(bottom = 8.dp)
@@ -266,6 +261,8 @@ fun HomeScreen(
                         MovieHorizontalRowItem(
                             movie = movie,
                             isFavorite = uiState.favoriteMovieIds.contains(movie.id),
+                            cardColor = cardColor,
+                            textColor = textColor,
                             onFavoriteClick = { viewModel.toggleFavorite(movie) },
                             onCardClick = {
                                 navController.navigate(Screen.Detail.createRoute(movie.id))
@@ -275,7 +272,6 @@ fun HomeScreen(
                 }
             }
 
-            // 5. TRẠNG THÁI LOADING - Chiếm hết số cột
             if (uiState.isLoading) {
                 item(span = { GridItemSpan(columns) }) {
                     Box(
@@ -301,11 +297,12 @@ fun HomeScreen(
     }
 }
 
-// COMPONENTS 1: Thẻ Phim Cuộn Ngang (Phim Phổ Biến)
 @Composable
 fun MovieItemCard(
     movie: MovieResponse,
     isFavorite: Boolean,
+    cardColor: Color,
+    textColor: Color,
     onFavoriteClick: () -> Unit,
     onCardClick: () -> Unit
 ) {
@@ -313,19 +310,18 @@ fun MovieItemCard(
         modifier = Modifier
             .width(140.dp)
             .clickable { onCardClick() },
-        colors = CardDefaults.cardColors(containerColor = Color(0xFF131C2E)),
-        shape = RoundedCornerShape(8.dp)
+        colors = CardDefaults.cardColors(containerColor = cardColor),
+        shape = RoundedCornerShape(8.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
         Column {
             Box(modifier = Modifier.height(180.dp).fillMaxWidth()) {
-                // Thư viện Coil tự tải ảnh từ URL cực kỳ mượt mà
                 AsyncImage(
                     model = movie.posterPath,
                     contentDescription = movie.title,
                     modifier = Modifier.fillMaxSize().clip(RoundedCornerShape(topStart = 8.dp, topEnd = 8.dp)),
                     contentScale = ContentScale.Crop
                 )
-                // Nút trái tim yêu thích bọc trên góc ảnh
                 IconButton(
                     onClick = onFavoriteClick,
                     modifier = Modifier.align(Alignment.TopEnd)
@@ -337,9 +333,8 @@ fun MovieItemCard(
                     )
                 }
             }
-            // Khối nội dung chữ bên dưới ảnh giống y hệt Wireframe
             Column(modifier = Modifier.padding(8.dp)) {
-                Text(text = movie.title, color = Color.White, fontSize = 14.sp, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                Text(text = movie.title, color = textColor, fontSize = 14.sp, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
                 Text(text = movie.genres.joinToString(", "), color = Color.Gray, fontSize = 12.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
                 Text(text = "★ ${movie.rating}", color = Color(0xFFFFC107), fontSize = 12.sp, fontWeight = FontWeight.Bold)
             }
@@ -347,11 +342,12 @@ fun MovieItemCard(
     }
 }
 
-// COMPONENTS 2: Dòng Phim Cuộn Dọc (Phim Hot)
 @Composable
 fun MovieHorizontalRowItem(
     movie: MovieResponse,
     isFavorite: Boolean,
+    cardColor: Color,
+    textColor: Color,
     onFavoriteClick: () -> Unit,
     onCardClick: () -> Unit
 ) {
@@ -360,8 +356,9 @@ fun MovieHorizontalRowItem(
             .fillMaxWidth()
             .height(100.dp)
             .clickable { onCardClick() },
-        colors = CardDefaults.cardColors(containerColor = Color(0xFF131C2E)),
-        shape = RoundedCornerShape(8.dp)
+        colors = CardDefaults.cardColors(containerColor = cardColor),
+        shape = RoundedCornerShape(8.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
         Row(modifier = Modifier.fillMaxSize()) {
             AsyncImage(
@@ -377,7 +374,7 @@ fun MovieHorizontalRowItem(
                     .padding(12.dp),
                 verticalArrangement = Arrangement.Center
             ) {
-                Text(text = movie.title, color = Color.White, fontSize = 15.sp, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                Text(text = movie.title, color = textColor, fontSize = 15.sp, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
                 Text(text = movie.genres.joinToString(", "), color = Color.Gray, fontSize = 13.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
                 Text(text = "★ ${movie.rating}", color = Color(0xFFFFC107), fontSize = 13.sp, fontWeight = FontWeight.Bold)
             }
@@ -386,7 +383,7 @@ fun MovieHorizontalRowItem(
                     Icon(
                         imageVector = if (isFavorite) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
                         contentDescription = "Favorite",
-                        tint = if (isFavorite) Color.Red else Color.White
+                        tint = if (isFavorite) Color.Red else (if (textColor == Color.White) Color.White else Color.Black)
                     )
                 }
             }

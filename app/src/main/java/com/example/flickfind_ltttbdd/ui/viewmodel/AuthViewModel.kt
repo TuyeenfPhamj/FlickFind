@@ -5,6 +5,9 @@ import androidx.lifecycle.viewModelScope
 import com.example.flickfind_ltttbdd.data.MovieRepository
 import com.example.flickfind_ltttbdd.data.local.UserEntity
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.auth.FirebaseAuthInvalidCredentialsException
+import com.google.firebase.auth.FirebaseAuthUserCollisionException
+import com.google.firebase.auth.FirebaseAuthWeakPasswordException
 import com.google.firebase.auth.UserProfileChangeRequest
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -42,8 +45,12 @@ class AuthViewModel(private val repository: MovieRepository) : ViewModel() {
     }
 
     fun login(email: String, password: String) {
-        if (email.isBlank() || password.isBlank()) {
-            _uiState.update { it.copy(errorMessage = "Vui lòng nhập đầy đủ thông tin") }
+        if (email.isBlank()) {
+            _uiState.update { it.copy(errorMessage = "Vui lòng nhập Email") }
+            return
+        }
+        if (password.isBlank()) {
+            _uiState.update { it.copy(errorMessage = "Vui lòng nhập mật khẩu") }
             return
         }
         
@@ -66,18 +73,38 @@ class AuthViewModel(private val repository: MovieRepository) : ViewModel() {
 
                 _uiState.update { it.copy(isLoading = false, isSuccess = true, isLoggedIn = true) }
             } catch (e: Exception) {
-                _uiState.update { it.copy(isLoading = false, errorMessage = e.localizedMessage) }
+                val friendlyMessage = when (e) {
+                    is FirebaseAuthInvalidCredentialsException -> "Tài khoản hoặc mật khẩu không chính xác"
+                    else -> "Lỗi đăng nhập: ${translateError(e.message)}"
+                }
+                _uiState.update { it.copy(isLoading = false, errorMessage = friendlyMessage) }
             }
         }
     }
 
     fun register(name: String, email: String, password: String, confirmPass: String) {
-        if (name.isBlank() || email.isBlank() || password.isBlank() || confirmPass.isBlank()) {
-            _uiState.update { it.copy(errorMessage = "Vui lòng nhập đầy đủ thông tin") }
+        if (name.isBlank()) {
+            _uiState.update { it.copy(errorMessage = "Vui lòng nhập họ tên") }
+            return
+        }
+        if (email.isBlank()) {
+            _uiState.update { it.copy(errorMessage = "Vui lòng nhập Email") }
+            return
+        }
+        if (!android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
+            _uiState.update { it.copy(errorMessage = "Định dạng Email không hợp lệ") }
+            return
+        }
+        if (password.isBlank()) {
+            _uiState.update { it.copy(errorMessage = "Vui lòng nhập mật khẩu") }
+            return
+        }
+        if (password.length < 6) {
+            _uiState.update { it.copy(errorMessage = "Mật khẩu phải có ít nhất 6 ký tự") }
             return
         }
         if (password != confirmPass) {
-            _uiState.update { it.copy(errorMessage = "Mật khẩu không khớp") }
+            _uiState.update { it.copy(errorMessage = "Mật khẩu xác nhận không khớp") }
             return
         }
 
@@ -107,8 +134,23 @@ class AuthViewModel(private val repository: MovieRepository) : ViewModel() {
 
                 _uiState.update { it.copy(isLoading = false, isSuccess = true, isLoggedIn = true) }
             } catch (e: Exception) {
-                _uiState.update { it.copy(isLoading = false, errorMessage = e.localizedMessage) }
+                val friendlyMessage = when (e) {
+                    is FirebaseAuthWeakPasswordException -> "Mật khẩu quá yếu"
+                    is FirebaseAuthInvalidCredentialsException -> "Email không hợp lệ"
+                    is FirebaseAuthUserCollisionException -> "Email này đã được sử dụng bởi một tài khoản khác"
+                    else -> "Lỗi đăng ký: ${translateError(e.message)}"
+                }
+                _uiState.update { it.copy(isLoading = false, errorMessage = friendlyMessage) }
             }
+        }
+    }
+
+    private fun translateError(message: String?): String {
+        if (message == null) return "Lỗi không xác định"
+        return when {
+            message.contains("network", ignoreCase = true) -> "Lỗi kết nối mạng"
+            message.contains("too many requests", ignoreCase = true) -> "Quá nhiều yêu cầu. Vui lòng thử lại sau"
+            else -> message
         }
     }
 

@@ -34,7 +34,6 @@ import coil.compose.AsyncImage
 import com.example.flickfind_ltttbdd.data.local.FavoriteMovieEntity
 import com.example.flickfind_ltttbdd.ui.viewmodel.ProfileViewModel
 import com.example.flickfind_ltttbdd.navigation.Screen
-import androidx.compose.ui.tooling.preview.Preview
 import com.example.flickfind_ltttbdd.data.local.UserEntity
 import com.google.firebase.auth.FirebaseAuth
 
@@ -42,10 +41,18 @@ import com.google.firebase.auth.FirebaseAuth
 fun ProfileScreen(
     viewModel: ProfileViewModel,
     navController: NavController,
+    isDarkTheme: Boolean,
     onLogout: () -> Unit = {}
 ) {
     val uiState by viewModel.uiState.collectAsState()
-    val bgColor = Color(0xFF0B101B)
+    
+    // [GHI CHÚ]: Đồng bộ màu sắc theo theme Sáng/Tối
+    val bgColor = if (isDarkTheme) Color(0xFF0B101B) else Color(0xFFF0F4F8)
+    val cardColor = if (isDarkTheme) Color(0xFF172033) else Color.White
+    val textColor = if (isDarkTheme) Color.White else Color.Black
+    val subTextColor = if (isDarkTheme) Color.Gray else Color.DarkGray
+    val secondaryCardColor = if (isDarkTheme) Color(0xFF23304B) else Color(0xFFDEE5EF)
+
     val context = LocalContext.current
     var isEditMode by remember { mutableStateOf(false) }
     var showNameDialog by remember { mutableStateOf(false) }
@@ -54,15 +61,12 @@ fun ProfileScreen(
         contract = ActivityResultContracts.PickVisualMedia(),
         onResult = { uri ->
             uri?.let { 
-                // Cấp quyền truy cập lâu dài cho URI này để ảnh không bị mất khi khởi động lại app
                 try {
                     context.contentResolver.takePersistableUriPermission(
                         it,
                         Intent.FLAG_GRANT_READ_URI_PERMISSION
                     )
-                } catch (e: Exception) {
-                    // Một số URI không hỗ trợ persistable permission
-                }
+                } catch (e: Exception) {}
                 viewModel.updateAvatar(it.toString()) 
             }
         }
@@ -71,6 +75,8 @@ fun ProfileScreen(
     if (showNameDialog) {
         NameEditDialog(
             currentName = uiState.user?.name ?: "",
+            cardColor = cardColor,
+            textColor = textColor,
             onDismiss = { showNameDialog = false },
             onConfirm = { newName ->
                 viewModel.updateName(newName)
@@ -86,11 +92,13 @@ fun ProfileScreen(
         contentPadding = PaddingValues(16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        // 1. Header: Thông tin tài khoản
         item {
             ProfileHeader(
                 name = uiState.user?.name ?: "Người dùng",
                 avatarUrl = uiState.user?.avatarUrl ?: "",
+                cardColor = cardColor,
+                textColor = textColor,
+                secondaryColor = secondaryCardColor,
                 onLogout = onLogout,
                 onEditAvatar = {
                     photoPickerLauncher.launch(
@@ -101,11 +109,10 @@ fun ProfileScreen(
             )
         }
 
-        // 2. Dòng chữ tiêu đề
         item {
             Text(
                 text = "Bảng thống kê thể loại phim đã xem",
-                color = Color.Cyan,
+                color = if (isDarkTheme) Color.Cyan else Color(0xFF00796B),
                 fontSize = 15.sp,
                 fontWeight = FontWeight.Bold,
                 modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
@@ -113,15 +120,17 @@ fun ProfileScreen(
             )
         }
 
-        // 3. Statistics: Biểu đồ cột ngang
         item {
             GenreBarChartSection(
                 genreDistribution = uiState.genreDistribution,
-                totalTime = uiState.totalWatchTime
+                totalTime = uiState.totalWatchTime,
+                cardColor = cardColor,
+                textColor = textColor,
+                secondaryColor = secondaryCardColor,
+                isDarkTheme = isDarkTheme
             )
         }
 
-        // 4. Title Section for Favorites with Edit Toggle
         item {
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -130,14 +139,15 @@ fun ProfileScreen(
             ) {
                 Text(
                     text = "Danh sách yêu thích",
-                    color = Color.White,
+                    color = textColor,
                     fontSize = 18.sp,
                     fontWeight = FontWeight.Bold
                 )
                 Surface(
                     onClick = { isEditMode = !isEditMode },
-                    color = if (isEditMode) Color(0xFFE91E63) else Color(0xFF172033),
-                    shape = RoundedCornerShape(8.dp)
+                    color = if (isEditMode) Color(0xFFE91E63) else cardColor,
+                    shape = RoundedCornerShape(8.dp),
+                    shadowElevation = 2.dp
                 ) {
                     Row(
                         modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
@@ -145,14 +155,14 @@ fun ProfileScreen(
                     ) {
                         Text(
                             text = if (isEditMode) "Xong" else "Sửa",
-                            color = Color.White,
+                            color = if (isEditMode || isDarkTheme) Color.White else Color.Black,
                             fontSize = 12.sp
                         )
                         Spacer(modifier = Modifier.width(4.dp))
                         Icon(
                             imageVector = if (isEditMode) Icons.Default.Done else Icons.Default.Edit,
                             contentDescription = null,
-                            tint = Color.White,
+                            tint = if (isEditMode || isDarkTheme) Color.White else Color.Black,
                             modifier = Modifier.size(14.dp)
                         )
                     }
@@ -160,11 +170,13 @@ fun ProfileScreen(
             }
         }
 
-        // 5. Horizontal Favorite Movie List
         items(uiState.favoriteMovies) { movie ->
             HorizontalFavoriteMovieItem(
                 movie = movie,
                 isEditMode = isEditMode,
+                cardColor = cardColor,
+                textColor = textColor,
+                subTextColor = subTextColor,
                 onToggleWatched = { viewModel.toggleWatched(movie) },
                 onDelete = { viewModel.deleteFavorite(movie) },
                 onClick = {
@@ -181,16 +193,20 @@ fun ProfileScreen(
 fun HorizontalFavoriteMovieItem(
     movie: FavoriteMovieEntity,
     isEditMode: Boolean,
+    cardColor: Color,
+    textColor: Color,
+    subTextColor: Color,
     onToggleWatched: () -> Unit,
     onDelete: () -> Unit,
     onClick: () -> Unit
 ) {
     Card(
-        colors = CardDefaults.cardColors(containerColor = Color(0xFF172033)),
+        colors = CardDefaults.cardColors(containerColor = cardColor),
         shape = RoundedCornerShape(12.dp),
         modifier = Modifier
             .fillMaxWidth()
-            .clickable { onClick() }
+            .clickable { onClick() },
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
         Row(
             modifier = Modifier
@@ -198,7 +214,6 @@ fun HorizontalFavoriteMovieItem(
                 .fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // 1. Ảnh phim bên trái
             val imageUrl = if (movie.posterPath.startsWith("/")) {
                 "https://image.tmdb.org/t/p/w500${movie.posterPath}"
             } else {
@@ -216,11 +231,10 @@ fun HorizontalFavoriteMovieItem(
 
             Spacer(modifier = Modifier.width(12.dp))
 
-            // 2. Thông tin phim ở giữa
             Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = movie.title,
-                    color = Color.White,
+                    color = textColor,
                     fontSize = 15.sp,
                     fontWeight = FontWeight.Bold,
                     maxLines = 1,
@@ -228,7 +242,7 @@ fun HorizontalFavoriteMovieItem(
                 )
                 Text(
                     text = movie.genre,
-                    color = Color.Gray,
+                    color = subTextColor,
                     fontSize = 12.sp,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
@@ -237,14 +251,13 @@ fun HorizontalFavoriteMovieItem(
                     verticalAlignment = Alignment.CenterVertically,
                     modifier = Modifier.padding(top = 4.dp)
                 ) {
-                    Icon(Icons.Default.Star, null, tint = Color.Yellow, modifier = Modifier.size(12.dp))
+                    Icon(Icons.Default.Star, null, tint = Color(0xFFFFC107), modifier = Modifier.size(12.dp))
                     Spacer(modifier = Modifier.width(4.dp))
-                    Text(text = movie.rating.toString(), color = Color.White, fontSize = 12.sp)
+                    Text(text = movie.rating.toString(), color = textColor, fontSize = 12.sp)
                     Spacer(modifier = Modifier.width(12.dp))
-                    Text(text = "${movie.runtime}p", color = Color.Gray, fontSize = 12.sp)
+                    Text(text = "${movie.runtime}p", color = subTextColor, fontSize = 12.sp)
                 }
 
-                // Chế độ chỉnh sửa trạng thái 1 trong 2
                 if (isEditMode) {
                     Spacer(modifier = Modifier.height(8.dp))
                     Row(
@@ -265,13 +278,11 @@ fun HorizontalFavoriteMovieItem(
                 }
             }
 
-            // 3. Góc phải dưới: Trạng thái hoặc Nút xóa
             Box(
                 modifier = Modifier.fillMaxHeight(),
                 contentAlignment = Alignment.BottomEnd
             ) {
                 if (isEditMode) {
-                    // Nút xóa màu đỏ (ở trên cùng bên phải khi sửa)
                     IconButton(
                         onClick = onDelete,
                         modifier = Modifier.align(Alignment.TopEnd).size(28.dp)
@@ -279,11 +290,10 @@ fun HorizontalFavoriteMovieItem(
                         Icon(Icons.Default.Close, null, tint = Color.Red, modifier = Modifier.size(20.dp))
                     }
                 } else {
-                    // Trạng thái hiển thị ở góc phải dưới khi xem bình thường
                     Surface(
                         color = if (movie.isWatched) Color(0xFF00BFA5) else Color(0xFFE91E63),
                         shape = RoundedCornerShape(4.dp),
-                        modifier = Modifier.padding(top = 60.dp) // Đẩy xuống dưới
+                        modifier = Modifier.padding(top = 60.dp)
                     ) {
                         Text(
                             text = if (movie.isWatched) "Đã xem" else "Chưa xem",
@@ -320,11 +330,12 @@ fun StatusChoiceChip(text: String, isSelected: Boolean, onClick: () -> Unit) {
 }
 
 @Composable
-fun GenreBarChartSection(genreDistribution: Map<String, Int>, totalTime: Int) {
+fun GenreBarChartSection(genreDistribution: Map<String, Int>, totalTime: Int, cardColor: Color, textColor: Color, secondaryColor: Color, isDarkTheme: Boolean) {
     Card(
-        colors = CardDefaults.cardColors(containerColor = Color(0xFF172033)),
+        colors = CardDefaults.cardColors(containerColor = cardColor),
         shape = RoundedCornerShape(16.dp),
-        modifier = Modifier.fillMaxWidth()
+        modifier = Modifier.fillMaxWidth(),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
             Row(
@@ -332,8 +343,8 @@ fun GenreBarChartSection(genreDistribution: Map<String, Int>, totalTime: Int) {
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Text("Phân bổ thể loại", color = Color.White, fontSize = 14.sp, fontWeight = FontWeight.Medium)
-                Text(text = "Tổng: $totalTime phút", color = Color.Cyan, fontSize = 12.sp)
+                Text("Phân bổ thể loại", color = textColor, fontSize = 14.sp, fontWeight = FontWeight.Medium)
+                Text(text = "Tổng: $totalTime phút", color = if (isDarkTheme) Color.Cyan else Color(0xFF00796B), fontSize = 12.sp)
             }
             Spacer(modifier = Modifier.height(12.dp))
             if (genreDistribution.isEmpty()) {
@@ -341,7 +352,7 @@ fun GenreBarChartSection(genreDistribution: Map<String, Int>, totalTime: Int) {
             } else {
                 val maxCount = genreDistribution.values.maxOrNull()?.toFloat() ?: 1f
                 genreDistribution.entries.sortedByDescending { it.value }.take(4).forEach { (genre, count) ->
-                    GenreBarItem(genre, count, count / maxCount)
+                    GenreBarItem(genre, count, count / maxCount, textColor, secondaryColor, isDarkTheme)
                     Spacer(modifier = Modifier.height(8.dp))
                 }
             }
@@ -350,32 +361,33 @@ fun GenreBarChartSection(genreDistribution: Map<String, Int>, totalTime: Int) {
 }
 
 @Composable
-fun GenreBarItem(genre: String, count: Int, ratio: Float) {
+fun GenreBarItem(genre: String, count: Int, ratio: Float, textColor: Color, secondaryColor: Color, isDarkTheme: Boolean) {
     Column(modifier = Modifier.fillMaxWidth()) {
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-            Text(text = genre, color = Color.LightGray, fontSize = 10.sp)
-            Text(text = "$count phim", color = Color.White, fontSize = 10.sp)
+            Text(text = genre, color = textColor.copy(alpha = 0.7f), fontSize = 10.sp)
+            Text(text = "$count phim", color = textColor, fontSize = 10.sp)
         }
         Spacer(modifier = Modifier.height(4.dp))
-        Box(modifier = Modifier.fillMaxWidth().height(6.dp).clip(CircleShape).background(Color(0xFF23304B))) {
-            Box(modifier = Modifier.fillMaxWidth(ratio).fillMaxHeight().clip(CircleShape).background(Color.Cyan))
+        Box(modifier = Modifier.fillMaxWidth().height(6.dp).clip(CircleShape).background(secondaryColor)) {
+            Box(modifier = Modifier.fillMaxWidth(ratio).fillMaxHeight().clip(CircleShape).background(if (isDarkTheme) Color.Cyan else Color(0xFF009688)))
         }
     }
 }
 
 @Composable
-fun ProfileHeader(name: String, avatarUrl: String, onLogout: () -> Unit, onEditAvatar: () -> Unit, onEditName: () -> Unit) {
+fun ProfileHeader(name: String, avatarUrl: String, cardColor: Color, textColor: Color, secondaryColor: Color, onLogout: () -> Unit, onEditAvatar: () -> Unit, onEditName: () -> Unit) {
     Card(
-        colors = CardDefaults.cardColors(containerColor = Color(0xFF172033)),
+        colors = CardDefaults.cardColors(containerColor = cardColor),
         shape = RoundedCornerShape(16.dp),
-        modifier = Modifier.fillMaxWidth()
+        modifier = Modifier.fillMaxWidth(),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
         Row(modifier = Modifier.padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
             Box(
                 modifier = Modifier
                     .size(50.dp)
                     .clip(CircleShape)
-                    .background(Color(0xFF23304B))
+                    .background(secondaryColor)
                     .clickable { onEditAvatar() }, 
                 contentAlignment = Alignment.Center
             ) {
@@ -388,7 +400,7 @@ fun ProfileHeader(name: String, avatarUrl: String, onLogout: () -> Unit, onEditA
             Spacer(modifier = Modifier.width(12.dp))
             Column(modifier = Modifier.weight(1f)) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text(text = name, color = Color.White, fontSize = 16.sp, fontWeight = FontWeight.Medium)
+                    Text(text = name, color = textColor, fontSize = 16.sp, fontWeight = FontWeight.Medium)
                     Spacer(modifier = Modifier.width(4.dp))
                     Icon(
                         imageVector = Icons.Default.Edit,
@@ -401,35 +413,37 @@ fun ProfileHeader(name: String, avatarUrl: String, onLogout: () -> Unit, onEditA
             }
             Button(
                 onClick = onLogout,
-                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF23304B)),
+                colors = ButtonDefaults.buttonColors(containerColor = secondaryColor),
                 shape = RoundedCornerShape(8.dp),
                 contentPadding = PaddingValues(horizontal = 12.dp, vertical = 4.dp),
                 modifier = Modifier.height(32.dp)
             ) {
-                Text("Đăng xuất", color = Color.White, fontSize = 11.sp)
+                Text("Đăng xuất", color = textColor, fontSize = 11.sp)
             }
         }
     }
 }
 
 @Composable
-fun NameEditDialog(currentName: String, onDismiss: () -> Unit, onConfirm: (String) -> Unit) {
+fun NameEditDialog(currentName: String, cardColor: Color, textColor: Color, onDismiss: () -> Unit, onConfirm: (String) -> Unit) {
     var text by remember { mutableStateOf(currentName) }
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Đổi tên tài khoản", color = Color.White) },
-        containerColor = Color(0xFF172033),
+        title = { Text("Đổi tên tài khoản", color = textColor) },
+        containerColor = cardColor,
         text = {
             Column {
-                Text("Nhập tên mới:", color = Color.Gray, fontSize = 14.sp)
+                Text("Nhập tên mới:", color = textColor.copy(alpha = 0.7f), fontSize = 14.sp)
                 Spacer(modifier = Modifier.height(8.dp))
                 OutlinedTextField(
                     value = text,
                     onValueChange = { text = it },
                     modifier = Modifier.fillMaxWidth(),
                     colors = OutlinedTextFieldDefaults.colors(
-                        focusedTextColor = Color.White,
-                        unfocusedTextColor = Color.White
+                        focusedTextColor = textColor,
+                        unfocusedTextColor = textColor,
+                        focusedBorderColor = Color.Cyan,
+                        unfocusedBorderColor = Color.Gray
                     )
                 )
             }
@@ -445,24 +459,4 @@ fun NameEditDialog(currentName: String, onDismiss: () -> Unit, onConfirm: (Strin
             }
         }
     )
-}
-
-@Preview(showBackground = true, backgroundColor = 0xFF0B101B)
-@Composable
-fun ProfileScreenPreview() {
-    val dummyUser = UserEntity(id = "1", name = "Nguyễn Văn A", avatarUrl = "")
-    val dummyMovies = listOf(
-        FavoriteMovieEntity("1", "1", "Inception", "/edv5bs1pUQC67SWHqcYf67OQ97R.jpg", "", "Hành động", 8.8f, 148, true),
-        FavoriteMovieEntity("2", "1", "The Dark Knight", "/qJ2tW6WMUDp9QmSJJIVP6YFZO8r.jpg", "", "Hành động", 9.0f, 152, true),
-    )
-    
-    LazyColumn(
-        modifier = Modifier.fillMaxSize().background(Color(0xFF0B101B)).padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
-    ) {
-        item { ProfileHeader(dummyUser.name, "", {}, {}, {}) }
-        item { GenreBarChartSection(mapOf("Hành động" to 5), 600) }
-        item { Text("Danh sách yêu thích", color = Color.White, fontSize = 18.sp, fontWeight = FontWeight.Bold) }
-        items(dummyMovies) { HorizontalFavoriteMovieItem(it, true, {}, {}, {}) }
-    }
 }

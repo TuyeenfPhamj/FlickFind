@@ -31,28 +31,28 @@ class AppViewModelProvider(private val context: Context) : ViewModelProvider.Fac
 
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
         val repo = getRepository(context)
-        // Trong thực tế, bạn sẽ lấy userId từ FirebaseAuth.
-        // Ví dụ: val userId = FirebaseAuth.getInstance().currentUser?.uid ?: "guest_user"
-        val userId = "guest_user"
+
+        // [GHI CHÚ]: Loại bỏ việc truyền cứng userId từ Factory. 
+        // Các ViewModel bây giờ sẽ tự lấy userId từ FirebaseAuth để đảm bảo tính thời gian thực khi đăng nhập/đăng xuất.
 
         if (modelClass.isAssignableFrom(HomeViewModel::class.java)) {
             @Suppress("UNCHECKED_CAST")
-            return HomeViewModel(repo, userId) as T
+            return HomeViewModel(repo) as T
         }
 
         if (modelClass.isAssignableFrom(SearchViewModel::class.java)) {
             @Suppress("UNCHECKED_CAST")
-            return SearchViewModel(repo, userId) as T
+            return SearchViewModel(repo) as T
         }
-        //đoạn sửa
+
         if(modelClass.isAssignableFrom(DetailViewModel::class.java)) {
             @Suppress("UNCHECKED_CAST")
-            return DetailViewModel(repo, userId) as T
+            return DetailViewModel(repo) as T
         }
 
         if (modelClass.isAssignableFrom(ProfileViewModel::class.java)) {
             @Suppress("UNCHECKED_CAST")
-            return ProfileViewModel(repo, userId) as T
+            return ProfileViewModel(repo) as T
         }
 
         if (modelClass.isAssignableFrom(AuthViewModel::class.java)) {

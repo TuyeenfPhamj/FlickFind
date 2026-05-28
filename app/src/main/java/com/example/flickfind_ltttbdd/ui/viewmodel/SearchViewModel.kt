@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.example.flickfind_ltttbdd.data.MovieRepository
 import com.example.flickfind_ltttbdd.data.local.FavoriteMovieEntity
 import com.example.flickfind_ltttbdd.data.remote.MovieResponse
+import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -25,21 +26,28 @@ data class SearchUiState(
 )
 
 class SearchViewModel(
-    private val repository: MovieRepository,
-    private val userId: String = "guest_user"
+    private val repository: MovieRepository
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(SearchUiState())
     val uiState: StateFlow<SearchUiState> = _uiState.asStateFlow()
 
     private var currentSearchJob: Job? = null
+    private var favoritesJob: Job? = null
 
-    init {
-        observeFavorites()
+    // [GHI CHÚ]: Lắng nghe thay đổi tài khoản để cập nhật icon Trái tim thời gian thực
+    private val authListener = FirebaseAuth.AuthStateListener { auth ->
+        val userId = auth.currentUser?.uid ?: "guest_user"
+        observeFavorites(userId)
     }
 
-    private fun observeFavorites() {
-        viewModelScope.launch {
+    init {
+        FirebaseAuth.getInstance().addAuthStateListener(authListener)
+    }
+
+    private fun observeFavorites(userId: String) {
+        favoritesJob?.cancel()
+        favoritesJob = viewModelScope.launch {
             repository.getAllFavorites(userId).collect { favoriteEntities ->
                 _uiState.update { currentState ->
                     currentState.copy(favoriteMovieIds = favoriteEntities.map { it.id }.toSet())
@@ -49,7 +57,6 @@ class SearchViewModel(
     }
 
     fun setFiltersAndSearch(query: String?, genre: String?, yearRange: String?, sortBy: String? = null) {
-        // Chuẩn hóa: Nếu chuỗi rỗng hoặc chỉ có khoảng trắng thì coi như null
         val cleanQuery = query?.takeIf { it.isNotBlank() }
         val cleanGenre = genre?.takeIf { it.isNotBlank() }
         val cleanYear = yearRange?.takeIf { it.isNotBlank() }
@@ -68,7 +75,6 @@ class SearchViewModel(
             )
         }
         
-        // Hủy job tìm kiếm cũ nếu người dùng thay đổi bộ lọc liên tục
         currentSearchJob?.cancel()
         currentSearchJob = viewModelScope.launch {
             performSearch()
@@ -78,12 +84,9 @@ class SearchViewModel(
     private suspend fun performSearch() {
         _uiState.update { it.copy(isLoading = true, errorMessage = null) }
 
-        // Giải pháp triệt để: Tải toàn bộ danh sách phim (100 phim) và lọc local.
-        // Điều này đảm bảo bộ lọc hoạt động độc lập, không phụ thuộc vào trạng thái 
-        // cuộn của màn hình chính và khắc phục giới hạn lọc của MockAPI.
         val result = repository.getMoviesFromApi(
             page = 1,
-            limit = 100, // Tải đủ số lượng phim dự kiến trong hệ thống
+            limit = 100,
             search = null
         )
 
@@ -93,19 +96,13 @@ class SearchViewModel(
                 val g = _uiState.value.genre
                 val y = _uiState.value.yearRange
 
-                // 1. Lọc theo từ khóa (Tiêu đề)
                 val matchQuery = q == null || movie.title.contains(q, ignoreCase = true)
-                
-                // 2. Lọc theo Thể loại (Lọc trong mảng genres)
                 val matchGenre = g == null || movie.genres.any { it.contains(g, ignoreCase = true) }
-                
-                // 3. Lọc theo Khoảng năm (Dựa trên releaseDate YYYY-MM-DD)
                 val matchYear = y == null || matchesYearRange(movie.releaseDate, y)
 
                 matchQuery && matchGenre && matchYear
             }
 
-            // Sắp xếp nếu có yêu cầu
             val sorted = if (_uiState.value.sortBy == "rating") {
                 filtered.sortedByDescending { it.rating }
             } else {
@@ -115,7 +112,7 @@ class SearchViewModel(
             _uiState.update { it.copy(
                 isLoading = false, 
                 movies = sorted,
-                isEndReached = true // Đã hoàn thành tải và lọc toàn bộ kho phim
+                isEndReached = true
             ) }
         }.onFailure { e ->
             _uiState.update { it.copy(
@@ -127,24 +124,21 @@ class SearchViewModel(
 
     private fun matchesYearRange(releaseDate: String, range: String): Boolean {
         return try {
-            // range: "2021 - 2025" -> start=2021, end=2025
             val years = range.split("-").map { it.trim().toIntOrNull() }
             val start = years.getOrNull(0) ?: 0
             val end = years.getOrNull(1) ?: 9999
             
-            // Lấy 4 ký tự đầu của "YYYY-MM-DD"
             val movieYear = releaseDate.take(4).toIntOrNull() ?: 0
             movieYear in start..end
         } catch (e: Exception) {
-            true // Nếu lỗi định dạng thì bỏ qua lọc năm này
+            true 
         }
     }
 
-    fun loadNextMovies() {
-        // Không cần loadNext nữa vì performSearch đã tải và lọc toàn bộ kho phim ngay lần đầu
-    }
+    fun loadNextMovies() {}
 
     fun toggleFavorite(movie: MovieResponse) {
+        val userId = FirebaseAuth.getInstance().currentUser?.uid ?: "guest_user"
         viewModelScope.launch {
             val isFav = repository.isMovieFavorite(movie.id, userId)
             val entity = FavoriteMovieEntity(
@@ -165,5 +159,10 @@ class SearchViewModel(
                 repository.addToFavorite(entity)
             }
         }
+    }
+
+    override fun onCleared() {
+        super.onCleared()
+        FirebaseAuth.getInstance().removeAuthStateListener(authListener)
     }
 }

@@ -23,8 +23,15 @@ import androidx.navigation.NavController
 @Composable
 fun FilterScreen(
     navController: NavController,
+    isDarkTheme: Boolean,
     onApplyFilters: (genre: String?, yearRange: String?) -> Unit
 ) {
+    // [GHI CHÚ]: Đồng bộ màu sắc theo theme Sáng/Tối
+    val backgroundColor = if (isDarkTheme) Color(0xFF0B101B) else Color(0xFFF0F4F8)
+    val cardColor = if (isDarkTheme) Color(0xFF131C2E) else Color.White
+    val textColor = if (isDarkTheme) Color.White else Color.Black
+    val primaryColor = Color(0xFF38B6FF)
+
     var selectedGenre by remember { mutableStateOf<String?>(null) }
     var selectedYearRange by remember { mutableStateOf<String?>(null) }
 
@@ -40,16 +47,16 @@ fun FilterScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Lọc phim", color = Color.White) },
+                title = { Text("Lọc phim", color = textColor) },
                 navigationIcon = {
                     IconButton(onClick = { navController.popBackStack() }) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "Back", tint = Color.White)
+                        Icon(Icons.Default.ArrowBack, contentDescription = "Back", tint = textColor)
                     }
                 },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = Color(0xFF0B121F))
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = backgroundColor)
             )
         },
-        containerColor = Color(0xFF0B121F)
+        containerColor = backgroundColor
     ) { padding ->
         Column(
             modifier = Modifier
@@ -58,10 +65,9 @@ fun FilterScreen(
                 .padding(16.dp)
                 .verticalScroll(scrollState)
         ) {
-            Text("Theo thể loại", color = Color.White, fontSize = 18.sp, fontWeight = FontWeight.Bold)
+            Text("Theo thể loại", color = textColor, fontSize = 18.sp, fontWeight = FontWeight.Bold)
             Spacer(modifier = Modifier.height(12.dp))
             
-            // Grid thể loại (Không dùng Lazy để tự động giãn theo nội dung)
             genres.chunked(3).forEach { rowGenres ->
                 Row(
                     modifier = Modifier.fillMaxWidth(),
@@ -77,19 +83,24 @@ fun FilterScreen(
                                     maxLines = 1, 
                                     overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
                                     modifier = Modifier.fillMaxWidth(),
-                                    textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                                    textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+                                    fontSize = 12.sp
                                 ) 
                             },
                             modifier = Modifier.weight(1f),
                             colors = FilterChipDefaults.filterChipColors(
-                                containerColor = Color(0xFF131C2E),
-                                labelColor = Color.Gray,
-                                selectedContainerColor = Color(0xFF38B6FF),
+                                containerColor = cardColor,
+                                labelColor = if (isDarkTheme) Color.Gray else Color.DarkGray,
+                                selectedContainerColor = primaryColor,
                                 selectedLabelColor = Color.White
+                            ),
+                            border = FilterChipDefaults.filterChipBorder(
+                                borderColor = if (isDarkTheme) Color.Transparent else Color.LightGray,
+                                enabled = true,
+                                selected = selectedGenre == genre
                             )
                         )
                     }
-                    // Spacer bù nếu dòng cuối không đủ 3 cột
                     repeat(3 - rowGenres.size) {
                         Spacer(modifier = Modifier.weight(1f))
                     }
@@ -98,10 +109,9 @@ fun FilterScreen(
             }
 
             Spacer(modifier = Modifier.height(24.dp))
-            Text("Theo năm phát hành", color = Color.White, fontSize = 18.sp, fontWeight = FontWeight.Bold)
+            Text("Theo năm phát hành", color = textColor, fontSize = 18.sp, fontWeight = FontWeight.Bold)
             Spacer(modifier = Modifier.height(12.dp))
 
-            // Grid năm (Không dùng Lazy)
             yearRanges.chunked(2).forEach { rowYears ->
                 Row(
                     modifier = Modifier.fillMaxWidth(),
@@ -111,13 +121,18 @@ fun FilterScreen(
                         FilterChip(
                             selected = selectedYearRange == range,
                             onClick = { selectedYearRange = if (selectedYearRange == range) null else range },
-                            label = { Text(range, modifier = Modifier.fillMaxWidth(), textAlign = androidx.compose.ui.text.style.TextAlign.Center) },
+                            label = { Text(range, modifier = Modifier.fillMaxWidth(), textAlign = androidx.compose.ui.text.style.TextAlign.Center, fontSize = 12.sp) },
                             modifier = Modifier.weight(1f),
                             colors = FilterChipDefaults.filterChipColors(
-                                containerColor = Color(0xFF131C2E),
-                                labelColor = Color.Gray,
-                                selectedContainerColor = Color(0xFF38B6FF),
+                                containerColor = cardColor,
+                                labelColor = if (isDarkTheme) Color.Gray else Color.DarkGray,
+                                selectedContainerColor = primaryColor,
                                 selectedLabelColor = Color.White
+                            ),
+                            border = FilterChipDefaults.filterChipBorder(
+                                borderColor = if (isDarkTheme) Color.Transparent else Color.LightGray,
+                                enabled = true,
+                                selected = selectedYearRange == range
                             )
                         )
                     }
@@ -133,7 +148,7 @@ fun FilterScreen(
             Button(
                 onClick = { onApplyFilters(selectedGenre, selectedYearRange) },
                 modifier = Modifier.fillMaxWidth().padding(vertical = 16.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF38B6FF)),
+                colors = ButtonDefaults.buttonColors(containerColor = primaryColor),
                 shape = RoundedCornerShape(8.dp)
             ) {
                 Text("Áp dụng", color = Color.White, fontSize = 16.sp)

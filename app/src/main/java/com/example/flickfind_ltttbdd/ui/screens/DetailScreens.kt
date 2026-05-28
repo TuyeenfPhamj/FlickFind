@@ -15,12 +15,10 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.FavoriteBorder
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -32,8 +30,15 @@ import com.example.flickfind_ltttbdd.ui.viewmodel.DetailViewModel
 fun DetailScreen(
     movieId: String,
     viewModel: DetailViewModel,
+    isDarkTheme: Boolean,
     onBackClick: () -> Unit
 ) {
+    // [GHI CHÚ]: Đồng bộ màu sắc theo theme Sáng/Tối
+    val backgroundColor = if (isDarkTheme) Color(0xFF0B101B) else Color(0xFFF0F4F8)
+    val cardColor = if (isDarkTheme) Color(0xFF131C2E) else Color.White
+    val textColor = if (isDarkTheme) Color.White else Color.Black
+    val primaryColor = Color(0xFF38B6FF)
+
     val movie by viewModel.movie.collectAsState()
     val isLoading by viewModel.isLoading.collectAsState()
     val error by viewModel.error.collectAsState()
@@ -45,14 +50,14 @@ fun DetailScreen(
 
     Surface(
         modifier = Modifier.fillMaxSize(),
-        color = Color(0xFF0B121F) // Màu Navy đồng bộ toàn app
+        color = backgroundColor
     ) {
         Box(modifier = Modifier.fillMaxSize()) {
             when {
                 isLoading -> {
                     CircularProgressIndicator(
                         modifier = Modifier.align(Alignment.Center),
-                        color = Color(0xFF38B6FF)
+                        color = primaryColor
                     )
                 }
                 error != null -> {
@@ -60,13 +65,13 @@ fun DetailScreen(
                         modifier = Modifier.align(Alignment.Center),
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
-                        Text(text = error!!, color = Color.White)
+                        Text(text = error!!, color = textColor)
                         Spacer(modifier = Modifier.height(16.dp))
                         Button(
                             onClick = { viewModel.getMovieById(movieId) },
-                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF38B6FF))
+                            colors = ButtonDefaults.buttonColors(containerColor = primaryColor)
                         ) {
-                            Text("Thử lại")
+                            Text("Thử lại", color = Color.White)
                         }
                     }
                 }
@@ -74,6 +79,10 @@ fun DetailScreen(
                     MovieDetailContent(
                         movie = movie!!,
                         isFavorite = isFavorite,
+                        textColor = textColor,
+                        cardColor = cardColor,
+                        primaryColor = primaryColor,
+                        isDarkTheme = isDarkTheme,
                         onToggleFavorite = { viewModel.toggleFavorite(movie!!) },
                         onBackClick = onBackClick
                     )
@@ -87,6 +96,10 @@ fun DetailScreen(
 fun MovieDetailContent(
     movie: MovieResponse,
     isFavorite: Boolean,
+    textColor: Color,
+    cardColor: Color,
+    primaryColor: Color,
+    isDarkTheme: Boolean,
     onToggleFavorite: () -> Unit,
     onBackClick: () -> Unit
 ) {
@@ -95,13 +108,11 @@ fun MovieDetailContent(
             .fillMaxSize()
             .verticalScroll(rememberScrollState())
     ) {
-        // --- PHẦN 1: HEADER (BACKDROP + NÚT BACK + NÚT YÊU THÍCH + POSTER) ---
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(380.dp) // Chiều cao Header cố định
+                .height(380.dp)
         ) {
-            // 1.1 Ảnh Background (Backdrop) - Phủ kín toàn bộ Header để Poster không bị "rơi" ra ngoài
             AsyncImage(
                 model = movie.backdropPath,
                 contentDescription = null,
@@ -109,7 +120,6 @@ fun MovieDetailContent(
                 contentScale = ContentScale.Crop
             )
 
-            // 1.2 Nút Back (Mũi tên) - Góc trái trên
             IconButton(
                 onClick = onBackClick,
                 modifier = Modifier
@@ -124,27 +134,25 @@ fun MovieDetailContent(
                 )
             }
 
-            // 1.3 Nút yêu thích (Trái tim) - Căn góc phải dưới của Backdrop
             IconButton(
                 onClick = onToggleFavorite,
                 modifier = Modifier
                     .padding(16.dp)
-                    .padding(bottom = 8.dp) // Nâng nhẹ nút lên khỏi mép
+                    .padding(bottom = 8.dp)
                     .align(Alignment.BottomEnd)
-                    .background(Color(0xFF1E293B), CircleShape)
-                    .border(1.dp, Color(0xFF38B6FF), CircleShape)
+                    .background(if (isDarkTheme) Color(0xFF1E293B) else Color.White, CircleShape)
+                    .border(1.dp, primaryColor, CircleShape)
             ) {
                 Icon(
                     imageVector = if (isFavorite) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
                     contentDescription = "Yêu thích",
-                    tint = if (isFavorite) Color.Red else Color.White
+                    tint = if (isFavorite) Color.Red else (if (isDarkTheme) Color.White else Color.Black)
                 )
             }
 
-            // 1.4 Ảnh Poster - Thu nhỏ và nằm gọn trong ảnh nền
             Card(
                 modifier = Modifier
-                    .padding(start = 24.dp, bottom = 12.dp) // Cách đáy 12dp để không bị "tràn" xuống nội dung
+                    .padding(start = 24.dp, bottom = 12.dp)
                     .width(100.dp)
                     .height(150.dp)
                     .align(Alignment.BottomStart),
@@ -160,33 +168,32 @@ fun MovieDetailContent(
             }
         }
 
-        // --- PHẦN 2: KHUNG NỘI DUNG (Lên trên) ---
         Box(
             modifier = Modifier
                 .padding(16.dp)
                 .fillMaxWidth()
-                .border(1.dp, Color(0xFF38B6FF), RoundedCornerShape(12.dp))
-                .background(Color(0xFF131C2E).copy(alpha = 0.7f), RoundedCornerShape(12.dp))
+                .border(1.dp, primaryColor, RoundedCornerShape(12.dp))
+                .background(cardColor.copy(alpha = 0.8f), RoundedCornerShape(12.dp))
                 .padding(16.dp)
         ) {
             Column(modifier = Modifier.fillMaxWidth()) {
                 Text(
                     text = movie.title,
-                    color = Color.White,
+                    color = textColor,
                     fontSize = 22.sp,
                     fontWeight = FontWeight.Bold
                 )
                 Spacer(modifier = Modifier.height(8.dp))
                 Text(
                     text = "Nội dung:",
-                    color = Color(0xFF38B6FF),
+                    color = primaryColor,
                     fontSize = 16.sp,
                     fontWeight = FontWeight.SemiBold
                 )
                 Spacer(modifier = Modifier.height(4.dp))
                 Text(
                     text = movie.overview,
-                    color = Color.LightGray,
+                    color = if (isDarkTheme) Color.LightGray else Color.DarkGray,
                     fontSize = 14.sp,
                     lineHeight = 20.sp,
                     textAlign = TextAlign.Justify
@@ -194,36 +201,35 @@ fun MovieDetailContent(
             }
         }
 
-        // --- PHẦN 3: KHUNG THÔNG TIN CHI TIẾT (Xuống dưới) ---
         Column(
             modifier = Modifier
                 .padding(horizontal = 16.dp)
                 .padding(bottom = 32.dp)
                 .fillMaxWidth()
-                .border(1.dp, Color(0xFF38B6FF), RoundedCornerShape(12.dp))
-                .background(Color(0xFF131C2E).copy(alpha = 0.7f), RoundedCornerShape(12.dp))
+                .border(1.dp, primaryColor, RoundedCornerShape(12.dp))
+                .background(cardColor.copy(alpha = 0.8f), RoundedCornerShape(12.dp))
                 .padding(16.dp)
         ) {
             Text(
                 text = "Thông tin chi tiết",
-                color = Color.White,
+                color = textColor,
                 fontSize = 16.sp,
                 fontWeight = FontWeight.Bold
             )
-            HorizontalDivider(modifier = Modifier.padding(vertical = 12.dp), color = Color(0xFF233044))
+            HorizontalDivider(modifier = Modifier.padding(vertical = 12.dp), color = primaryColor.copy(alpha = 0.3f))
 
-            DetailInfoRow("Thời lượng", "${movie.runtime} phút")
-            DetailInfoRow("Đánh giá", "★ ${movie.rating}/10")
-            DetailInfoRow("Thể loại", movie.genres.joinToString(", "))
-            DetailInfoRow("Đạo diễn", movie.director)
-            DetailInfoRow("Diễn viên", movie.cast)
-            DetailInfoRow("Ngày ra mắt", movie.releaseDate)
+            DetailInfoRow("Thời lượng", "${movie.runtime} phút", textColor)
+            DetailInfoRow("Đánh giá", "★ ${movie.rating}/10", textColor)
+            DetailInfoRow("Thể loại", movie.genres.joinToString(", "), textColor)
+            DetailInfoRow("Đạo diễn", movie.director, textColor)
+            DetailInfoRow("Diễn viên", movie.cast, textColor)
+            DetailInfoRow("Ngày ra mắt", movie.releaseDate, textColor)
         }
     }
 }
 
 @Composable
-fun DetailInfoRow(label: String, value: String) {
+fun DetailInfoRow(label: String, value: String, textColor: Color) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -233,7 +239,7 @@ fun DetailInfoRow(label: String, value: String) {
         Text(text = label, color = Color.Gray, fontSize = 14.sp)
         Text(
             text = value,
-            color = Color.White,
+            color = textColor,
             fontSize = 14.sp,
             fontWeight = FontWeight.SemiBold,
             modifier = Modifier.widthIn(max = 220.dp),
