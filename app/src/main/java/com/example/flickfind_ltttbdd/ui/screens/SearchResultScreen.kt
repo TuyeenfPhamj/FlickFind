@@ -33,6 +33,18 @@ fun SearchResultScreen(
     navController: NavController
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    val snackbarHostState = remember { SnackbarHostState() }
+
+    // Xử lý hiển thị Snackbar khi có lỗi
+    LaunchedEffect(uiState.errorMessage) {
+        uiState.errorMessage?.let { message ->
+            snackbarHostState.showSnackbar(
+                message = message,
+                duration = SnackbarDuration.Short
+            )
+            viewModel.clearErrorMessage()
+        }
+    }
 
     // Kiểm tra hướng màn hình để quyết định số cột (Dọc: 1 cột, Ngang: 2 cột)
     val configuration = LocalConfiguration.current
@@ -71,7 +83,8 @@ fun SearchResultScreen(
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = Color(0xFF0B121F))
             )
         },
-        containerColor = Color(0xFF0B121F)
+        containerColor = Color(0xFF0B121F),
+        snackbarHost = { SnackbarHost(snackbarHostState) }
     ) { padding ->
         if (movies.isEmpty() && !uiState.isLoading) {
             Box(modifier = Modifier.fillMaxSize().padding(padding), contentAlignment = Alignment.Center) {

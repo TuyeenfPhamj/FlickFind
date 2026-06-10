@@ -113,8 +113,9 @@ fun HomeScreen(
                         placeholder = { Text("Thanh tìm kiếm...", color = Color.Gray) },
                         leadingIcon = {
                             IconButton(onClick = {
-                                if (searchQuery.isNotEmpty()) {
-                                    navController.navigate(Screen.SearchResult.createRoute(query = searchQuery))
+                                val cleanQuery = searchQuery.trim()
+                                if (cleanQuery.isNotEmpty()) {
+                                    navController.navigate(Screen.SearchResult.createRoute(query = cleanQuery))
                                 }
                             }) {
                                 Icon(Icons.Default.Search, contentDescription = "Search", tint = Color.Gray)
@@ -142,8 +143,9 @@ fun HomeScreen(
                         keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
                         keyboardActions = KeyboardActions(
                             onSearch = {
-                                if (searchQuery.isNotBlank()) {
-                                    navController.navigate(Screen.SearchResult.createRoute(query = searchQuery))
+                                val cleanQuery = searchQuery.trim()
+                                if (cleanQuery.isNotBlank()) {
+                                    navController.navigate(Screen.SearchResult.createRoute(query = cleanQuery))
                                     isSuggestionsVisible = false
                                 }
                             }
@@ -180,8 +182,11 @@ fun HomeScreen(
                                 // Nút màu xanh (Xem tất cả kết quả)
                                 Button(
                                     onClick = {
-                                        navController.navigate(Screen.SearchResult.createRoute(query = searchQuery))
-                                        isSuggestionsVisible = false
+                                        val cleanQuery = searchQuery.trim()
+                                        if (cleanQuery.isNotBlank()) {
+                                            navController.navigate(Screen.SearchResult.createRoute(query = cleanQuery))
+                                            isSuggestionsVisible = false
+                                        }
                                     },
                                     modifier = Modifier
                                         .fillMaxWidth()
@@ -200,44 +205,48 @@ fun HomeScreen(
             // Giao diện trang chủ không thay đổi theo searchQuery (Dùng uiState.movies gốc)
             val allMovies = uiState.movies
 
-            // 3. MỤC PHIM PHỔ BIẾN - Chiếm hết số cột
+            // 3. MỤC PHIM PHỔ BIẾN
             if (allMovies.isNotEmpty()) {
                 item(span = { GridItemSpan(columns) }) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Text(
-                            text = "Phim Phổ Biến",
-                            color = Color.White,
-                            fontSize = 18.sp,
-                            fontWeight = FontWeight.Bold
-                        )
-                        Text(
-                            text = "xem thêm...",
-                            color = Color(0xFF38B6FF),
-                            fontSize = 14.sp,
-                            modifier = Modifier.clickable {
-                                // Điều hướng tới trang kết quả tìm kiếm và yêu cầu sắp xếp theo đánh giá cao nhất
-                                navController.navigate(Screen.SearchResult.createRoute(sortBy = "rating"))
-                            }
-                        )
-                    }
-
-                    val popularMovies = uiState.popularMovies
-                    LazyRow(
-                        horizontalArrangement = Arrangement.spacedBy(14.dp)
-                    ) {
-                        items(popularMovies) { movie ->
-                            MovieItemCard(
-                                movie = movie,
-                                isFavorite = uiState.favoriteMovieIds.contains(movie.id),
-                                onFavoriteClick = { viewModel.toggleFavorite(movie) },
-                                onCardClick = {
-                                    navController.navigate(Screen.Detail.createRoute(movie.id))
+                    Column(modifier = Modifier.fillMaxWidth()) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(top = 8.dp, bottom = 16.dp),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                text = "Phim Phổ Biến",
+                                color = Color.White,
+                                fontSize = 18.sp,
+                                fontWeight = FontWeight.Bold
+                            )
+                            Text(
+                                text = "xem thêm...",
+                                color = Color(0xFF38B6FF),
+                                fontSize = 14.sp,
+                                modifier = Modifier.clickable {
+                                    navController.navigate(Screen.SearchResult.createRoute(sortBy = "rating"))
                                 }
                             )
+                        }
+
+                        val popularMovies = uiState.popularMovies
+                        LazyRow(
+                            horizontalArrangement = Arrangement.spacedBy(14.dp),
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            items(popularMovies) { movie ->
+                                MovieItemCard(
+                                    movie = movie,
+                                    isFavorite = uiState.favoriteMovieIds.contains(movie.id),
+                                    onFavoriteClick = { viewModel.toggleFavorite(movie) },
+                                    onCardClick = {
+                                        navController.navigate(Screen.Detail.createRoute(movie.id))
+                                    }
+                                )
+                            }
                         }
                     }
                 }
@@ -251,7 +260,7 @@ fun HomeScreen(
                         color = Color.White,
                         fontSize = 18.sp,
                         fontWeight = FontWeight.Bold,
-                        modifier = Modifier.padding(bottom = 8.dp)
+                        modifier = Modifier.padding(top = 16.dp, bottom = 8.dp)
                     )
                 }
 

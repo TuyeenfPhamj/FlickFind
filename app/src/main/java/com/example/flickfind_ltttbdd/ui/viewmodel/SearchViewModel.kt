@@ -140,6 +140,10 @@ class SearchViewModel(
         }
     }
 
+    fun clearErrorMessage() {
+        _uiState.update { it.copy(errorMessage = null) }
+    }
+
     fun loadNextMovies() {
         // Không cần loadNext nữa vì performSearch đã tải và lọc toàn bộ kho phim ngay lần đầu
     }
