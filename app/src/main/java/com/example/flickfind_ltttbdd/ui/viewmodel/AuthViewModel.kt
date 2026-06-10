@@ -45,22 +45,30 @@ class AuthViewModel(private val repository: MovieRepository) : ViewModel() {
     }
 
     fun login(email: String, password: String) {
-        if (email.isBlank()) {
-            _uiState.update { it.copy(errorMessage = "Vui lòng nhập Email") }
+        // [GHI CHÚ]: Tự động xóa khoảng trắng và chuyển phần sau dấu @ thành chữ thường
+        val parts = email.trim().split("@")
+        val cleanEmail = if (parts.size == 2) {
+            "${parts[0]}@${parts[1].lowercase()}"
+        } else {
+            email.trim().lowercase()
+        }
+
+        if (cleanEmail.isBlank() || password.isBlank()) {
+            _uiState.update { it.copy(errorMessage = "Vui lòng nhập đầy đủ thông tin") }
             return
         }
-        if (password.isBlank()) {
-            _uiState.update { it.copy(errorMessage = "Vui lòng nhập mật khẩu") }
+        
+        if (!android.util.Patterns.EMAIL_ADDRESS.matcher(cleanEmail).matches()) {
+            _uiState.update { it.copy(errorMessage = "Email không hợp lệ") }
             return
         }
         
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true, errorMessage = null) }
             try {
-                val result = auth.signInWithEmailAndPassword(email, password).await()
+                val result = auth.signInWithEmailAndPassword(cleanEmail, password).await()
                 val user = result.user
                 
-                // Đồng bộ thông tin user vào Room Database ngay khi đăng nhập
                 if (user != null) {
                     repository.insertOrUpdateUser(
                         UserEntity(
@@ -75,7 +83,7 @@ class AuthViewModel(private val repository: MovieRepository) : ViewModel() {
             } catch (e: Exception) {
                 val friendlyMessage = when (e) {
                     is FirebaseAuthInvalidCredentialsException -> "Tài khoản hoặc mật khẩu không chính xác"
-                    else -> "Lỗi đăng nhập: ${translateError(e.message)}"
+                    else -> translateError(e.message)
                 }
                 _uiState.update { it.copy(isLoading = false, errorMessage = friendlyMessage) }
             }
@@ -83,26 +91,30 @@ class AuthViewModel(private val repository: MovieRepository) : ViewModel() {
     }
 
     fun register(name: String, email: String, password: String, confirmPass: String) {
-        if (name.isBlank()) {
-            _uiState.update { it.copy(errorMessage = "Vui lòng nhập họ tên") }
+        // [GHI CHÚ]: Tự động làm sạch dữ liệu email (xóa khoảng trắng và chuyển tên miền sau @ về chữ thường)
+        val parts = email.trim().split("@")
+        val cleanEmail = if (parts.size == 2) {
+            "${parts[0]}@${parts[1].lowercase()}"
+        } else {
+            email.trim().lowercase()
+        }
+        val cleanName = name.trim()
+
+        if (cleanName.isBlank() || cleanEmail.isBlank() || password.isBlank() || confirmPass.isBlank()) {
+            _uiState.update { it.copy(errorMessage = "Vui lòng nhập đầy đủ thông tin") }
             return
         }
-        if (email.isBlank()) {
-            _uiState.update { it.copy(errorMessage = "Vui lòng nhập Email") }
+
+        if (!android.util.Patterns.EMAIL_ADDRESS.matcher(cleanEmail).matches()) {
+            _uiState.update { it.copy(errorMessage = "Email không hợp lệ") }
             return
         }
-        if (!android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
-            _uiState.update { it.copy(errorMessage = "Định dạng Email không hợp lệ") }
-            return
-        }
-        if (password.isBlank()) {
-            _uiState.update { it.copy(errorMessage = "Vui lòng nhập mật khẩu") }
-            return
-        }
+
         if (password.length < 6) {
             _uiState.update { it.copy(errorMessage = "Mật khẩu phải có ít nhất 6 ký tự") }
             return
         }
+
         if (password != confirmPass) {
             _uiState.update { it.copy(errorMessage = "Mật khẩu xác nhận không khớp") }
             return
@@ -111,22 +123,20 @@ class AuthViewModel(private val repository: MovieRepository) : ViewModel() {
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true, errorMessage = null) }
             try {
-                val result = auth.createUserWithEmailAndPassword(email, password).await()
+                val result = auth.createUserWithEmailAndPassword(cleanEmail, password).await()
                 val user = result.user
                 
-                // Cập nhật tên hiển thị
                 user?.updateProfile(
                     UserProfileChangeRequest.Builder()
-                        .setDisplayName(name)
+                        .setDisplayName(cleanName)
                         .build()
                 )?.await()
 
-                // Đồng bộ thông tin user vào Room Database ngay khi đăng ký
                 if (user != null) {
                     repository.insertOrUpdateUser(
                         UserEntity(
                             id = user.uid,
-                            name = name,
+                            name = cleanName,
                             avatarUrl = ""
                         )
                     )
@@ -138,7 +148,7 @@ class AuthViewModel(private val repository: MovieRepository) : ViewModel() {
                     is FirebaseAuthWeakPasswordException -> "Mật khẩu quá yếu"
                     is FirebaseAuthInvalidCredentialsException -> "Email không hợp lệ"
                     is FirebaseAuthUserCollisionException -> "Email này đã được sử dụng bởi một tài khoản khác"
-                    else -> "Lỗi đăng ký: ${translateError(e.message)}"
+                    else -> translateError(e.message)
                 }
                 _uiState.update { it.copy(isLoading = false, errorMessage = friendlyMessage) }
             }
@@ -148,9 +158,13 @@ class AuthViewModel(private val repository: MovieRepository) : ViewModel() {
     private fun translateError(message: String?): String {
         if (message == null) return "Lỗi không xác định"
         return when {
+            message.contains("badly formatted", ignoreCase = true) -> "Email không hợp lệ"
+            message.contains("invalid email", ignoreCase = true) -> "Email không hợp lệ"
             message.contains("network", ignoreCase = true) -> "Lỗi kết nối mạng"
             message.contains("too many requests", ignoreCase = true) -> "Quá nhiều yêu cầu. Vui lòng thử lại sau"
-            else -> message
+            message.contains("user not found", ignoreCase = true) -> "Tài khoản không tồn tại"
+            message.contains("wrong password", ignoreCase = true) -> "Mật khẩu không chính xác"
+            else -> "Lỗi hệ thống: $message"
         }
     }
 
