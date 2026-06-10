@@ -142,7 +142,10 @@ class AuthViewModel(private val repository: MovieRepository) : ViewModel() {
                     )
                 }
 
-                _uiState.update { it.copy(isLoading = false, isSuccess = true, isLoggedIn = true) }
+                // [GHI CHÚ]: Đăng xuất ngay sau khi đăng ký để người dùng phải đăng nhập lại theo yêu cầu
+                auth.signOut()
+
+                _uiState.update { it.copy(isLoading = false, isSuccess = true, isLoggedIn = false) }
             } catch (e: Exception) {
                 val friendlyMessage = when (e) {
                     is FirebaseAuthWeakPasswordException -> "Mật khẩu quá yếu"
