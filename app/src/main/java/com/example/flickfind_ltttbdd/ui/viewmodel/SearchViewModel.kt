@@ -88,6 +88,7 @@ class SearchViewModel(
         )
 
         result.onSuccess { allMovies ->
+            // ... (keeping existing logic for filtering)
             val filtered = allMovies.filter { movie ->
                 val q = _uiState.value.query
                 val g = _uiState.value.genre
@@ -118,9 +119,14 @@ class SearchViewModel(
                 isEndReached = true // Đã hoàn thành tải và lọc toàn bộ kho phim
             ) }
         }.onFailure { e ->
+            val friendlyError = if (e is java.net.UnknownHostException || e.message?.contains("Unable to resolve host") == true) {
+                "Không có kết nối mạng, vui lòng thử lại"
+            } else {
+                e.localizedMessage ?: "Không có kết nối mạng, vui lòng thử lại"
+            }
             _uiState.update { it.copy(
                 isLoading = false, 
-                errorMessage = e.localizedMessage ?: "Lỗi kết nối máy chủ"
+                errorMessage = friendlyError
             ) }
         }
     }

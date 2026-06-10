@@ -69,10 +69,23 @@ class HomeViewModel(
         _uiState.update { it.copy(searchSuggestions = emptyList()) }
     }
 
+    // Làm mới toàn bộ danh sách
+    fun refreshMovies() {
+        _uiState.update { it.copy(
+            currentPage = 1,
+            movies = emptyList(),
+            isEndReached = false,
+            isLoading = true,
+            errorMessage = null
+        ) }
+        loadNextMovies()
+        fetchAllMoviesForSuggestions()
+    }
+
     // 2. Logic Phân trang (Pagination) thủ công cực kỳ trực quan
     fun loadNextMovies() {
-        // Nếu đang tải hoặc đã hết phim thì không gọi API nữa để tiết kiệm băng thông
-        if (_uiState.value.isLoading || _uiState.value.isEndReached) return
+        // Nếu đang tải hoặc đã hết phim thì không gọi API nữa
+        if (_uiState.value.isLoading && _uiState.value.currentPage > 1 || _uiState.value.isEndReached) return
 
         _uiState.update { it.copy(isLoading = true, errorMessage = null) }
 
@@ -86,17 +99,19 @@ class HomeViewModel(
                 _uiState.update { currentState ->
                     currentState.copy(
                         isLoading = false,
-                        // Gộp danh sách phim cũ và phim mới tải về lại thành một danh sách duy nhất
-                        movies = currentState.movies + newMovies,
-                        // Tăng số trang lên 1 để chuẩn bị cho lần cuộn tiếp theo
+                        movies = if (currentState.currentPage == 1) newMovies else currentState.movies + newMovies,
                         currentPage = currentState.currentPage + 1,
-                        // Nếu API trả về ít hơn giới hạn nghĩa là đã chạm đáy danh sách
                         isEndReached = newMovies.size < pageLimit
                     )
                 }
-            } .onFailure { exception ->
+            }.onFailure { exception ->
+                val friendlyError = if (exception is java.net.UnknownHostException || exception.message?.contains("Unable to resolve host") == true) {
+                    "Không có kết nối mạng, vui lòng thử lại"
+                } else {
+                    exception.localizedMessage ?: "Lỗi kết nối API"
+                }
                 _uiState.update {
-                    it.copy(isLoading = false, errorMessage = exception.localizedMessage ?: "Lỗi kết nối API")
+                    it.copy(isLoading = false, errorMessage = friendlyError)
                 }
             }
         }
