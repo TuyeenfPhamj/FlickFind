@@ -9,6 +9,7 @@ import com.google.firebase.auth.FirebaseAuthInvalidCredentialsException
 import com.google.firebase.auth.FirebaseAuthUserCollisionException
 import com.google.firebase.auth.FirebaseAuthWeakPasswordException
 import com.google.firebase.auth.UserProfileChangeRequest
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -21,7 +22,9 @@ data class AuthUiState(
     val isLoading: Boolean = false,
     val isSuccess: Boolean = false,
     val errorMessage: String? = null,
-    val isLoggedIn: Boolean = FirebaseAuth.getInstance().currentUser != null
+    val isLoggedIn: Boolean = FirebaseAuth.getInstance().currentUser != null,
+    val isOtpSent: Boolean = false, // Trạng thái đã gửi mã OTP (giả lập)
+    val generatedOtp: String = ""    // Mã OTP đã tạo (giả lập)
 )
 
 class AuthViewModel(private val repository: MovieRepository) : ViewModel() {
@@ -45,7 +48,6 @@ class AuthViewModel(private val repository: MovieRepository) : ViewModel() {
     }
 
     fun login(email: String, password: String) {
-        // [GHI CHÚ]: Tự động xóa khoảng trắng và chuyển phần sau dấu @ thành chữ thường
         val parts = email.trim().split("@")
         val cleanEmail = if (parts.size == 2) {
             "${parts[0]}@${parts[1].lowercase()}"
@@ -90,35 +92,38 @@ class AuthViewModel(private val repository: MovieRepository) : ViewModel() {
         }
     }
 
-    fun register(name: String, email: String, password: String, confirmPass: String) {
-        // [GHI CHÚ]: Tự động làm sạch dữ liệu email (xóa khoảng trắng và chuyển tên miền sau @ về chữ thường)
+    // [GHI CHÚ]: Hàm giả lập gửi OTP về Email
+    fun sendOtp(email: String) {
+        if (email.isBlank() || !android.util.Patterns.EMAIL_ADDRESS.matcher(email.trim()).matches()) {
+            _uiState.update { it.copy(errorMessage = "Vui lòng nhập Email hợp lệ để nhận mã") }
+            return
+        }
+
+        viewModelScope.launch {
+            _uiState.update { it.copy(isLoading = true, errorMessage = null) }
+            delay(1000) // Giả lập độ trễ gửi mail
+            
+            // Tạo mã 6 số ngẫu nhiên
+            val otp = (100000..999999).random().toString()
+            
+            _uiState.update { it.copy(
+                isLoading = false,
+                isOtpSent = true,
+                generatedOtp = otp,
+                errorMessage = "Mã OTP đã được gửi (Giả lập: $otp)" // Hiển thị mã để test
+            ) }
+        }
+    }
+
+    fun registerWithOtp(name: String, email: String, password: String, otpInput: String) {
+        if (otpInput != _uiState.value.generatedOtp) {
+            _uiState.update { it.copy(errorMessage = "Mã OTP không chính xác") }
+            return
+        }
+
         val parts = email.trim().split("@")
-        val cleanEmail = if (parts.size == 2) {
-            "${parts[0]}@${parts[1].lowercase()}"
-        } else {
-            email.trim().lowercase()
-        }
+        val cleanEmail = "${parts[0]}@${parts[1].lowercase()}"
         val cleanName = name.trim()
-
-        if (cleanName.isBlank() || cleanEmail.isBlank() || password.isBlank() || confirmPass.isBlank()) {
-            _uiState.update { it.copy(errorMessage = "Vui lòng nhập đầy đủ thông tin") }
-            return
-        }
-
-        if (!android.util.Patterns.EMAIL_ADDRESS.matcher(cleanEmail).matches()) {
-            _uiState.update { it.copy(errorMessage = "Email không hợp lệ") }
-            return
-        }
-
-        if (password.length < 6) {
-            _uiState.update { it.copy(errorMessage = "Mật khẩu phải có ít nhất 6 ký tự") }
-            return
-        }
-
-        if (password != confirmPass) {
-            _uiState.update { it.copy(errorMessage = "Mật khẩu xác nhận không khớp") }
-            return
-        }
 
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true, errorMessage = null) }
@@ -142,14 +147,15 @@ class AuthViewModel(private val repository: MovieRepository) : ViewModel() {
                     )
                 }
 
-                // [GHI CHÚ]: Đăng xuất ngay sau khi đăng ký để người dùng phải đăng nhập lại theo yêu cầu
-                auth.signOut()
-
-                _uiState.update { it.copy(isLoading = false, isSuccess = true, isLoggedIn = false) }
+                _uiState.update { it.copy(
+                    isLoading = false, 
+                    isSuccess = true, 
+                    isLoggedIn = true,
+                    isOtpSent = false 
+                ) }
             } catch (e: Exception) {
                 val friendlyMessage = when (e) {
                     is FirebaseAuthWeakPasswordException -> "Mật khẩu quá yếu"
-                    is FirebaseAuthInvalidCredentialsException -> "Email không hợp lệ"
                     is FirebaseAuthUserCollisionException -> "Email này đã được sử dụng bởi một tài khoản khác"
                     else -> translateError(e.message)
                 }
@@ -173,10 +179,14 @@ class AuthViewModel(private val repository: MovieRepository) : ViewModel() {
 
     fun logout() {
         auth.signOut()
-        _uiState.update { it.copy(isLoggedIn = false) }
+        _uiState.update { it.copy(isLoggedIn = false, isOtpSent = false) }
     }
     
     fun resetSuccess() {
         _uiState.update { it.copy(isSuccess = false) }
+    }
+
+    fun cancelOtp() {
+        _uiState.update { it.copy(isOtpSent = false, errorMessage = null) }
     }
 }
