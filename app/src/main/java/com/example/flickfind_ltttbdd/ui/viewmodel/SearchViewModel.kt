@@ -5,7 +5,6 @@ import androidx.lifecycle.viewModelScope
 import com.example.flickfind_ltttbdd.data.MovieRepository
 import com.example.flickfind_ltttbdd.data.local.FavoriteMovieEntity
 import com.example.flickfind_ltttbdd.data.remote.MovieResponse
-import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -26,28 +25,21 @@ data class SearchUiState(
 )
 
 class SearchViewModel(
-    private val repository: MovieRepository
+    private val repository: MovieRepository,
+    private val userId: String = "guest_user"
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(SearchUiState())
     val uiState: StateFlow<SearchUiState> = _uiState.asStateFlow()
 
     private var currentSearchJob: Job? = null
-    private var favoritesJob: Job? = null
-
-    // [GHI CHÚ]: Lắng nghe thay đổi tài khoản để cập nhật icon Trái tim thời gian thực
-    private val authListener = FirebaseAuth.AuthStateListener { auth ->
-        val userId = auth.currentUser?.uid ?: "guest_user"
-        observeFavorites(userId)
-    }
 
     init {
-        FirebaseAuth.getInstance().addAuthStateListener(authListener)
+        observeFavorites()
     }
 
-    private fun observeFavorites(userId: String) {
-        favoritesJob?.cancel()
-        favoritesJob = viewModelScope.launch {
+    private fun observeFavorites() {
+        viewModelScope.launch {
             repository.getAllFavorites(userId).collect { favoriteEntities ->
                 _uiState.update { currentState ->
                     currentState.copy(favoriteMovieIds = favoriteEntities.map { it.id }.toSet())
@@ -57,6 +49,7 @@ class SearchViewModel(
     }
 
     fun setFiltersAndSearch(query: String?, genre: String?, yearRange: String?, sortBy: String? = null) {
+        // Chuẩn hóa: Nếu chuỗi rỗng hoặc chỉ có khoảng trắng thì coi như null
         val cleanQuery = query?.takeIf { it.isNotBlank() }
         val cleanGenre = genre?.takeIf { it.isNotBlank() }
         val cleanYear = yearRange?.takeIf { it.isNotBlank() }
@@ -75,6 +68,7 @@ class SearchViewModel(
             )
         }
         
+        // Hủy job tìm kiếm cũ nếu người dùng thay đổi bộ lọc liên tục
         currentSearchJob?.cancel()
         currentSearchJob = viewModelScope.launch {
             performSearch()
@@ -84,61 +78,66 @@ class SearchViewModel(
     private suspend fun performSearch() {
         _uiState.update { it.copy(isLoading = true, errorMessage = null) }
 
+        // Tận dụng sức mạnh của API: Gửi bộ lọc trực tiếp lên Server
+        // Không tải 100 phim nữa mà chỉ tải đúng kết quả cần thiết
         val result = repository.getMoviesFromApi(
             page = 1,
-            limit = 100,
-            search = null
+            limit = 50, // Lấy 50 kết quả phù hợp nhất
+            search = _uiState.value.query,
+            genre = _uiState.value.genre,
+            yearRange = _uiState.value.yearRange
         )
 
-        result.onSuccess { allMovies ->
-            val filtered = allMovies.filter { movie ->
-                val q = _uiState.value.query
-                val g = _uiState.value.genre
-                val y = _uiState.value.yearRange
-
-                val matchQuery = q == null || movie.title.contains(q, ignoreCase = true)
-                val matchGenre = g == null || movie.genres.any { it.contains(g, ignoreCase = true) }
-                val matchYear = y == null || matchesYearRange(movie.releaseDate, y)
-
-                matchQuery && matchGenre && matchYear
-            }
-
+        result.onSuccess { filteredMovies ->
+            // Sắp xếp lại danh sách kết quả (Rating) nếu người dùng yêu cầu
             val sorted = if (_uiState.value.sortBy == "rating") {
-                filtered.sortedByDescending { it.rating }
+                filteredMovies.sortedByDescending { it.rating }
             } else {
-                filtered
+                filteredMovies
             }
 
             _uiState.update { it.copy(
                 isLoading = false, 
                 movies = sorted,
-                isEndReached = true
+                isEndReached = true // Đã có bộ lọc chính xác từ Server
             ) }
         }.onFailure { e ->
+            val friendlyError = if (e is java.net.UnknownHostException || e.message?.contains("Unable to resolve host") == true) {
+                "Không có kết nối mạng, vui lòng thử lại"
+            } else {
+                e.localizedMessage ?: "Không có kết nối mạng, vui lòng thử lại"
+            }
             _uiState.update { it.copy(
                 isLoading = false, 
-                errorMessage = e.localizedMessage ?: "Lỗi kết nối máy chủ"
+                errorMessage = friendlyError
             ) }
         }
     }
 
     private fun matchesYearRange(releaseDate: String, range: String): Boolean {
         return try {
+            // range: "2021 - 2025" -> start=2021, end=2025
             val years = range.split("-").map { it.trim().toIntOrNull() }
             val start = years.getOrNull(0) ?: 0
             val end = years.getOrNull(1) ?: 9999
             
+            // Lấy 4 ký tự đầu của "YYYY-MM-DD"
             val movieYear = releaseDate.take(4).toIntOrNull() ?: 0
             movieYear in start..end
         } catch (e: Exception) {
-            true 
+            true // Nếu lỗi định dạng thì bỏ qua lọc năm này
         }
     }
 
-    fun loadNextMovies() {}
+    fun clearErrorMessage() {
+        _uiState.update { it.copy(errorMessage = null) }
+    }
+
+    fun loadNextMovies() {
+        // Không cần loadNext nữa vì performSearch đã tải và lọc toàn bộ kho phim ngay lần đầu
+    }
 
     fun toggleFavorite(movie: MovieResponse) {
-        val userId = FirebaseAuth.getInstance().currentUser?.uid ?: "guest_user"
         viewModelScope.launch {
             val isFav = repository.isMovieFavorite(movie.id, userId)
             val entity = FavoriteMovieEntity(
@@ -159,10 +158,5 @@ class SearchViewModel(
                 repository.addToFavorite(entity)
             }
         }
-    }
-
-    override fun onCleared() {
-        super.onCleared()
-        FirebaseAuth.getInstance().removeAuthStateListener(authListener)
     }
 }

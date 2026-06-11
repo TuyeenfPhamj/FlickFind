@@ -97,7 +97,6 @@ fun MainNavGraph(
                 HomeScreen(
                     viewModel = homeViewModel, 
                     navController = navController,
-                    isDarkTheme = isDarkTheme
                 )
             }
 
@@ -105,7 +104,6 @@ fun MainNavGraph(
             composable(Screen.Filter.route) {
                 FilterScreen(
                     navController = navController,
-                    isDarkTheme = isDarkTheme,
                     onApplyFilters = { genre, yearRange ->
                         navController.navigate(Screen.SearchResult.createRoute(genre = genre, yearRange = yearRange))
                     }
@@ -132,7 +130,6 @@ fun MainNavGraph(
                     sortBy = sortBy,
                     viewModel = searchViewModel,
                     navController = navController,
-                    isDarkTheme = isDarkTheme
                 )
             }
 
@@ -149,7 +146,6 @@ fun MainNavGraph(
                     DetailScreen(
                         movieId = movieId,
                         viewModel = detailViewModel,
-                        isDarkTheme = isDarkTheme,
                         onBackClick = { navController.popBackStack() }
                     )
                 }
@@ -164,7 +160,6 @@ fun MainNavGraph(
                     ProfileScreen(
                         viewModel = profileViewModel,
                         navController = navController,
-                        isDarkTheme = isDarkTheme,
                         onLogout = {
                             authViewModel.logout()
                         }
