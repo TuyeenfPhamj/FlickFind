@@ -5,7 +5,6 @@ import androidx.lifecycle.viewModelScope
 import com.example.flickfind_ltttbdd.data.MovieRepository
 import com.example.flickfind_ltttbdd.data.local.FavoriteMovieEntity
 import com.example.flickfind_ltttbdd.data.remote.MovieResponse
-import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -26,61 +25,70 @@ data class HomeUiState(
 )
 
 class HomeViewModel(
-    private val repository: MovieRepository
+    private val repository: MovieRepository,
+    private val userId: String = "guest_user"
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(HomeUiState())
     val uiState: StateFlow<HomeUiState> = _uiState.asStateFlow()
 
     private val pageLimit = 10
-    private var allMoviesForSuggestions: List<MovieResponse> = emptyList()
-    private var favoritesJob: Job? = null
-
-    // [GHI CHÚ]: Theo dõi sự thay đổi tài khoản để cập nhật danh sách yêu thích thời gian thực
-    private val authListener = FirebaseAuth.AuthStateListener { auth ->
-        val userId = auth.currentUser?.uid ?: "guest_user"
-        observeFavorites(userId)
-    }
+    private var searchJob: kotlinx.coroutines.Job? = null
 
     init {
         loadNextMovies()
-        fetchAllMoviesForSuggestions()
-        FirebaseAuth.getInstance().addAuthStateListener(authListener)
+        observeFavorites()
+        fetchPopularMovies()
     }
 
-    private fun fetchAllMoviesForSuggestions() {
+    private fun fetchPopularMovies() {
         viewModelScope.launch {
-            // Tải 100 phim một lần để phục vụ gợi ý tìm kiếm tức thì và lấy phim phổ biến
-            repository.getMoviesFromApi(page = 1, limit = 100).onSuccess { all ->
-                allMoviesForSuggestions = all
-                // Lấy 10 phim có rating cao nhất làm phim phổ biến
-                val popular = all.sortedByDescending { it.rating }.take(10)
+            // Tải 20 phim để lọc ra 10 phim rating cao nhất làm "Phổ biến"
+            // Giúp khởi động app nhanh hơn nhiều so với việc tải 100 phim
+            repository.getMoviesFromApi(page = 1, limit = 20).onSuccess { movies ->
+                val popular = movies.sortedByDescending { it.rating }.take(10)
                 _uiState.update { it.copy(popularMovies = popular) }
             }
         }
     }
 
     fun updateSearchSuggestions(query: String) {
-        if (query.length <= 3) {
+        val cleanQuery = query.trim()
+        if (cleanQuery.length < 2) {
             _uiState.update { it.copy(searchSuggestions = emptyList()) }
             return
         }
         
-        val filtered = allMoviesForSuggestions.filter { 
-            it.title.contains(query, ignoreCase = true) 
-        }.take(5)
-        
-        _uiState.update { it.copy(searchSuggestions = filtered) }
+        searchJob?.cancel()
+        searchJob = viewModelScope.launch {
+            // Tìm kiếm trực tiếp từ API thay vì lọc từ danh sách tải sẵn
+            repository.getMoviesFromApi(page = 1, limit = 5, search = cleanQuery).onSuccess { results ->
+                _uiState.update { it.copy(searchSuggestions = results) }
+            }
+        }
     }
 
     fun clearSuggestions() {
         _uiState.update { it.copy(searchSuggestions = emptyList()) }
     }
 
+    // Làm mới toàn bộ danh sách
+    fun refreshMovies() {
+        _uiState.update { it.copy(
+            currentPage = 1,
+            movies = emptyList(),
+            isEndReached = false,
+            isLoading = true,
+            errorMessage = null
+        ) }
+        loadNextMovies()
+        fetchPopularMovies()
+    }
+
     // 2. Logic Phân trang (Pagination) thủ công cực kỳ trực quan
     fun loadNextMovies() {
-        // Nếu đang tải hoặc đã hết phim thì không gọi API nữa để tiết kiệm băng thông
-        if (_uiState.value.isLoading || _uiState.value.isEndReached) return
+        // Nếu đang tải hoặc đã hết phim thì không gọi API nữa
+        if (_uiState.value.isLoading && _uiState.value.currentPage > 1 || _uiState.value.isEndReached) return
 
         _uiState.update { it.copy(isLoading = true, errorMessage = null) }
 
@@ -94,38 +102,38 @@ class HomeViewModel(
                 _uiState.update { currentState ->
                     currentState.copy(
                         isLoading = false,
-                        // Gộp danh sách phim cũ và phim mới tải về lại thành một danh sách duy nhất
-                        movies = currentState.movies + newMovies,
-                        // Tăng số trang lên 1 để chuẩn bị cho lần cuộn tiếp theo
+                        movies = if (currentState.currentPage == 1) newMovies else currentState.movies + newMovies,
                         currentPage = currentState.currentPage + 1,
-                        // Nếu API trả về ít hơn giới hạn nghĩa là đã chạm đáy danh sách
                         isEndReached = newMovies.size < pageLimit
                     )
                 }
-            } .onFailure { exception ->
+            }.onFailure { exception ->
+                val friendlyError = if (exception is java.net.UnknownHostException || exception.message?.contains("Unable to resolve host") == true) {
+                    "Không có kết nối mạng, vui lòng thử lại"
+                } else {
+                    exception.localizedMessage ?: "Lỗi kết nối API"
+                }
                 _uiState.update {
-                    it.copy(isLoading = false, errorMessage = exception.localizedMessage ?: "Lỗi kết nối API")
+                    it.copy(isLoading = false, errorMessage = friendlyError)
                 }
             }
         }
     }
 
-    // 3. [GHI CHÚ]: Theo dõi danh sách phim đã lưu trong Room DB theo userId của tài khoản đang đăng nhập
-    private fun observeFavorites(userId: String) {
-        favoritesJob?.cancel()
-        favoritesJob = viewModelScope.launch {
+    // 3. Theo dõi danh sách phim đã lưu trong Room DB theo userId
+    private fun observeFavorites() {
+        viewModelScope.launch {
             repository.getAllFavorites(userId).collect { favoriteEntities ->
                 _uiState.update { currentState ->
-                    // Chuyển danh sách thực thể thành một bộ Set<String> chứa ID để tìm kiếm siêu nhanh (O(1))
+                    // Chuyển danh sách thực thể thành một bộ Set<Int> chứa ID để tìm kiếm siêu nhanh (O(1))
                     currentState.copy(favoriteMovieIds = favoriteEntities.map { it.id }.toSet())
                 }
             }
         }
     }
 
-    // 4. [GHI CHÚ]: Tính năng Click vào nút "Thích" (CRUD - Thêm/Xóa khỏi Room DB trực tiếp từ danh sách)
+    // 4. Tính năng Click vào nút "Thích" (CRUD - Thêm/Xóa khỏi Room DB trực tiếp từ danh sách)
     fun toggleFavorite(movie: MovieResponse) {
-        val userId = FirebaseAuth.getInstance().currentUser?.uid ?: "guest_user"
         viewModelScope.launch {
             val isFav = repository.isMovieFavorite(movie.id, userId)
             // Chuyển đổi dữ liệu từ dạng API Response sang thực thể Room DB
@@ -147,10 +155,5 @@ class HomeViewModel(
                 repository.addToFavorite(entity)
             }
         }
-    }
-
-    override fun onCleared() {
-        super.onCleared()
-        FirebaseAuth.getInstance().removeAuthStateListener(authListener)
     }
 }

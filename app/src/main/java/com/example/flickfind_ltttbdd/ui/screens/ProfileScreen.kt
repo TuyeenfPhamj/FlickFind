@@ -444,24 +444,3 @@ fun NameEditDialog(currentName: String, onDismiss: () -> Unit, onConfirm: (Strin
     )
 }
 
-@Preview(showBackground = true)
-@Composable
-fun ProfileScreenPreview() {
-    val dummyUser = UserEntity(id = "1", name = "Nguyễn Văn A", avatarUrl = "")
-    val dummyMovies = listOf(
-        FavoriteMovieEntity("1", "1", "Inception", "/edv5bs1pUQC67SWHqcYf67OQ97R.jpg", "", "Hành động", 8.8f, 148, true),
-        FavoriteMovieEntity("2", "1", "The Dark Knight", "/qJ2tW6WMUDp9QmSJJIVP6YFZO8r.jpg", "", "Hành động", 9.0f, 152, true),
-    )
-
-    MaterialTheme {
-        LazyColumn(
-            modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background).padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
-        ) {
-            item { ProfileHeader(dummyUser.name, "", {}, {}, {}) }
-            item { GenreBarChartSection(mapOf("Hành động" to 5), 600) }
-            item { Text("Danh sách yêu thích", color = MaterialTheme.colorScheme.onBackground, fontSize = 18.sp, fontWeight = FontWeight.Bold) }
-            items(dummyMovies) { HorizontalFavoriteMovieItem(it, true, {}, {}, {}) }
-        }
-    }
-}
