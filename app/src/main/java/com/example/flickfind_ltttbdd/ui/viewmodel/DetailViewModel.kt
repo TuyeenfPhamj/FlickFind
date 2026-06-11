@@ -27,10 +27,6 @@ class DetailViewModel(
     private val _error = MutableStateFlow<String?>(null)
     val error: StateFlow<String?> = _error
 
-    // [GHI CHÚ]: Lấy ID người dùng hiện tại từ Firebase để quản lý yêu thích theo từng tài khoản
-    private val currentUserId: String
-        get() = FirebaseAuth.getInstance().currentUser?.uid ?: "guest_user"
-
     fun getMovieById(movieId: String) {
         if (movieId.isBlank()) {
             _error.value = "ID phim không hợp lệ"
@@ -64,8 +60,13 @@ class DetailViewModel(
 
     // [GHI CHÚ]: Theo dõi trạng thái yêu thích dựa trên userId hiện tại
     private fun observeFavoriteStatus(movieId: String) {
+        val currentUser = FirebaseAuth.getInstance().currentUser
+        if (currentUser == null) {
+            _isFavorite.value = false
+            return
+        }
         viewModelScope.launch {
-            repository.getAllFavorites(currentUserId).collect { favorites ->
+            repository.getAllFavorites(currentUser.uid).collect { favorites ->
                 _isFavorite.value = favorites.any { it.id == movieId }
             }
         }
@@ -73,10 +74,16 @@ class DetailViewModel(
 
     // [GHI CHÚ]: Thêm/Xóa phim khỏi danh sách yêu thích liên kết với từng tài khoản
     fun toggleFavorite(movie: MovieResponse) {
+        val currentUser = FirebaseAuth.getInstance().currentUser
+        if (currentUser == null) {
+            _error.value = "Vui lòng đăng nhập để thích phim"
+            return
+        }
+        val userId = currentUser.uid
         viewModelScope.launch {
             val favoriteMovie = FavoriteMovieEntity(
                 id = movie.id,
-                userId = currentUserId,
+                userId = userId,
                 title = movie.title,
                 posterPath = movie.posterPath,
                 backdropPath = movie.backdropPath,

@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.example.flickfind_ltttbdd.data.MovieRepository
 import com.example.flickfind_ltttbdd.data.local.FavoriteMovieEntity
 import com.example.flickfind_ltttbdd.data.remote.MovieResponse
+import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -25,21 +26,36 @@ data class SearchUiState(
 )
 
 class SearchViewModel(
-    private val repository: MovieRepository,
-    private val userId: String = "guest_user"
+    private val repository: MovieRepository
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(SearchUiState())
     val uiState: StateFlow<SearchUiState> = _uiState.asStateFlow()
 
     private var currentSearchJob: Job? = null
+    private var favoritesJob: Job? = null
 
-    init {
-        observeFavorites()
+    private val authListener = FirebaseAuth.AuthStateListener { auth ->
+        val userId = auth.currentUser?.uid
+        favoritesJob?.cancel()
+        if (userId != null) {
+            observeFavorites(userId)
+        } else {
+            _uiState.update { it.copy(favoriteMovieIds = emptySet()) }
+        }
     }
 
-    private fun observeFavorites() {
-        viewModelScope.launch {
+    init {
+        FirebaseAuth.getInstance().addAuthStateListener(authListener)
+    }
+
+    override fun onCleared() {
+        super.onCleared()
+        FirebaseAuth.getInstance().removeAuthStateListener(authListener)
+    }
+
+    private fun observeFavorites(userId: String) {
+        favoritesJob = viewModelScope.launch {
             repository.getAllFavorites(userId).collect { favoriteEntities ->
                 _uiState.update { currentState ->
                     currentState.copy(favoriteMovieIds = favoriteEntities.map { it.id }.toSet())
@@ -78,8 +94,7 @@ class SearchViewModel(
     private suspend fun performSearch() {
         _uiState.update { it.copy(isLoading = true, errorMessage = null) }
 
-        // Tận dụng sức mạnh của API: Gửi bộ lọc trực tiếp lên Server
-        // Không tải 100 phim nữa mà chỉ tải đúng kết quả cần thiết
+        // Gọi API lọc trực tiếp từ server theo cơ chế cũ
         val result = repository.getMoviesFromApi(
             page = 1,
             limit = 50, // Lấy 50 kết quả phù hợp nhất
@@ -138,6 +153,12 @@ class SearchViewModel(
     }
 
     fun toggleFavorite(movie: MovieResponse) {
+        val currentUser = FirebaseAuth.getInstance().currentUser
+        if (currentUser == null) {
+            _uiState.update { it.copy(errorMessage = "Vui lòng đăng nhập để thích phim") }
+            return
+        }
+        val userId = currentUser.uid
         viewModelScope.launch {
             val isFav = repository.isMovieFavorite(movie.id, userId)
             val entity = FavoriteMovieEntity(

@@ -22,9 +22,9 @@ data class AuthUiState(
     val isLoading: Boolean = false,
     val isSuccess: Boolean = false,
     val errorMessage: String? = null,
-    val isLoggedIn: Boolean = FirebaseAuth.getInstance().currentUser != null,
-    val isOtpSent: Boolean = false, // Trạng thái đã gửi mã OTP (giả lập)
-    val generatedOtp: String = ""    // Mã OTP đã tạo (giả lập)
+    val isLoggedIn: Boolean = FirebaseAuth.getInstance().currentUser?.isEmailVerified ?: false,
+    val isVerificationSent: Boolean = false,
+    val isEmailVerifiedSuccess: Boolean = false
 )
 
 class AuthViewModel(private val repository: MovieRepository) : ViewModel() {
@@ -35,7 +35,7 @@ class AuthViewModel(private val repository: MovieRepository) : ViewModel() {
 
     private val authListener = FirebaseAuth.AuthStateListener { fbAuth: FirebaseAuth ->
         val user = fbAuth.currentUser
-        _uiState.update { it.copy(isLoggedIn = user != null) }
+        _uiState.update { it.copy(isLoggedIn = user != null && user.isEmailVerified) }
     }
 
     init {
@@ -72,6 +72,16 @@ class AuthViewModel(private val repository: MovieRepository) : ViewModel() {
                 val user = result.user
                 
                 if (user != null) {
+                    if (!user.isEmailVerified) {
+                        user.sendEmailVerification()
+                        auth.signOut()
+                        _uiState.update { it.copy(
+                            isLoading = false,
+                            isLoggedIn = false,
+                            errorMessage = "Email chưa được xác thực. Chúng tôi đã gửi lại liên kết xác thực vào email của bạn."
+                        ) }
+                        return@launch
+                    }
                     repository.insertOrUpdateUser(
                         UserEntity(
                             id = user.uid,
@@ -92,38 +102,24 @@ class AuthViewModel(private val repository: MovieRepository) : ViewModel() {
         }
     }
 
-    // [GHI CHÚ]: Hàm giả lập gửi OTP về Email
-    fun sendOtp(email: String) {
-        if (email.isBlank() || !android.util.Patterns.EMAIL_ADDRESS.matcher(email.trim()).matches()) {
-            _uiState.update { it.copy(errorMessage = "Vui lòng nhập Email hợp lệ để nhận mã") }
-            return
-        }
-
-        viewModelScope.launch {
-            _uiState.update { it.copy(isLoading = true, errorMessage = null) }
-            delay(1000) // Giả lập độ trễ gửi mail
-            
-            // Tạo mã 6 số ngẫu nhiên
-            val otp = (100000..999999).random().toString()
-            
-            _uiState.update { it.copy(
-                isLoading = false,
-                isOtpSent = true,
-                generatedOtp = otp,
-                errorMessage = "Mã OTP đã được gửi (Giả lập: $otp)" // Hiển thị mã để test
-            ) }
-        }
-    }
-
-    fun registerWithOtp(name: String, email: String, password: String, otpInput: String) {
-        if (otpInput != _uiState.value.generatedOtp) {
-            _uiState.update { it.copy(errorMessage = "Mã OTP không chính xác") }
-            return
-        }
-
-        val parts = email.trim().split("@")
-        val cleanEmail = "${parts[0]}@${parts[1].lowercase()}"
+    fun register(name: String, email: String, password: String, confirmPassword: String) {
         val cleanName = name.trim()
+        val cleanEmail = email.trim().lowercase()
+
+        if (cleanName.isBlank() || cleanEmail.isBlank() || password.isBlank() || confirmPassword.isBlank()) {
+            _uiState.update { it.copy(errorMessage = "Vui lòng nhập đầy đủ thông tin") }
+            return
+        }
+
+        if (password != confirmPassword) {
+            _uiState.update { it.copy(errorMessage = "Mật khẩu xác nhận không khớp") }
+            return
+        }
+
+        if (!android.util.Patterns.EMAIL_ADDRESS.matcher(cleanEmail).matches()) {
+            _uiState.update { it.copy(errorMessage = "Email không hợp lệ") }
+            return
+        }
 
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true, errorMessage = null) }
@@ -131,13 +127,15 @@ class AuthViewModel(private val repository: MovieRepository) : ViewModel() {
                 val result = auth.createUserWithEmailAndPassword(cleanEmail, password).await()
                 val user = result.user
                 
-                user?.updateProfile(
-                    UserProfileChangeRequest.Builder()
-                        .setDisplayName(cleanName)
-                        .build()
-                )?.await()
-
                 if (user != null) {
+                    user.updateProfile(
+                        UserProfileChangeRequest.Builder()
+                            .setDisplayName(cleanName)
+                            .build()
+                    ).await()
+
+                    user.sendEmailVerification().await()
+                    
                     repository.insertOrUpdateUser(
                         UserEntity(
                             id = user.uid,
@@ -145,14 +143,14 @@ class AuthViewModel(private val repository: MovieRepository) : ViewModel() {
                             avatarUrl = ""
                         )
                     )
+                    
+                    _uiState.update { it.copy(
+                        isLoading = false,
+                        isSuccess = true,
+                        isVerificationSent = true,
+                        isLoggedIn = false
+                    ) }
                 }
-
-                _uiState.update { it.copy(
-                    isLoading = false, 
-                    isSuccess = true, 
-                    isLoggedIn = true,
-                    isOtpSent = false 
-                ) }
             } catch (e: Exception) {
                 val friendlyMessage = when (e) {
                     is FirebaseAuthWeakPasswordException -> "Mật khẩu quá yếu"
@@ -162,6 +160,36 @@ class AuthViewModel(private val repository: MovieRepository) : ViewModel() {
                 _uiState.update { it.copy(isLoading = false, errorMessage = friendlyMessage) }
             }
         }
+    }
+
+    fun checkEmailVerificationStatus() {
+        val user = auth.currentUser ?: return
+        viewModelScope.launch {
+            try {
+                user.reload().await()
+                if (user.isEmailVerified) {
+                    repository.insertOrUpdateUser(
+                        UserEntity(
+                            id = user.uid,
+                            name = user.displayName ?: "Người dùng",
+                            avatarUrl = ""
+                        )
+                    )
+                    auth.signOut()
+                    
+                    _uiState.update { it.copy(
+                        isEmailVerifiedSuccess = true,
+                        isLoggedIn = false
+                    ) }
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+        }
+    }
+
+    fun clearError() {
+        _uiState.update { it.copy(errorMessage = null) }
     }
 
     private fun translateError(message: String?): String {
@@ -179,14 +207,10 @@ class AuthViewModel(private val repository: MovieRepository) : ViewModel() {
 
     fun logout() {
         auth.signOut()
-        _uiState.update { it.copy(isLoggedIn = false, isOtpSent = false) }
+        _uiState.update { it.copy(isLoggedIn = false, isVerificationSent = false, isEmailVerifiedSuccess = false) }
     }
     
     fun resetSuccess() {
-        _uiState.update { it.copy(isSuccess = false) }
-    }
-
-    fun cancelOtp() {
-        _uiState.update { it.copy(isOtpSent = false, errorMessage = null) }
+        _uiState.update { it.copy(isSuccess = false, isEmailVerifiedSuccess = false) }
     }
 }

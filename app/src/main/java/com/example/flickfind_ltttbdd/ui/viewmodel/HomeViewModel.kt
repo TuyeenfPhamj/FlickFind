@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.example.flickfind_ltttbdd.data.MovieRepository
 import com.example.flickfind_ltttbdd.data.local.FavoriteMovieEntity
 import com.example.flickfind_ltttbdd.data.remote.MovieResponse
+import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -25,8 +26,7 @@ data class HomeUiState(
 )
 
 class HomeViewModel(
-    private val repository: MovieRepository,
-    private val userId: String = "guest_user"
+    private val repository: MovieRepository
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(HomeUiState())
@@ -34,11 +34,27 @@ class HomeViewModel(
 
     private val pageLimit = 10
     private var searchJob: kotlinx.coroutines.Job? = null
+    private var favoritesJob: kotlinx.coroutines.Job? = null
+
+    private val authListener = FirebaseAuth.AuthStateListener { auth ->
+        val userId = auth.currentUser?.uid
+        favoritesJob?.cancel()
+        if (userId != null) {
+            observeFavorites(userId)
+        } else {
+            _uiState.update { it.copy(favoriteMovieIds = emptySet()) }
+        }
+    }
 
     init {
         loadNextMovies()
-        observeFavorites()
+        FirebaseAuth.getInstance().addAuthStateListener(authListener)
         fetchPopularMovies()
+    }
+
+    override fun onCleared() {
+        super.onCleared()
+        FirebaseAuth.getInstance().removeAuthStateListener(authListener)
     }
 
     private fun fetchPopularMovies() {
@@ -121,8 +137,8 @@ class HomeViewModel(
     }
 
     // 3. Theo dõi danh sách phim đã lưu trong Room DB theo userId
-    private fun observeFavorites() {
-        viewModelScope.launch {
+    private fun observeFavorites(userId: String) {
+        favoritesJob = viewModelScope.launch {
             repository.getAllFavorites(userId).collect { favoriteEntities ->
                 _uiState.update { currentState ->
                     // Chuyển danh sách thực thể thành một bộ Set<Int> chứa ID để tìm kiếm siêu nhanh (O(1))
@@ -134,6 +150,12 @@ class HomeViewModel(
 
     // 4. Tính năng Click vào nút "Thích" (CRUD - Thêm/Xóa khỏi Room DB trực tiếp từ danh sách)
     fun toggleFavorite(movie: MovieResponse) {
+        val currentUser = FirebaseAuth.getInstance().currentUser
+        if (currentUser == null) {
+            _uiState.update { it.copy(errorMessage = "Vui lòng đăng nhập để thích phim") }
+            return
+        }
+        val userId = currentUser.uid
         viewModelScope.launch {
             val isFav = repository.isMovieFavorite(movie.id, userId)
             // Chuyển đổi dữ liệu từ dạng API Response sang thực thể Room DB

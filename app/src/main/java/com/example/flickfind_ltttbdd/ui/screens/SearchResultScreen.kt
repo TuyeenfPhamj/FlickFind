@@ -15,6 +15,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalContext
+import android.widget.Toast
+import com.google.firebase.auth.FirebaseAuth
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -33,6 +36,7 @@ fun SearchResultScreen(
     navController: NavController
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    val context = LocalContext.current
 
     // Kiểm tra hướng màn hình để quyết định số cột (Dọc: 1 cột, Ngang: 2 cột)
     val configuration = LocalConfiguration.current
@@ -110,7 +114,13 @@ fun SearchResultScreen(
                         MovieHorizontalRowItem(
                             movie = movie,
                             isFavorite = uiState.favoriteMovieIds.contains(movie.id),
-                            onFavoriteClick = { viewModel.toggleFavorite(movie) },
+                            onFavoriteClick = {
+                                if (FirebaseAuth.getInstance().currentUser != null) {
+                                    viewModel.toggleFavorite(movie)
+                                } else {
+                                    Toast.makeText(context, "Vui lòng đăng nhập để thích phim", Toast.LENGTH_SHORT).show()
+                                }
+                            },
                             onCardClick = {
                                 navController.navigate(Screen.Detail.createRoute(movie.id))
                             }

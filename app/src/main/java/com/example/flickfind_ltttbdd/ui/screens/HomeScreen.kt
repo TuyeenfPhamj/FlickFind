@@ -36,6 +36,9 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
+import androidx.compose.ui.platform.LocalContext
+import android.widget.Toast
+import com.google.firebase.auth.FirebaseAuth
 import coil.compose.AsyncImage
 import com.example.flickfind_ltttbdd.R
 import com.example.flickfind_ltttbdd.data.remote.MovieResponse
@@ -50,6 +53,7 @@ fun HomeScreen(
 ) {
     // Lắng nghe trạng thái UI State từ ViewModel phát ra
     val uiState by viewModel.uiState.collectAsState()
+    val context = LocalContext.current
     var searchQuery by remember { mutableStateOf("") }
     var isSuggestionsVisible by remember { mutableStateOf(false) }
 
@@ -258,7 +262,13 @@ fun HomeScreen(
                                     MovieItemCard(
                                         movie = movie,
                                         isFavorite = uiState.favoriteMovieIds.contains(movie.id),
-                                        onFavoriteClick = { viewModel.toggleFavorite(movie) },
+                                        onFavoriteClick = {
+                                            if (FirebaseAuth.getInstance().currentUser != null) {
+                                                viewModel.toggleFavorite(movie)
+                                            } else {
+                                                Toast.makeText(context, "Vui lòng đăng nhập để thích phim", Toast.LENGTH_SHORT).show()
+                                            }
+                                        },
                                         onCardClick = {
                                             navController.navigate(Screen.Detail.createRoute(movie.id))
                                         }
@@ -292,7 +302,13 @@ fun HomeScreen(
                             MovieHorizontalRowItem(
                                 movie = movie,
                                 isFavorite = uiState.favoriteMovieIds.contains(movie.id),
-                                onFavoriteClick = { viewModel.toggleFavorite(movie) },
+                                onFavoriteClick = {
+                                    if (FirebaseAuth.getInstance().currentUser != null) {
+                                        viewModel.toggleFavorite(movie)
+                                    } else {
+                                        Toast.makeText(context, "Vui lòng đăng nhập để thích phim", Toast.LENGTH_SHORT).show()
+                                    }
+                                },
                                 onCardClick = {
                                     navController.navigate(Screen.Detail.createRoute(movie.id))
                                 }

@@ -15,15 +15,16 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.FavoriteBorder
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.platform.LocalContext
+import android.widget.Toast
+import com.google.firebase.auth.FirebaseAuth
 import coil.compose.AsyncImage
 import com.example.flickfind_ltttbdd.data.remote.MovieResponse
 import com.example.flickfind_ltttbdd.ui.viewmodel.DetailViewModel
@@ -71,10 +72,17 @@ fun DetailScreen(
                     }
                 }
                 movie != null -> {
+                    val context = LocalContext.current
                     MovieDetailContent(
                         movie = movie!!,
                         isFavorite = isFavorite,
-                        onToggleFavorite = { viewModel.toggleFavorite(movie!!) },
+                        onToggleFavorite = {
+                            if (FirebaseAuth.getInstance().currentUser != null) {
+                                viewModel.toggleFavorite(movie!!)
+                            } else {
+                                Toast.makeText(context, "Vui lòng đăng nhập để thích phim", Toast.LENGTH_SHORT).show()
+                            }
+                        },
                         onBackClick = onBackClick
                     )
                 }
