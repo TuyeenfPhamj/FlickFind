@@ -44,7 +44,6 @@ fun SearchResultScreen(
         viewModel.setFiltersAndSearch(query, genre, yearRange, sortBy)
     }
 
-    // Tự động tải thêm khi cuộn gần tới cuối danh sách
     val movies = uiState.movies
 
     Scaffold(
@@ -52,66 +51,77 @@ fun SearchResultScreen(
             TopAppBar(
                 title = { 
                     Column {
-                        Text("Kết quả tìm kiếm", color = Color.White, fontSize = 18.sp)
+                        Text("Kết quả tìm kiếm", color = MaterialTheme.colorScheme.onSurface, fontSize = 18.sp)
                         val filterText = listOfNotNull(
                             query?.takeIf { it.isNotBlank() }?.let { "Từ khóa: $it" },
                             genre?.takeIf { it.isNotBlank() }?.let { "Thể loại: $it" },
                             yearRange?.takeIf { it.isNotBlank() }?.let { "Năm: $it" }
                         ).joinToString(" | ")
                         if (filterText.isNotBlank()) {
-                            Text(filterText, color = Color.Gray, fontSize = 12.sp)
+                            Text(filterText, color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 12.sp)
                         }
                     }
                 },
                 navigationIcon = {
                     IconButton(onClick = { navController.popBackStack() }) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back", tint = Color.White)
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back", tint = MaterialTheme.colorScheme.onSurface)
                     }
                 },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = Color(0xFF0B121F))
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.surface)
             )
         },
-        containerColor = Color(0xFF0B121F)
+        containerColor = MaterialTheme.colorScheme.background
     ) { padding ->
-        if (movies.isEmpty() && !uiState.isLoading) {
-            Box(modifier = Modifier.fillMaxSize().padding(padding), contentAlignment = Alignment.Center) {
-                Text("Không tìm thấy phim nào phù hợp", color = Color.Gray)
-            }
-        } else {
-            LazyVerticalGrid(
-                columns = GridCells.Fixed(columns),
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(padding),
-                contentPadding = PaddingValues(16.dp),
-                verticalArrangement = Arrangement.spacedBy(16.dp),
-                horizontalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                items(movies) { movie ->
-                    MovieHorizontalRowItem(
-                        movie = movie,
-                        isFavorite = uiState.favoriteMovieIds.contains(movie.id),
-                        onFavoriteClick = { viewModel.toggleFavorite(movie) },
-                        onCardClick = {
-                            navController.navigate(Screen.Detail.createRoute(movie.id))
-                        }
+        Box(modifier = Modifier.fillMaxSize().padding(padding)) {
+            if (uiState.errorMessage != null && movies.isEmpty() && !uiState.isLoading) {
+                // Hiển thị lỗi mạng ở giữa màn hình nếu không có dữ liệu
+                Column(
+                    modifier = Modifier.fillMaxSize(),
+                    verticalArrangement = Arrangement.Center,
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Text(
+                        text = uiState.errorMessage!!,
+                        color = Color.Red,
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.Medium
                     )
-                }
-
-                // Hiển thị loading khi tải trang tiếp theo - Chiếm hết số cột
-                if (uiState.isLoading) {
-                    item(span = { GridItemSpan(columns) }) {
-                        Box(modifier = Modifier.fillMaxWidth().padding(8.dp), contentAlignment = Alignment.Center) {
-                            CircularProgressIndicator(color = Color(0xFF38B6FF))
-                        }
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Button(
+                        onClick = { viewModel.setFiltersAndSearch(query, genre, yearRange, sortBy) },
+                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF38B6FF))
+                    ) {
+                        Text("Thử lại", color = Color.White)
                     }
                 }
+            } else if (movies.isEmpty() && !uiState.isLoading) {
+                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    Text("Không tìm thấy phim nào phù hợp", color = Color.Gray)
+                }
+            } else {
+                LazyVerticalGrid(
+                    columns = GridCells.Fixed(columns),
+                    modifier = Modifier.fillMaxSize(),
+                    contentPadding = PaddingValues(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(16.dp),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    items(movies) { movie ->
+                        MovieHorizontalRowItem(
+                            movie = movie,
+                            isFavorite = uiState.favoriteMovieIds.contains(movie.id),
+                            onFavoriteClick = { viewModel.toggleFavorite(movie) },
+                            onCardClick = {
+                                navController.navigate(Screen.Detail.createRoute(movie.id))
+                            }
+                        )
+                    }
 
-                // Trigger tải thêm phim khi cuộn tới cuối - Chiếm hết số cột
-                item(span = { GridItemSpan(columns) }) {
-                    LaunchedEffect(Unit) {
-                        if (!uiState.isEndReached && !uiState.isLoading) {
-                            viewModel.loadNextMovies()
+                    if (uiState.isLoading) {
+                        item(span = { GridItemSpan(columns) }) {
+                            Box(modifier = Modifier.fillMaxWidth().padding(8.dp), contentAlignment = Alignment.Center) {
+                                CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
+                            }
                         }
                     }
                 }

@@ -5,14 +5,14 @@ import androidx.lifecycle.viewModelScope
 import com.example.flickfind_ltttbdd.data.MovieRepository
 import com.example.flickfind_ltttbdd.data.local.FavoriteMovieEntity
 import com.example.flickfind_ltttbdd.data.remote.MovieResponse
+import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
 class DetailViewModel(
-    private val repository: MovieRepository,
-    private val userId: String
+    private val repository: MovieRepository
 ) : ViewModel() {
 
     private val _movie = MutableStateFlow<MovieResponse?>(null)
@@ -26,6 +26,10 @@ class DetailViewModel(
 
     private val _error = MutableStateFlow<String?>(null)
     val error: StateFlow<String?> = _error
+
+    // [GHI CHÚ]: Lấy ID người dùng hiện tại từ Firebase để quản lý yêu thích theo từng tài khoản
+    private val currentUserId: String
+        get() = FirebaseAuth.getInstance().currentUser?.uid ?: "guest_user"
 
     fun getMovieById(movieId: String) {
         if (movieId.isBlank()) {
@@ -58,19 +62,21 @@ class DetailViewModel(
         }
     }
 
+    // [GHI CHÚ]: Theo dõi trạng thái yêu thích dựa trên userId hiện tại
     private fun observeFavoriteStatus(movieId: String) {
         viewModelScope.launch {
-            repository.getAllFavorites(userId).collect { favorites ->
+            repository.getAllFavorites(currentUserId).collect { favorites ->
                 _isFavorite.value = favorites.any { it.id == movieId }
             }
         }
     }
 
+    // [GHI CHÚ]: Thêm/Xóa phim khỏi danh sách yêu thích liên kết với từng tài khoản
     fun toggleFavorite(movie: MovieResponse) {
         viewModelScope.launch {
             val favoriteMovie = FavoriteMovieEntity(
                 id = movie.id,
-                userId = userId,
+                userId = currentUserId,
                 title = movie.title,
                 posterPath = movie.posterPath,
                 backdropPath = movie.backdropPath,

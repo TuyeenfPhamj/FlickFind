@@ -1,7 +1,5 @@
 package com.example.flickfind_ltttbdd.navigation
 
-
-import android.net.http.SslCertificate.saveState
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Home
@@ -75,6 +73,7 @@ fun MainNavGraph(
             composable(Screen.Login.route) {
                 LoginScreen(
                     viewModel = authViewModel,
+                    isDarkTheme = isDarkTheme,
                     onNavigateToRegister = { navController.navigate(Screen.Register.route) }
                 )
             }
@@ -82,7 +81,11 @@ fun MainNavGraph(
             composable(Screen.Register.route) {
                 RegisterScreen(
                     viewModel = authViewModel,
-                    onNavigateToLogin = { navController.popBackStack() }
+                    isDarkTheme = isDarkTheme,
+                    onNavigateToLogin = { 
+                        // Quay lại màn hình trước đó (Tab Cá nhân)
+                        navController.popBackStack() 
+                    }
                 )
             }
 
@@ -91,7 +94,10 @@ fun MainNavGraph(
                 val homeViewModel: HomeViewModel = viewModel(
                     factory = AppViewModelProvider(context)
                 )
-                HomeScreen(viewModel = homeViewModel, navController = navController)
+                HomeScreen(
+                    viewModel = homeViewModel, 
+                    navController = navController,
+                )
             }
 
             // 2. Màn hình Cá nhân (Yêu cầu đăng nhập)
@@ -123,7 +129,7 @@ fun MainNavGraph(
                     yearRange = yearRange,
                     sortBy = sortBy,
                     viewModel = searchViewModel,
-                    navController = navController
+                    navController = navController,
                 )
             }
 
@@ -162,6 +168,7 @@ fun MainNavGraph(
                     // Nếu chưa đăng nhập -> Hiện trang đăng nhập ngay tại tab Cá nhân
                     LoginScreen(
                         viewModel = authViewModel,
+                        isDarkTheme = isDarkTheme,
                         onNavigateToRegister = { navController.navigate(Screen.Register.route) }
                     )
                 }
@@ -180,6 +187,7 @@ fun MainNavGraph(
 
             composable(Screen.DeveloperInfo.route) {
                 DeveloperInfoScreen(
+                    isDarkTheme = isDarkTheme,
                     onBack = { navController.popBackStack() }
                 )
             }

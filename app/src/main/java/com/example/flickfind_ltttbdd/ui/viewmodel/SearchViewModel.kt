@@ -78,49 +78,38 @@ class SearchViewModel(
     private suspend fun performSearch() {
         _uiState.update { it.copy(isLoading = true, errorMessage = null) }
 
-        // Giải pháp triệt để: Tải toàn bộ danh sách phim (100 phim) và lọc local.
-        // Điều này đảm bảo bộ lọc hoạt động độc lập, không phụ thuộc vào trạng thái 
-        // cuộn của màn hình chính và khắc phục giới hạn lọc của MockAPI.
+        // Tận dụng sức mạnh của API: Gửi bộ lọc trực tiếp lên Server
+        // Không tải 100 phim nữa mà chỉ tải đúng kết quả cần thiết
         val result = repository.getMoviesFromApi(
             page = 1,
-            limit = 100, // Tải đủ số lượng phim dự kiến trong hệ thống
-            search = null
+            limit = 50, // Lấy 50 kết quả phù hợp nhất
+            search = _uiState.value.query,
+            genre = _uiState.value.genre,
+            yearRange = _uiState.value.yearRange
         )
 
-        result.onSuccess { allMovies ->
-            val filtered = allMovies.filter { movie ->
-                val q = _uiState.value.query
-                val g = _uiState.value.genre
-                val y = _uiState.value.yearRange
-
-                // 1. Lọc theo từ khóa (Tiêu đề)
-                val matchQuery = q == null || movie.title.contains(q, ignoreCase = true)
-                
-                // 2. Lọc theo Thể loại (Lọc trong mảng genres)
-                val matchGenre = g == null || movie.genres.any { it.contains(g, ignoreCase = true) }
-                
-                // 3. Lọc theo Khoảng năm (Dựa trên releaseDate YYYY-MM-DD)
-                val matchYear = y == null || matchesYearRange(movie.releaseDate, y)
-
-                matchQuery && matchGenre && matchYear
-            }
-
-            // Sắp xếp nếu có yêu cầu
+        result.onSuccess { filteredMovies ->
+            // Sắp xếp lại danh sách kết quả (Rating) nếu người dùng yêu cầu
             val sorted = if (_uiState.value.sortBy == "rating") {
-                filtered.sortedByDescending { it.rating }
+                filteredMovies.sortedByDescending { it.rating }
             } else {
-                filtered
+                filteredMovies
             }
 
             _uiState.update { it.copy(
                 isLoading = false, 
                 movies = sorted,
-                isEndReached = true // Đã hoàn thành tải và lọc toàn bộ kho phim
+                isEndReached = true // Đã có bộ lọc chính xác từ Server
             ) }
         }.onFailure { e ->
+            val friendlyError = if (e is java.net.UnknownHostException || e.message?.contains("Unable to resolve host") == true) {
+                "Không có kết nối mạng, vui lòng thử lại"
+            } else {
+                e.localizedMessage ?: "Không có kết nối mạng, vui lòng thử lại"
+            }
             _uiState.update { it.copy(
                 isLoading = false, 
-                errorMessage = e.localizedMessage ?: "Lỗi kết nối máy chủ"
+                errorMessage = friendlyError
             ) }
         }
     }
@@ -138,6 +127,10 @@ class SearchViewModel(
         } catch (e: Exception) {
             true // Nếu lỗi định dạng thì bỏ qua lọc năm này
         }
+    }
+
+    fun clearErrorMessage() {
+        _uiState.update { it.copy(errorMessage = null) }
     }
 
     fun loadNextMovies() {
