@@ -34,7 +34,6 @@ import coil.compose.AsyncImage
 import com.example.flickfind_ltttbdd.data.local.FavoriteMovieEntity
 import com.example.flickfind_ltttbdd.ui.viewmodel.ProfileViewModel
 import com.example.flickfind_ltttbdd.navigation.Screen
-import androidx.compose.ui.tooling.preview.Preview
 import com.example.flickfind_ltttbdd.data.local.UserEntity
 import com.google.firebase.auth.FirebaseAuth
 
@@ -59,9 +58,7 @@ fun ProfileScreen(
                         it,
                         Intent.FLAG_GRANT_READ_URI_PERMISSION
                     )
-                } catch (e: Exception) {
-                    // Một số URI không hỗ trợ persistable permission
-                }
+                } catch (e: Exception) {}
                 viewModel.updateAvatar(it.toString()) 
             }
         }
@@ -189,7 +186,8 @@ fun HorizontalFavoriteMovieItem(
         shape = RoundedCornerShape(12.dp),
         modifier = Modifier
             .fillMaxWidth()
-            .clickable { onClick() }
+            .clickable { onClick() },
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
         Row(
             modifier = Modifier
@@ -282,7 +280,7 @@ fun HorizontalFavoriteMovieItem(
                     Surface(
                         color = if (movie.isWatched) Color(0xFF00BFA5) else Color(0xFFE91E63),
                         shape = RoundedCornerShape(4.dp),
-                        modifier = Modifier.padding(top = 60.dp) // Đẩy xuống dưới
+                        modifier = Modifier.padding(top = 60.dp)
                     ) {
                         Text(
                             text = if (movie.isWatched) "Đã xem" else "Chưa xem",
@@ -454,7 +452,7 @@ fun ProfileScreenPreview() {
         FavoriteMovieEntity("1", "1", "Inception", "/edv5bs1pUQC67SWHqcYf67OQ97R.jpg", "", "Hành động", 8.8f, 148, true),
         FavoriteMovieEntity("2", "1", "The Dark Knight", "/qJ2tW6WMUDp9QmSJJIVP6YFZO8r.jpg", "", "Hành động", 9.0f, 152, true),
     )
-    
+
     MaterialTheme {
         LazyColumn(
             modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background).padding(16.dp),

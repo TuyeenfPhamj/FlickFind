@@ -1,7 +1,5 @@
 package com.example.flickfind_ltttbdd.navigation
 
-
-import android.net.http.SslCertificate.saveState
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Home
@@ -75,6 +73,7 @@ fun MainNavGraph(
             composable(Screen.Login.route) {
                 LoginScreen(
                     viewModel = authViewModel,
+                    isDarkTheme = isDarkTheme,
                     onNavigateToRegister = { navController.navigate(Screen.Register.route) }
                 )
             }
@@ -82,7 +81,11 @@ fun MainNavGraph(
             composable(Screen.Register.route) {
                 RegisterScreen(
                     viewModel = authViewModel,
-                    onNavigateToLogin = { navController.popBackStack() }
+                    isDarkTheme = isDarkTheme,
+                    onNavigateToLogin = { 
+                        // Quay lại màn hình trước đó (Tab Cá nhân)
+                        navController.popBackStack() 
+                    }
                 )
             }
 
@@ -91,13 +94,18 @@ fun MainNavGraph(
                 val homeViewModel: HomeViewModel = viewModel(
                     factory = AppViewModelProvider(context)
                 )
-                HomeScreen(viewModel = homeViewModel, navController = navController)
+                HomeScreen(
+                    viewModel = homeViewModel, 
+                    navController = navController,
+                    isDarkTheme = isDarkTheme
+                )
             }
 
             // 2. Màn hình Cá nhân (Yêu cầu đăng nhập)
             composable(Screen.Filter.route) {
                 FilterScreen(
                     navController = navController,
+                    isDarkTheme = isDarkTheme,
                     onApplyFilters = { genre, yearRange ->
                         navController.navigate(Screen.SearchResult.createRoute(genre = genre, yearRange = yearRange))
                     }
@@ -123,7 +131,8 @@ fun MainNavGraph(
                     yearRange = yearRange,
                     sortBy = sortBy,
                     viewModel = searchViewModel,
-                    navController = navController
+                    navController = navController,
+                    isDarkTheme = isDarkTheme
                 )
             }
 
@@ -140,6 +149,7 @@ fun MainNavGraph(
                     DetailScreen(
                         movieId = movieId,
                         viewModel = detailViewModel,
+                        isDarkTheme = isDarkTheme,
                         onBackClick = { navController.popBackStack() }
                     )
                 }
@@ -154,6 +164,7 @@ fun MainNavGraph(
                     ProfileScreen(
                         viewModel = profileViewModel,
                         navController = navController,
+                        isDarkTheme = isDarkTheme,
                         onLogout = {
                             authViewModel.logout()
                         }
@@ -162,6 +173,7 @@ fun MainNavGraph(
                     // Nếu chưa đăng nhập -> Hiện trang đăng nhập ngay tại tab Cá nhân
                     LoginScreen(
                         viewModel = authViewModel,
+                        isDarkTheme = isDarkTheme,
                         onNavigateToRegister = { navController.navigate(Screen.Register.route) }
                     )
                 }
@@ -180,6 +192,7 @@ fun MainNavGraph(
 
             composable(Screen.DeveloperInfo.route) {
                 DeveloperInfoScreen(
+                    isDarkTheme = isDarkTheme,
                     onBack = { navController.popBackStack() }
                 )
             }

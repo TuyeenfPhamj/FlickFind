@@ -25,6 +25,10 @@ fun AboutScreen(
     onThemeToggle: () -> Unit,
     onNavigateToDeveloperInfo: () -> Unit
 ) {
+    val backgroundColor = if (isDarkTheme) Color(0xFF0B101B) else Color(0xFFF0F4F8)
+    val cardColor = if (isDarkTheme) Color(0xFF172033) else Color(0xFFFFFFFF)
+    val textColor = if (isDarkTheme) Color.White else Color.Black
+
     Column(
         modifier = Modifier
             .fillMaxSize()
