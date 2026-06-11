@@ -129,7 +129,7 @@ fun MovieDetailContent(
                 onClick = onToggleFavorite,
                 modifier = Modifier
                     .padding(16.dp)
-                    .padding(bottom = 8.dp) // Nâng nhẹ nút lên khỏi mép
+                    .padding(bottom = 8.dp)
                     .align(Alignment.BottomEnd)
                     .background(Color(0xFF1E293B), CircleShape)
                     .border(1.dp, Color(0xFF38B6FF), CircleShape)
