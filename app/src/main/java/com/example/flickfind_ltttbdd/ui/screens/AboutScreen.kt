@@ -25,14 +25,10 @@ fun AboutScreen(
     onThemeToggle: () -> Unit,
     onNavigateToDeveloperInfo: () -> Unit
 ) {
-    val backgroundColor = if (isDarkTheme) Color(0xFF050B18) else Color(0xFFF0F4F8)
-    val cardColor = if (isDarkTheme) Color(0xFF1B2A3E) else Color(0xFFFFFFFF)
-    val textColor = if (isDarkTheme) Color.White else Color.Black
-
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(backgroundColor)
+            .background(MaterialTheme.colorScheme.background)
             .padding(16.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
@@ -53,7 +49,7 @@ fun AboutScreen(
         // 2. Tên logo (Flick Find)
         Text(
             text = "Flick Find",
-            color = textColor,
+            color = MaterialTheme.colorScheme.onBackground,
             fontSize = 20.sp,
             fontWeight = FontWeight.Bold,
             modifier = Modifier.padding(vertical = 8.dp)
@@ -66,7 +62,7 @@ fun AboutScreen(
             modifier = Modifier
                 .fillMaxWidth()
                 .height(56.dp)
-                .background(if (isDarkTheme) Color(0xFF162534) else Color(0xFFD1D9E6), RoundedCornerShape(8.dp)),
+                .background(MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(8.dp)),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Box(
@@ -79,7 +75,7 @@ fun AboutScreen(
             ) {
                 Text(
                     text = "Giới thiệu nhà phát triển",
-                    color = textColor,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                     fontSize = 16.sp
                 )
             }
@@ -93,7 +89,7 @@ fun AboutScreen(
                 Icon(
                     imageVector = Icons.Default.Menu,
                     contentDescription = "Menu",
-                    tint = textColor.copy(alpha = 0.6f),
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
                     modifier = Modifier.size(28.dp)
                 )
             }
@@ -110,8 +106,8 @@ fun AboutScreen(
                 checked = isDarkTheme,
                 onCheckedChange = { onThemeToggle() },
                 colors = SwitchDefaults.colors(
-                    checkedThumbColor = Color(0xFF4A6592),
-                    checkedTrackColor = Color(0xFF2C4162)
+                    checkedThumbColor = MaterialTheme.colorScheme.primary,
+                    checkedTrackColor = MaterialTheme.colorScheme.primaryContainer
                 )
             )
             
@@ -119,7 +115,7 @@ fun AboutScreen(
             
             Text(
                 text = "Bật tắt ánh sáng",
-                color = textColor,
+                color = MaterialTheme.colorScheme.onBackground,
                 fontSize = 16.sp,
                 modifier = Modifier.padding(12.dp)
             )

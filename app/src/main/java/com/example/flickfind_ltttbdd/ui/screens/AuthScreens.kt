@@ -25,12 +25,12 @@ fun LoginScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color(0xFF0B101B))
+            .background(MaterialTheme.colorScheme.background)
             .padding(24.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
-        Text("FlickFind", color = Color.Cyan, fontSize = 32.sp, fontWeight = FontWeight.Bold)
+        Text("FlickFind", color = MaterialTheme.colorScheme.primary, fontSize = 32.sp, fontWeight = FontWeight.Bold)
         Spacer(modifier = Modifier.height(32.dp))
         
         OutlinedTextField(
@@ -39,8 +39,10 @@ fun LoginScreen(
             label = { Text("Email") },
             modifier = Modifier.fillMaxWidth(),
             colors = OutlinedTextFieldDefaults.colors(
-                focusedTextColor = Color.White,
-                unfocusedTextColor = Color.White
+                focusedTextColor = MaterialTheme.colorScheme.onBackground,
+                unfocusedTextColor = MaterialTheme.colorScheme.onBackground,
+                focusedLabelColor = MaterialTheme.colorScheme.primary,
+                unfocusedLabelColor = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f)
             )
         )
         Spacer(modifier = Modifier.height(16.dp))
@@ -52,13 +54,15 @@ fun LoginScreen(
             visualTransformation = PasswordVisualTransformation(),
             modifier = Modifier.fillMaxWidth(),
             colors = OutlinedTextFieldDefaults.colors(
-                focusedTextColor = Color.White,
-                unfocusedTextColor = Color.White
+                focusedTextColor = MaterialTheme.colorScheme.onBackground,
+                unfocusedTextColor = MaterialTheme.colorScheme.onBackground,
+                focusedLabelColor = MaterialTheme.colorScheme.primary,
+                unfocusedLabelColor = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f)
             )
         )
         
         uiState.errorMessage?.let {
-            Text(it, color = Color.Red, modifier = Modifier.padding(top = 8.dp))
+            Text(it, color = MaterialTheme.colorScheme.error, modifier = Modifier.padding(top = 8.dp))
         }
         
         Spacer(modifier = Modifier.height(32.dp))
@@ -66,21 +70,24 @@ fun LoginScreen(
         Button(
             onClick = { viewModel.login(email, password) },
             modifier = Modifier.fillMaxWidth(),
-            colors = ButtonDefaults.buttonColors(containerColor = Color.Cyan)
+            colors = ButtonDefaults.buttonColors(
+                containerColor = MaterialTheme.colorScheme.primary,
+                contentColor = MaterialTheme.colorScheme.onPrimary
+            )
         ) {
             if (uiState.isLoading) {
-                CircularProgressIndicator(color = Color.Black, modifier = Modifier.size(24.dp))
+                CircularProgressIndicator(color = MaterialTheme.colorScheme.onPrimary, modifier = Modifier.size(24.dp))
             } else {
-                Text("Đăng nhập", color = Color.Black)
+                Text("Đăng nhập")
             }
         }
         Row(
             verticalAlignment = Alignment.CenterVertically,
             modifier = Modifier.padding(top = 8.dp)
         ) {
-            Text("Chưa có tài khoản? ", color = Color.Gray)
+            Text("Chưa có tài khoản? ", color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f))
             TextButton(onClick = onNavigateToRegister, contentPadding = PaddingValues(0.dp)) {
-                Text("Đăng ký ngay", color = Color.Cyan)
+                Text("Đăng ký ngay", color = MaterialTheme.colorScheme.primary)
             }
         }
     }
@@ -100,12 +107,12 @@ fun RegisterScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color(0xFF0B101B))
+            .background(MaterialTheme.colorScheme.background)
             .padding(24.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
-        Text("Tạo tài khoản", color = Color.Cyan, fontSize = 28.sp, fontWeight = FontWeight.Bold)
+        Text("Tạo tài khoản", color = MaterialTheme.colorScheme.primary, fontSize = 28.sp, fontWeight = FontWeight.Bold)
         Spacer(modifier = Modifier.height(32.dp))
         
         OutlinedTextField(
@@ -114,8 +121,10 @@ fun RegisterScreen(
             label = { Text("Họ tên") },
             modifier = Modifier.fillMaxWidth(),
             colors = OutlinedTextFieldDefaults.colors(
-                focusedTextColor = Color.White,
-                unfocusedTextColor = Color.White
+                focusedTextColor = MaterialTheme.colorScheme.onBackground,
+                unfocusedTextColor = MaterialTheme.colorScheme.onBackground,
+                focusedLabelColor = MaterialTheme.colorScheme.primary,
+                unfocusedLabelColor = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f)
             )
         )
         Spacer(modifier = Modifier.height(16.dp))
@@ -126,8 +135,10 @@ fun RegisterScreen(
             label = { Text("Email") },
             modifier = Modifier.fillMaxWidth(),
             colors = OutlinedTextFieldDefaults.colors(
-                focusedTextColor = Color.White,
-                unfocusedTextColor = Color.White
+                focusedTextColor = MaterialTheme.colorScheme.onBackground,
+                unfocusedTextColor = MaterialTheme.colorScheme.onBackground,
+                focusedLabelColor = MaterialTheme.colorScheme.primary,
+                unfocusedLabelColor = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f)
             )
         )
         Spacer(modifier = Modifier.height(16.dp))
@@ -139,8 +150,10 @@ fun RegisterScreen(
             visualTransformation = PasswordVisualTransformation(),
             modifier = Modifier.fillMaxWidth(),
             colors = OutlinedTextFieldDefaults.colors(
-                focusedTextColor = Color.White,
-                unfocusedTextColor = Color.White
+                focusedTextColor = MaterialTheme.colorScheme.onBackground,
+                unfocusedTextColor = MaterialTheme.colorScheme.onBackground,
+                focusedLabelColor = MaterialTheme.colorScheme.primary,
+                unfocusedLabelColor = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f)
             )
         )
         Spacer(modifier = Modifier.height(16.dp))
@@ -152,13 +165,15 @@ fun RegisterScreen(
             visualTransformation = PasswordVisualTransformation(),
             modifier = Modifier.fillMaxWidth(),
             colors = OutlinedTextFieldDefaults.colors(
-                focusedTextColor = Color.White,
-                unfocusedTextColor = Color.White
+                focusedTextColor = MaterialTheme.colorScheme.onBackground,
+                unfocusedTextColor = MaterialTheme.colorScheme.onBackground,
+                focusedLabelColor = MaterialTheme.colorScheme.primary,
+                unfocusedLabelColor = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f)
             )
         )
         
         uiState.errorMessage?.let {
-            Text(it, color = Color.Red, modifier = Modifier.padding(top = 8.dp))
+            Text(it, color = MaterialTheme.colorScheme.error, modifier = Modifier.padding(top = 8.dp))
         }
         
         Spacer(modifier = Modifier.height(32.dp))
@@ -166,19 +181,22 @@ fun RegisterScreen(
         Button(
             onClick = { viewModel.register(name, email, password, confirmPassword) },
             modifier = Modifier.fillMaxWidth(),
-            colors = ButtonDefaults.buttonColors(containerColor = Color.Cyan)
+            colors = ButtonDefaults.buttonColors(
+                containerColor = MaterialTheme.colorScheme.primary,
+                contentColor = MaterialTheme.colorScheme.onPrimary
+            )
         ) {
             if (uiState.isLoading) {
-                CircularProgressIndicator(color = Color.Black, modifier = Modifier.size(24.dp))
+                CircularProgressIndicator(color = MaterialTheme.colorScheme.onPrimary, modifier = Modifier.size(24.dp))
             } else {
-                Text("Đăng ký", color = Color.Black)
+                Text("Đăng ký")
             }
         }
 
 
-        Text("Đã có tài khoản? ", color = Color.Gray)
+        Text("Đã có tài khoản? ", color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f))
         TextButton(onClick = onNavigateToLogin, contentPadding = PaddingValues(0.dp)) {
-            Text("Đăng nhập ngay", color = Color.Cyan)
+            Text("Đăng nhập ngay", color = MaterialTheme.colorScheme.primary)
         }
     }
 }

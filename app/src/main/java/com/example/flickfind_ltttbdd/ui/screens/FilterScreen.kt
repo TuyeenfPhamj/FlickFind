@@ -40,16 +40,16 @@ fun FilterScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Lọc phim", color = Color.White) },
+                title = { Text("Lọc phim", color = MaterialTheme.colorScheme.onSurface) },
                 navigationIcon = {
                     IconButton(onClick = { navController.popBackStack() }) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "Back", tint = Color.White)
+                        Icon(Icons.Default.ArrowBack, contentDescription = "Back", tint = MaterialTheme.colorScheme.onSurface)
                     }
                 },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = Color(0xFF0B121F))
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.surface)
             )
         },
-        containerColor = Color(0xFF0B121F)
+        containerColor = MaterialTheme.colorScheme.background
     ) { padding ->
         Column(
             modifier = Modifier
@@ -58,7 +58,7 @@ fun FilterScreen(
                 .padding(16.dp)
                 .verticalScroll(scrollState)
         ) {
-            Text("Theo thể loại", color = Color.White, fontSize = 18.sp, fontWeight = FontWeight.Bold)
+            Text("Theo thể loại", color = MaterialTheme.colorScheme.onBackground, fontSize = 18.sp, fontWeight = FontWeight.Bold)
             Spacer(modifier = Modifier.height(12.dp))
             
             // Grid thể loại (Không dùng Lazy để tự động giãn theo nội dung)
@@ -82,10 +82,10 @@ fun FilterScreen(
                             },
                             modifier = Modifier.weight(1f),
                             colors = FilterChipDefaults.filterChipColors(
-                                containerColor = Color(0xFF131C2E),
-                                labelColor = Color.Gray,
-                                selectedContainerColor = Color(0xFF38B6FF),
-                                selectedLabelColor = Color.White
+                                containerColor = MaterialTheme.colorScheme.surfaceVariant,
+                                labelColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                                selectedContainerColor = MaterialTheme.colorScheme.primary,
+                                selectedLabelColor = MaterialTheme.colorScheme.onPrimary
                             )
                         )
                     }
@@ -98,7 +98,7 @@ fun FilterScreen(
             }
 
             Spacer(modifier = Modifier.height(24.dp))
-            Text("Theo năm phát hành", color = Color.White, fontSize = 18.sp, fontWeight = FontWeight.Bold)
+            Text("Theo năm phát hành", color = MaterialTheme.colorScheme.onBackground, fontSize = 18.sp, fontWeight = FontWeight.Bold)
             Spacer(modifier = Modifier.height(12.dp))
 
             // Grid năm (Không dùng Lazy)
@@ -114,10 +114,10 @@ fun FilterScreen(
                             label = { Text(range, modifier = Modifier.fillMaxWidth(), textAlign = androidx.compose.ui.text.style.TextAlign.Center) },
                             modifier = Modifier.weight(1f),
                             colors = FilterChipDefaults.filterChipColors(
-                                containerColor = Color(0xFF131C2E),
-                                labelColor = Color.Gray,
-                                selectedContainerColor = Color(0xFF38B6FF),
-                                selectedLabelColor = Color.White
+                                containerColor = MaterialTheme.colorScheme.surfaceVariant,
+                                labelColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                                selectedContainerColor = MaterialTheme.colorScheme.primary,
+                                selectedLabelColor = MaterialTheme.colorScheme.onPrimary
                             )
                         )
                     }
@@ -133,10 +133,10 @@ fun FilterScreen(
             Button(
                 onClick = { onApplyFilters(selectedGenre, selectedYearRange) },
                 modifier = Modifier.fillMaxWidth().padding(vertical = 16.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF38B6FF)),
+                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
                 shape = RoundedCornerShape(8.dp)
             ) {
-                Text("Áp dụng", color = Color.White, fontSize = 16.sp)
+                Text("Áp dụng", color = MaterialTheme.colorScheme.onPrimary, fontSize = 16.sp)
             }
         }
     }

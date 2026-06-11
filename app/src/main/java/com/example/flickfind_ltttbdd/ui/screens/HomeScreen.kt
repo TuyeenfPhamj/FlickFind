@@ -69,7 +69,7 @@ fun HomeScreen(
     }
 
     // Giao diện tổng thể sử dụng LazyVerticalGrid để hỗ trợ hiển thị lưới khi xoay ngang
-    Box(modifier = Modifier.fillMaxSize().background(Color(0xFF0B121F))) {
+    Box(modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
         LazyVerticalGrid(
             columns = GridCells.Fixed(columns),
             modifier = Modifier.fillMaxSize(),
@@ -86,7 +86,7 @@ fun HomeScreen(
                     contentAlignment = Alignment.Center
                 ) {
                     Image(
-                        painter = painterResource(id = R.drawable.logo_v1),
+                        painter = painterResource(id = R.drawable.logo_v3),
                         contentDescription = "Logo FlickFind",
                         modifier = Modifier
                             .width(340.dp)
@@ -110,14 +110,14 @@ fun HomeScreen(
                             }
                         },
                         modifier = Modifier.fillMaxWidth(),
-                        placeholder = { Text("Thanh tìm kiếm...", color = Color.Gray) },
+                        placeholder = { Text("Thanh tìm kiếm...", color = MaterialTheme.colorScheme.onSurfaceVariant) },
                         leadingIcon = {
                             IconButton(onClick = {
                                 if (searchQuery.isNotEmpty()) {
                                     navController.navigate(Screen.SearchResult.createRoute(query = searchQuery))
                                 }
                             }) {
-                                Icon(Icons.Default.Search, contentDescription = "Search", tint = Color.Gray)
+                                Icon(Icons.Default.Search, contentDescription = "Search", tint = MaterialTheme.colorScheme.onSurfaceVariant)
                             }
                         },
                         trailingIcon = {
@@ -125,18 +125,18 @@ fun HomeScreen(
                                 Icon(
                                     imageVector = Icons.Default.FilterList,
                                     contentDescription = "Filter",
-                                    tint = Color.Gray
+                                    tint = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
                             }
                         },
                         shape = RoundedCornerShape(8.dp),
                         colors = OutlinedTextFieldDefaults.colors(
-                            focusedBorderColor = Color(0xFF38B6FF),
-                            unfocusedBorderColor = Color(0xFF233044),
-                            focusedContainerColor = Color(0xFF131C2E),
-                            unfocusedContainerColor = Color(0xFF131C2E),
-                            focusedTextColor = Color.White,
-                            unfocusedTextColor = Color.White
+                            focusedBorderColor = MaterialTheme.colorScheme.primary,
+                            unfocusedBorderColor = MaterialTheme.colorScheme.outline,
+                            focusedContainerColor = MaterialTheme.colorScheme.surfaceVariant,
+                            unfocusedContainerColor = MaterialTheme.colorScheme.surfaceVariant,
+                            focusedTextColor = MaterialTheme.colorScheme.onSurface,
+                            unfocusedTextColor = MaterialTheme.colorScheme.onSurface
                         ),
                         singleLine = true,
                         keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
@@ -156,7 +156,7 @@ fun HomeScreen(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .padding(top = 4.dp),
-                            colors = CardDefaults.cardColors(containerColor = Color(0xFF131C2E)),
+                            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
                             shape = RoundedCornerShape(8.dp),
                             elevation = CardDefaults.cardElevation(8.dp)
                         ) {
@@ -164,7 +164,7 @@ fun HomeScreen(
                                 uiState.searchSuggestions.forEach { movie ->
                                     Text(
                                         text = movie.title,
-                                        color = Color.White,
+                                        color = MaterialTheme.colorScheme.onSurface,
                                         modifier = Modifier
                                             .fillMaxWidth()
                                             .clickable {
@@ -174,7 +174,7 @@ fun HomeScreen(
                                             .padding(12.dp),
                                         fontSize = 14.sp
                                     )
-                                    HorizontalDivider(color = Color(0xFF0B121F), thickness = 1.dp)
+                                    HorizontalDivider(color = MaterialTheme.colorScheme.background, thickness = 1.dp)
                                 }
 
                                 // Nút màu xanh (Xem tất cả kết quả)
@@ -210,13 +210,13 @@ fun HomeScreen(
                     ) {
                         Text(
                             text = "Phim Phổ Biến",
-                            color = Color.White,
+                            color = MaterialTheme.colorScheme.onBackground,
                             fontSize = 18.sp,
                             fontWeight = FontWeight.Bold
                         )
                         Text(
                             text = "xem thêm...",
-                            color = Color(0xFF38B6FF),
+                            color = MaterialTheme.colorScheme.primary,
                             fontSize = 14.sp,
                             modifier = Modifier.clickable {
                                 // Điều hướng tới trang kết quả tìm kiếm và yêu cầu sắp xếp theo đánh giá cao nhất
@@ -248,7 +248,7 @@ fun HomeScreen(
                 item(span = { GridItemSpan(columns) }) {
                     Text(
                         text = "Phim Hot",
-                        color = Color.White,
+                        color = MaterialTheme.colorScheme.onBackground,
                         fontSize = 18.sp,
                         fontWeight = FontWeight.Bold,
                         modifier = Modifier.padding(bottom = 8.dp)
@@ -282,7 +282,7 @@ fun HomeScreen(
                         modifier = Modifier.fillMaxWidth().padding(16.dp),
                         contentAlignment = Alignment.Center
                     ) {
-                        CircularProgressIndicator(color = Color(0xFF38B6FF))
+                        CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
                     }
                 }
             }
@@ -313,7 +313,7 @@ fun MovieItemCard(
         modifier = Modifier
             .width(140.dp)
             .clickable { onCardClick() },
-        colors = CardDefaults.cardColors(containerColor = Color(0xFF131C2E)),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
         shape = RoundedCornerShape(8.dp)
     ) {
         Column {
@@ -339,8 +339,8 @@ fun MovieItemCard(
             }
             // Khối nội dung chữ bên dưới ảnh giống y hệt Wireframe
             Column(modifier = Modifier.padding(8.dp)) {
-                Text(text = movie.title, color = Color.White, fontSize = 14.sp, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                Text(text = movie.genres.joinToString(", "), color = Color.Gray, fontSize = 12.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                Text(text = movie.title, color = MaterialTheme.colorScheme.onSurface, fontSize = 14.sp, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                Text(text = movie.genres.joinToString(", "), color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 12.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
                 Text(text = "★ ${movie.rating}", color = Color(0xFFFFC107), fontSize = 12.sp, fontWeight = FontWeight.Bold)
             }
         }
@@ -360,7 +360,7 @@ fun MovieHorizontalRowItem(
             .fillMaxWidth()
             .height(100.dp)
             .clickable { onCardClick() },
-        colors = CardDefaults.cardColors(containerColor = Color(0xFF131C2E)),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
         shape = RoundedCornerShape(8.dp)
     ) {
         Row(modifier = Modifier.fillMaxSize()) {
@@ -377,8 +377,8 @@ fun MovieHorizontalRowItem(
                     .padding(12.dp),
                 verticalArrangement = Arrangement.Center
             ) {
-                Text(text = movie.title, color = Color.White, fontSize = 15.sp, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                Text(text = movie.genres.joinToString(", "), color = Color.Gray, fontSize = 13.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                Text(text = movie.title, color = MaterialTheme.colorScheme.onSurface, fontSize = 15.sp, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                Text(text = movie.genres.joinToString(", "), color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 13.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
                 Text(text = "★ ${movie.rating}", color = Color(0xFFFFC107), fontSize = 13.sp, fontWeight = FontWeight.Bold)
             }
             Box(modifier = Modifier.fillMaxHeight(), contentAlignment = Alignment.Center) {

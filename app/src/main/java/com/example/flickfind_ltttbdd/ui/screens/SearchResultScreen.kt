@@ -52,30 +52,30 @@ fun SearchResultScreen(
             TopAppBar(
                 title = { 
                     Column {
-                        Text("Kết quả tìm kiếm", color = Color.White, fontSize = 18.sp)
+                        Text("Kết quả tìm kiếm", color = MaterialTheme.colorScheme.onSurface, fontSize = 18.sp)
                         val filterText = listOfNotNull(
                             query?.takeIf { it.isNotBlank() }?.let { "Từ khóa: $it" },
                             genre?.takeIf { it.isNotBlank() }?.let { "Thể loại: $it" },
                             yearRange?.takeIf { it.isNotBlank() }?.let { "Năm: $it" }
                         ).joinToString(" | ")
                         if (filterText.isNotBlank()) {
-                            Text(filterText, color = Color.Gray, fontSize = 12.sp)
+                            Text(filterText, color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 12.sp)
                         }
                     }
                 },
                 navigationIcon = {
                     IconButton(onClick = { navController.popBackStack() }) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back", tint = Color.White)
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back", tint = MaterialTheme.colorScheme.onSurface)
                     }
                 },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = Color(0xFF0B121F))
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.surface)
             )
         },
-        containerColor = Color(0xFF0B121F)
+        containerColor = MaterialTheme.colorScheme.background
     ) { padding ->
         if (movies.isEmpty() && !uiState.isLoading) {
             Box(modifier = Modifier.fillMaxSize().padding(padding), contentAlignment = Alignment.Center) {
-                Text("Không tìm thấy phim nào phù hợp", color = Color.Gray)
+                Text("Không tìm thấy phim nào phù hợp", color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
         } else {
             LazyVerticalGrid(
@@ -102,7 +102,7 @@ fun SearchResultScreen(
                 if (uiState.isLoading) {
                     item(span = { GridItemSpan(columns) }) {
                         Box(modifier = Modifier.fillMaxWidth().padding(8.dp), contentAlignment = Alignment.Center) {
-                            CircularProgressIndicator(color = Color(0xFF38B6FF))
+                            CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
                         }
                     }
                 }

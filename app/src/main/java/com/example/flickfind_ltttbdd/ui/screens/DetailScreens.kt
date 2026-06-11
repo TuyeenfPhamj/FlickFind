@@ -45,14 +45,14 @@ fun DetailScreen(
 
     Surface(
         modifier = Modifier.fillMaxSize(),
-        color = Color(0xFF0B121F) // Màu Navy đồng bộ toàn app
+        color = MaterialTheme.colorScheme.background
     ) {
         Box(modifier = Modifier.fillMaxSize()) {
             when {
                 isLoading -> {
                     CircularProgressIndicator(
                         modifier = Modifier.align(Alignment.Center),
-                        color = Color(0xFF38B6FF)
+                        color = MaterialTheme.colorScheme.primary
                     )
                 }
                 error != null -> {
@@ -60,13 +60,13 @@ fun DetailScreen(
                         modifier = Modifier.align(Alignment.Center),
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
-                        Text(text = error!!, color = Color.White)
+                        Text(text = error!!, color = MaterialTheme.colorScheme.onBackground)
                         Spacer(modifier = Modifier.height(16.dp))
                         Button(
                             onClick = { viewModel.getMovieById(movieId) },
-                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF38B6FF))
+                            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
                         ) {
-                            Text("Thử lại")
+                            Text("Thử lại", color = MaterialTheme.colorScheme.onPrimary)
                         }
                     }
                 }
@@ -131,13 +131,13 @@ fun MovieDetailContent(
                     .padding(16.dp)
                     .padding(bottom = 8.dp) // Nâng nhẹ nút lên khỏi mép
                     .align(Alignment.BottomEnd)
-                    .background(Color(0xFF1E293B), CircleShape)
-                    .border(1.dp, Color(0xFF38B6FF), CircleShape)
+                    .background(MaterialTheme.colorScheme.surface, CircleShape)
+                    .border(1.dp, MaterialTheme.colorScheme.primary, CircleShape)
             ) {
                 Icon(
                     imageVector = if (isFavorite) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
                     contentDescription = "Yêu thích",
-                    tint = if (isFavorite) Color.Red else Color.White
+                    tint = if (isFavorite) Color.Red else MaterialTheme.colorScheme.onSurface
                 )
             }
 
@@ -165,28 +165,28 @@ fun MovieDetailContent(
             modifier = Modifier
                 .padding(16.dp)
                 .fillMaxWidth()
-                .border(1.dp, Color(0xFF38B6FF), RoundedCornerShape(12.dp))
-                .background(Color(0xFF131C2E).copy(alpha = 0.7f), RoundedCornerShape(12.dp))
+                .border(1.dp, MaterialTheme.colorScheme.primary, RoundedCornerShape(12.dp))
+                .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.7f), RoundedCornerShape(12.dp))
                 .padding(16.dp)
         ) {
             Column(modifier = Modifier.fillMaxWidth()) {
                 Text(
                     text = movie.title,
-                    color = Color.White,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                     fontSize = 22.sp,
                     fontWeight = FontWeight.Bold
                 )
                 Spacer(modifier = Modifier.height(8.dp))
                 Text(
                     text = "Nội dung:",
-                    color = Color(0xFF38B6FF),
+                    color = MaterialTheme.colorScheme.primary,
                     fontSize = 16.sp,
                     fontWeight = FontWeight.SemiBold
                 )
                 Spacer(modifier = Modifier.height(4.dp))
                 Text(
                     text = movie.overview,
-                    color = Color.LightGray,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                     fontSize = 14.sp,
                     lineHeight = 20.sp,
                     textAlign = TextAlign.Justify
@@ -200,17 +200,17 @@ fun MovieDetailContent(
                 .padding(horizontal = 16.dp)
                 .padding(bottom = 32.dp)
                 .fillMaxWidth()
-                .border(1.dp, Color(0xFF38B6FF), RoundedCornerShape(12.dp))
-                .background(Color(0xFF131C2E).copy(alpha = 0.7f), RoundedCornerShape(12.dp))
+                .border(1.dp, MaterialTheme.colorScheme.primary, RoundedCornerShape(12.dp))
+                .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.7f), RoundedCornerShape(12.dp))
                 .padding(16.dp)
         ) {
             Text(
                 text = "Thông tin chi tiết",
-                color = Color.White,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
                 fontSize = 16.sp,
                 fontWeight = FontWeight.Bold
             )
-            HorizontalDivider(modifier = Modifier.padding(vertical = 12.dp), color = Color(0xFF233044))
+            HorizontalDivider(modifier = Modifier.padding(vertical = 12.dp), color = MaterialTheme.colorScheme.outlineVariant)
 
             DetailInfoRow("Thời lượng", "${movie.runtime} phút")
             DetailInfoRow("Đánh giá", "★ ${movie.rating}/10")
@@ -230,10 +230,10 @@ fun DetailInfoRow(label: String, value: String) {
             .padding(vertical = 6.dp),
         horizontalArrangement = Arrangement.SpaceBetween
     ) {
-        Text(text = label, color = Color.Gray, fontSize = 14.sp)
+        Text(text = label, color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f), fontSize = 14.sp)
         Text(
             text = value,
-            color = Color.White,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
             fontSize = 14.sp,
             fontWeight = FontWeight.SemiBold,
             modifier = Modifier.widthIn(max = 220.dp),

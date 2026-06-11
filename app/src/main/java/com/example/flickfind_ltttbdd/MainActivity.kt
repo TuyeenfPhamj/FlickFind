@@ -23,7 +23,8 @@ class MainActivity : ComponentActivity() {
         }
 
         setContent {
-            var isDarkTheme by remember { mutableStateOf(true) }
+            val systemTheme = androidx.compose.foundation.isSystemInDarkTheme()
+            var isDarkTheme by remember { mutableStateOf(systemTheme) }
             FlickFindLTTTBDDTheme(darkTheme = isDarkTheme) {
                 MainNavGraph(
                     isDarkTheme = isDarkTheme,
