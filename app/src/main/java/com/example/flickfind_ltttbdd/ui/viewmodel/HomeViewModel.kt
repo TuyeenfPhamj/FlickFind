@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.example.flickfind_ltttbdd.data.MovieRepository
 import com.example.flickfind_ltttbdd.data.local.FavoriteMovieEntity
 import com.example.flickfind_ltttbdd.data.remote.MovieResponse
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -32,37 +33,39 @@ class HomeViewModel(
     val uiState: StateFlow<HomeUiState> = _uiState.asStateFlow()
 
     private val pageLimit = 10
-    private var allMoviesForSuggestions: List<MovieResponse> = emptyList()
+    private var searchJob: kotlinx.coroutines.Job? = null
 
     init {
         loadNextMovies()
         observeFavorites()
-        fetchAllMoviesForSuggestions()
+        fetchPopularMovies()
     }
 
-    private fun fetchAllMoviesForSuggestions() {
+    private fun fetchPopularMovies() {
         viewModelScope.launch {
-            // Tải 100 phim một lần để phục vụ gợi ý tìm kiếm tức thì và lấy phim phổ biến
-            repository.getMoviesFromApi(page = 1, limit = 100).onSuccess { all ->
-                allMoviesForSuggestions = all
-                // Lấy 10 phim có rating cao nhất làm phim phổ biến
-                val popular = all.sortedByDescending { it.rating }.take(10)
+            // Tải 20 phim để lọc ra 10 phim rating cao nhất làm "Phổ biến"
+            // Giúp khởi động app nhanh hơn nhiều so với việc tải 100 phim
+            repository.getMoviesFromApi(page = 1, limit = 20).onSuccess { movies ->
+                val popular = movies.sortedByDescending { it.rating }.take(10)
                 _uiState.update { it.copy(popularMovies = popular) }
             }
         }
     }
 
     fun updateSearchSuggestions(query: String) {
-        if (query.length <= 3) {
+        val cleanQuery = query.trim()
+        if (cleanQuery.length < 2) {
             _uiState.update { it.copy(searchSuggestions = emptyList()) }
             return
         }
         
-        val filtered = allMoviesForSuggestions.filter { 
-            it.title.contains(query, ignoreCase = true) 
-        }.take(5)
-        
-        _uiState.update { it.copy(searchSuggestions = filtered) }
+        searchJob?.cancel()
+        searchJob = viewModelScope.launch {
+            // Tìm kiếm trực tiếp từ API thay vì lọc từ danh sách tải sẵn
+            repository.getMoviesFromApi(page = 1, limit = 5, search = cleanQuery).onSuccess { results ->
+                _uiState.update { it.copy(searchSuggestions = results) }
+            }
+        }
     }
 
     fun clearSuggestions() {
@@ -79,7 +82,7 @@ class HomeViewModel(
             errorMessage = null
         ) }
         loadNextMovies()
-        fetchAllMoviesForSuggestions()
+        fetchPopularMovies()
     }
 
     // 2. Logic Phân trang (Pagination) thủ công cực kỳ trực quan

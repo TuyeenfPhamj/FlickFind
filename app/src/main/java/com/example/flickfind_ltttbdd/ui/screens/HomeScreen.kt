@@ -58,11 +58,12 @@ fun HomeScreen(
     val isLandscape = configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
     val columns = if (isLandscape) 2 else 1
 
-    // Xử lý Debounce tìm kiếm: Chỉ tìm khi nhập > 3 ký tự và dừng gõ 2 giây
+    // Xử lý Debounce tìm kiếm: Chỉ tìm khi nhập > 2 ký tự và dừng gõ 1 giây (1000ms)
     LaunchedEffect(searchQuery) {
-        if (searchQuery.length > 3) {
-            kotlinx.coroutines.delay(2000)
-            viewModel.updateSearchSuggestions(searchQuery)
+        val cleanQuery = searchQuery.trim()
+        if (cleanQuery.length >= 2) {
+            kotlinx.coroutines.delay(1000)
+            viewModel.updateSearchSuggestions(cleanQuery)
             isSuggestionsVisible = true
         } else {
             viewModel.clearSuggestions()
