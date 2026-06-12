@@ -52,7 +52,7 @@ fun LoginScreen(
     ) {
         // Logo & Brand Name
         Image(
-            painter = painterResource(id = R.drawable.logo_v3),
+            painter = painterResource(id = if (isDarkTheme) R.drawable.logo_v1 else R.drawable.logo_v3),
             contentDescription = "Logo",
             modifier = Modifier.width(200.dp).height(80.dp),
             contentScale = ContentScale.Fit
@@ -199,7 +199,7 @@ fun RegisterScreen(
         ) {
             // Logo (Đồng bộ thương hiệu)
             Image(
-                painter = painterResource(id = R.drawable.logo_v3),
+                painter = painterResource(id = if (isDarkTheme) R.drawable.logo_v1 else R.drawable.logo_v3),
                 contentDescription = "Logo",
                 modifier = Modifier.width(200.dp).height(80.dp),
                 contentScale = ContentScale.Fit

@@ -114,7 +114,7 @@ fun HomeScreen(
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
                         Image(
-                            painter = painterResource(id = R.drawable.logo_v3),
+                            painter = painterResource(id = if (isDarkTheme) R.drawable.logo_v1 else R.drawable.logo_v3),
                             contentDescription = "Logo FlickFind",
                             modifier = Modifier
                                 .width(280.dp)

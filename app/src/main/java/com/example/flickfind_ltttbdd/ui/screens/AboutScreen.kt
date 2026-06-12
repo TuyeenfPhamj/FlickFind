@@ -35,7 +35,7 @@ fun AboutScreen(
     ) {
         // 1. LOGO (Đồng bộ thương hiệu - Tự động đổi màu theo theme)
         Image(
-            painter = painterResource(id = R.drawable.logo_v3),
+            painter = painterResource(id = if (isDarkTheme) R.drawable.logo_v1 else R.drawable.logo_v3),
             contentDescription = "Logo",
             modifier = Modifier
                 .padding(top = 8.dp)
