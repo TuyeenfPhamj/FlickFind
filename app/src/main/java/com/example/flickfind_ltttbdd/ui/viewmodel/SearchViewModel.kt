@@ -94,27 +94,32 @@ class SearchViewModel(
     private suspend fun performSearch() {
         _uiState.update { it.copy(isLoading = true, errorMessage = null) }
 
-        // Gọi API lọc trực tiếp từ server theo cơ chế cũ
+        // Gọi API lọc theo từ khóa và thể loại trực tiếp từ server
         val result = repository.getMoviesFromApi(
             page = 1,
-            limit = 50, // Lấy 50 kết quả phù hợp nhất
+            limit = 50, // Lấy 50 kết quả phù hợp nhất từ Server
             search = _uiState.value.query,
-            genre = _uiState.value.genre,
-            yearRange = _uiState.value.yearRange
+            genre = _uiState.value.genre
         )
 
-        result.onSuccess { filteredMovies ->
+        result.onSuccess { apiMovies ->
+            // Thực hiện lọc bổ sung khoảng năm (nếu có) ở phía client
+            val filtered = apiMovies.filter { movie ->
+                val y = _uiState.value.yearRange
+                y == null || matchesYearRange(movie.releaseDate, y)
+            }
+
             // Sắp xếp lại danh sách kết quả (Rating) nếu người dùng yêu cầu
             val sorted = if (_uiState.value.sortBy == "rating") {
-                filteredMovies.sortedByDescending { it.rating }
+                filtered.sortedByDescending { it.rating }
             } else {
-                filteredMovies
+                filtered
             }
 
             _uiState.update { it.copy(
                 isLoading = false, 
                 movies = sorted,
-                isEndReached = true // Đã có bộ lọc chính xác từ Server
+                isEndReached = true // Đã lọc xong danh sách phim phù hợp
             ) }
         }.onFailure { e ->
             val friendlyError = if (e is java.net.UnknownHostException || e.message?.contains("Unable to resolve host") == true) {

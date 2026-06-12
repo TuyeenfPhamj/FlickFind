@@ -23,11 +23,10 @@ class MovieRepository(
         page: Int,
         limit: Int,
         search: String? = null,
-        genre: String? = null,
-        yearRange: String? = null
+        genre: String? = null
     ): Result<List<MovieResponse>> {
         return try {
-            val response = apiService.getMovies(page, limit, search, genre, yearRange)
+            val response = apiService.getMovies(page, limit, search, genre)
             Result.success(response)
         } catch (e: Exception) {
             Result.failure(e)
