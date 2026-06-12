@@ -4,6 +4,7 @@ import android.content.res.Configuration
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.grid.GridCells
@@ -27,6 +28,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.painterResource
@@ -49,7 +51,8 @@ import com.example.flickfind_ltttbdd.ui.viewmodel.HomeViewModel
 @Composable
 fun HomeScreen(
     viewModel: HomeViewModel,
-    navController: NavController
+    navController: NavController,
+    isDarkTheme: Boolean
 ) {
     // Lắng nghe trạng thái UI State từ ViewModel phát ra
     val uiState by viewModel.uiState.collectAsState()
@@ -85,7 +88,7 @@ fun HomeScreen(
     }
 
     // Giao diện tổng thể
-    Box(modifier = Modifier.fillMaxSize().background(Color(0xFF0B121F))) {
+    Box(modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
         PullToRefreshBox(
             isRefreshing = isRefreshing,
             onRefresh = {
@@ -102,22 +105,23 @@ fun HomeScreen(
                 verticalArrangement = Arrangement.spacedBy(16.dp),
                 horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                // 1. KHỐI LOGO (Căn giữa) - Chiếm hết số cột
+                // 1. KHỐI LOGO & CHỮ (Căn giữa - Đồng bộ thương hiệu)
                 item(span = { GridItemSpan(columns) }) {
-                    Box(
+                    Column(
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(vertical = 8.dp),
-                        contentAlignment = Alignment.Center
+                        horizontalAlignment = Alignment.CenterHorizontally
                     ) {
                         Image(
-                            painter = painterResource(id = R.drawable.logo_v1),
+                            painter = painterResource(id = R.drawable.logo_v3),
                             contentDescription = "Logo FlickFind",
                             modifier = Modifier
-                                .width(340.dp)
-                                .height(120.dp),
+                                .width(280.dp)
+                                .height(100.dp),
                             contentScale = ContentScale.Fit
                         )
+
                     }
                 }
 
@@ -133,7 +137,7 @@ fun HomeScreen(
                                 }
                             },
                             modifier = Modifier.fillMaxWidth(),
-                            placeholder = { Text("Thanh tìm kiếm...", color = Color.Gray) },
+                            placeholder = { Text("Thanh tìm kiếm...", color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)) },
                             leadingIcon = {
                                 IconButton(onClick = {
                                     val cleanQuery = searchQuery.trim()
@@ -141,7 +145,7 @@ fun HomeScreen(
                                         navController.navigate(Screen.SearchResult.createRoute(query = cleanQuery))
                                     }
                                 }) {
-                                    Icon(Icons.Default.Search, contentDescription = "Search", tint = Color.Gray)
+                                    Icon(Icons.Default.Search, contentDescription = "Search", tint = MaterialTheme.colorScheme.onSurfaceVariant)
                                 }
                             },
                             trailingIcon = {
@@ -149,18 +153,18 @@ fun HomeScreen(
                                     Icon(
                                         imageVector = Icons.Default.FilterList,
                                         contentDescription = "Filter",
-                                        tint = Color.Gray
+                                        tint = MaterialTheme.colorScheme.onSurfaceVariant
                                     )
                                 }
                             },
                             shape = RoundedCornerShape(8.dp),
                             colors = OutlinedTextFieldDefaults.colors(
-                                focusedBorderColor = Color(0xFF38B6FF),
-                                unfocusedBorderColor = Color(0xFF233044),
-                                focusedContainerColor = Color(0xFF131C2E),
-                                unfocusedContainerColor = Color(0xFF131C2E),
-                                focusedTextColor = Color.White,
-                                unfocusedTextColor = Color.White
+                                focusedBorderColor = MaterialTheme.colorScheme.primary,
+                                unfocusedBorderColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.5f),
+                                focusedContainerColor = MaterialTheme.colorScheme.surfaceVariant,
+                                unfocusedContainerColor = MaterialTheme.colorScheme.surfaceVariant,
+                                focusedTextColor = MaterialTheme.colorScheme.onSurface,
+                                unfocusedTextColor = MaterialTheme.colorScheme.onSurface
                             ),
                             singleLine = true,
                             keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
@@ -181,7 +185,7 @@ fun HomeScreen(
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .padding(top = 4.dp),
-                                colors = CardDefaults.cardColors(containerColor = Color(0xFF131C2E)),
+                                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
                                 shape = RoundedCornerShape(8.dp),
                                 elevation = CardDefaults.cardElevation(8.dp)
                             ) {
@@ -189,7 +193,7 @@ fun HomeScreen(
                                     uiState.searchSuggestions.forEach { movie ->
                                         Text(
                                             text = movie.title,
-                                            color = Color.White,
+                                            color = MaterialTheme.colorScheme.onSurface,
                                             modifier = Modifier
                                                 .fillMaxWidth()
                                                 .clickable {
@@ -199,7 +203,7 @@ fun HomeScreen(
                                                 .padding(12.dp),
                                             fontSize = 14.sp
                                         )
-                                        HorizontalDivider(color = Color(0xFF0B121F), thickness = 1.dp)
+                                        HorizontalDivider(color = MaterialTheme.colorScheme.background, thickness = 1.dp)
                                     }
 
                                     Button(
@@ -213,10 +217,10 @@ fun HomeScreen(
                                         modifier = Modifier
                                             .fillMaxWidth()
                                             .height(40.dp),
-                                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF4CAF50)),
+                                        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
                                         shape = RoundedCornerShape(bottomStart = 8.dp, bottomEnd = 8.dp)
                                     ) {
-                                        Text("Xem tất cả kết quả", color = Color.White, fontSize = 12.sp)
+                                        Text("Xem tất cả kết quả", color = MaterialTheme.colorScheme.onPrimary, fontSize = 12.sp)
                                     }
                                 }
                             }
@@ -239,13 +243,13 @@ fun HomeScreen(
                             ) {
                                 Text(
                                     text = "Phim Phổ Biến",
-                                    color = Color.White,
+                                    color = MaterialTheme.colorScheme.onBackground,
                                     fontSize = 18.sp,
                                     fontWeight = FontWeight.Bold
                                 )
                                 Text(
                                     text = "xem thêm...",
-                                    color = Color(0xFF38B6FF),
+                                    color = MaterialTheme.colorScheme.primary,
                                     fontSize = 14.sp,
                                     modifier = Modifier.clickable {
                                         navController.navigate(Screen.SearchResult.createRoute(sortBy = "rating"))
@@ -340,7 +344,7 @@ fun HomeScreen(
                         ) {
                             Text(
                                 text = error,
-                                color = Color.Red,
+                                color = MaterialTheme.colorScheme.error,
                                 fontSize = 16.sp,
                                 fontWeight = FontWeight.Medium,
                                 modifier = Modifier.padding(16.dp)

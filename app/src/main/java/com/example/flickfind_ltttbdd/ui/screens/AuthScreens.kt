@@ -12,6 +12,12 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.foundation.Image
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.res.painterResource
+import com.example.flickfind_ltttbdd.R
 import com.example.flickfind_ltttbdd.ui.viewmodel.AuthViewModel
 import kotlinx.coroutines.delay
 import androidx.lifecycle.Lifecycle
@@ -44,8 +50,15 @@ fun LoginScreen(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
-        Spacer(modifier = Modifier.height(32.dp))
-        Text("FlickFind", color = colorScheme.primary, fontSize = 32.sp, fontWeight = FontWeight.Bold)
+        // Logo & Brand Name
+        Image(
+            painter = painterResource(id = R.drawable.logo_v3),
+            contentDescription = "Logo",
+            modifier = Modifier.width(200.dp).height(80.dp),
+            contentScale = ContentScale.Fit
+        )
+
+
         Spacer(modifier = Modifier.height(32.dp))
         
         OutlinedTextField(
@@ -184,6 +197,16 @@ fun RegisterScreen(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
+            // Logo (Đồng bộ thương hiệu)
+            Image(
+                painter = painterResource(id = R.drawable.logo_v3),
+                contentDescription = "Logo",
+                modifier = Modifier.width(200.dp).height(80.dp),
+                contentScale = ContentScale.Fit
+            )
+
+            Spacer(modifier = Modifier.height(24.dp))
+
             Text("Tạo tài khoản", color = colorScheme.primary, fontSize = 28.sp, fontWeight = FontWeight.Bold)
             Spacer(modifier = Modifier.height(32.dp))
             

@@ -13,6 +13,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -25,10 +26,6 @@ fun AboutScreen(
     onThemeToggle: () -> Unit,
     onNavigateToDeveloperInfo: () -> Unit
 ) {
-    val backgroundColor = if (isDarkTheme) Color(0xFF0B101B) else Color(0xFFF0F4F8)
-    val cardColor = if (isDarkTheme) Color(0xFF172033) else Color(0xFFFFFFFF)
-    val textColor = if (isDarkTheme) Color.White else Color.Black
-
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -36,27 +33,15 @@ fun AboutScreen(
             .padding(16.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Spacer(modifier = Modifier.height(40.dp))
-
-        // 1. LOGO
+        // 1. LOGO (Đồng bộ thương hiệu - Tự động đổi màu theo theme)
         Image(
-            painter = painterResource(id = if (isDarkTheme) R.drawable.logo_v2 else R.drawable.logo_v4),
+            painter = painterResource(id = R.drawable.logo_v3),
             contentDescription = "Logo",
             modifier = Modifier
-                .size(150.dp)
-                .padding(8.dp),
+                .padding(top = 8.dp)
+                .width(280.dp)
+                .height(100.dp),
             contentScale = ContentScale.Fit
-        )
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        // 2. Tên logo (Flick Find)
-        Text(
-            text = "Flick Find",
-            color = MaterialTheme.colorScheme.onBackground,
-            fontSize = 20.sp,
-            fontWeight = FontWeight.Bold,
-            modifier = Modifier.padding(vertical = 8.dp)
         )
 
         Spacer(modifier = Modifier.height(32.dp))

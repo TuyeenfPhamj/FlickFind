@@ -20,15 +20,12 @@ fun DeveloperInfoScreen(
     isDarkTheme: Boolean,
     onBack: () -> Unit
 ) {
-    // [GHI CHÚ]: Đồng bộ màu sắc theo theme Sáng/Tối
-    val backgroundColor = if (isDarkTheme) Color(0xFF0B101B) else Color(0xFFF0F4F8)
-    val cardColor = if (isDarkTheme) Color(0xFF172033) else Color.White
-    val textColor = if (isDarkTheme) Color.White else Color.Black
+    val colorScheme = MaterialTheme.colorScheme
 
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(backgroundColor)
+            .background(colorScheme.background)
             .padding(16.dp)
     ) {
         // Nút quay lại (chỉ mũi tên)
@@ -36,7 +33,7 @@ fun DeveloperInfoScreen(
             Icon(
                 imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                 contentDescription = "Quay lại",
-                tint = textColor,
+                tint = colorScheme.onBackground,
                 modifier = Modifier.size(32.dp)
             )
         }
@@ -49,20 +46,20 @@ fun DeveloperInfoScreen(
                 .fillMaxWidth()
                 .padding(bottom = 16.dp),
             shape = RoundedCornerShape(16.dp),
-            colors = CardDefaults.cardColors(containerColor = cardColor),
+            colors = CardDefaults.cardColors(containerColor = colorScheme.surfaceVariant),
             elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
         ) {
             Column(modifier = Modifier.padding(20.dp)) {
                 Text(
                     text = "Giới thiệu",
-                    color = textColor,
+                    color = if (isDarkTheme) colorScheme.onSurfaceVariant else Color.Black,
                     fontSize = 20.sp,
                     fontWeight = FontWeight.Bold
                 )
                 Spacer(modifier = Modifier.height(12.dp))
                 Text(
                     text = "Dự án FlickFind được phát triển nhằm mang lại trải nghiệm tìm kiếm và quản lý phim tốt nhất cho người dùng.",
-                    color = textColor.copy(alpha = 0.8f),
+                    color = if (isDarkTheme) colorScheme.onSurfaceVariant.copy(alpha = 0.8f) else Color.Black,
                     fontSize = 15.sp,
                     lineHeight = 22.sp
                 )
@@ -73,7 +70,7 @@ fun DeveloperInfoScreen(
         Card(
             modifier = Modifier.fillMaxWidth(),
             shape = RoundedCornerShape(16.dp),
-            colors = CardDefaults.cardColors(containerColor = cardColor),
+            colors = CardDefaults.cardColors(containerColor = colorScheme.surfaceVariant),
             elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
         ) {
             Column(modifier = Modifier.padding(20.dp)) {
@@ -81,13 +78,13 @@ fun DeveloperInfoScreen(
                     Icon(
                         imageVector = Icons.Default.Group,
                         contentDescription = null,
-                        tint = textColor,
+                        tint = if (isDarkTheme) colorScheme.onSurfaceVariant else Color.Black,
                         modifier = Modifier.size(24.dp)
                     )
                     Spacer(modifier = Modifier.width(12.dp))
                     Text(
                         text = "Đội ngũ phát triển",
-                        color = textColor,
+                        color = if (isDarkTheme) colorScheme.onSurfaceVariant else Color.Black,
                         fontSize = 20.sp,
                         fontWeight = FontWeight.Bold
                     )
@@ -105,7 +102,7 @@ fun DeveloperInfoScreen(
                 members.forEach { member ->
                     Text(
                         text = member,
-                        color = textColor.copy(alpha = 0.8f),
+                        color = if (isDarkTheme) colorScheme.onSurfaceVariant.copy(alpha = 0.8f) else Color.Black,
                         fontSize = 16.sp,
                         modifier = Modifier.padding(vertical = 6.dp)
                     )

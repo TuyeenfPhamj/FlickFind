@@ -97,6 +97,7 @@ fun MainNavGraph(
                 HomeScreen(
                     viewModel = homeViewModel, 
                     navController = navController,
+                    isDarkTheme = isDarkTheme
                 )
             }
 
