@@ -132,7 +132,9 @@ fun FilterScreen(
 
             Button(
                 onClick = { onApplyFilters(selectedGenre, selectedYearRange) },
-                modifier = Modifier.fillMaxWidth().padding(vertical = 16.dp),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 16.dp),
                 colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
                 shape = RoundedCornerShape(8.dp)
             ) {
