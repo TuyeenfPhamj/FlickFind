@@ -1,5 +1,6 @@
 package com.example.flickfind_ltttbdd.ui.viewmodel
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.flickfind_ltttbdd.data.MovieRepository
@@ -47,6 +48,7 @@ class HomeViewModel(
     }
 
     init {
+        Log.d("HomeViewModel", "==> Khởi tạo HomeViewModel")
         loadNextMovies()
         FirebaseAuth.getInstance().addAuthStateListener(authListener)
         fetchPopularMovies()
@@ -58,12 +60,16 @@ class HomeViewModel(
     }
 
     private fun fetchPopularMovies() {
+        Log.d("HomeViewModel", "Đang tải danh sách phim phổ biến...")
         viewModelScope.launch {
             // Tải 20 phim để lọc ra 10 phim rating cao nhất làm "Phổ biến"
             // Giúp khởi động app nhanh hơn nhiều so với việc tải 100 phim
             repository.getMoviesFromApi(page = 1, limit = 20).onSuccess { movies ->
+                Log.i("HomeViewModel", "Tải thành công ${movies.size} phim để lọc phổ biến")
                 val popular = movies.sortedByDescending { it.rating }.take(10)
                 _uiState.update { it.copy(popularMovies = popular) }
+            }.onFailure { e ->
+                Log.e("HomeViewModel", "Lỗi khi tải phim phổ biến", e)
             }
         }
     }
@@ -106,6 +112,7 @@ class HomeViewModel(
         // Nếu đang tải hoặc đã hết phim thì không gọi API nữa
         if (_uiState.value.isLoading && _uiState.value.currentPage > 1 || _uiState.value.isEndReached) return
 
+        Log.d("HomeViewModel", "Đang tải trang ${_uiState.value.currentPage}...")
         _uiState.update { it.copy(isLoading = true, errorMessage = null) }
 
         viewModelScope.launch {
@@ -115,6 +122,7 @@ class HomeViewModel(
             )
 
             result.onSuccess { newMovies ->
+                Log.i("HomeViewModel", "Tải thành công trang ${_uiState.value.currentPage} với ${newMovies.size} phim")
                 _uiState.update { currentState ->
                     currentState.copy(
                         isLoading = false,
@@ -124,6 +132,7 @@ class HomeViewModel(
                     )
                 }
             }.onFailure { exception ->
+                Log.e("HomeViewModel", "Lỗi khi tải trang ${_uiState.value.currentPage}", exception)
                 val friendlyError = if (exception is java.net.UnknownHostException || exception.message?.contains("Unable to resolve host") == true) {
                     "Không có kết nối mạng, vui lòng thử lại"
                 } else {
@@ -152,10 +161,12 @@ class HomeViewModel(
     fun toggleFavorite(movie: MovieResponse) {
         val currentUser = FirebaseAuth.getInstance().currentUser
         if (currentUser == null) {
+            Log.w("HomeViewModel", "Thất bại: User chưa đăng nhập nhưng bấm nút yêu thích")
             _uiState.update { it.copy(errorMessage = "Vui lòng đăng nhập để thích phim") }
             return
         }
         val userId = currentUser.uid
+        Log.d("HomeViewModel", "Toggle favorite cho phim: ${movie.title} (User: $userId)")
         viewModelScope.launch {
             val isFav = repository.isMovieFavorite(movie.id, userId)
             // Chuyển đổi dữ liệu từ dạng API Response sang thực thể Room DB
@@ -172,8 +183,10 @@ class HomeViewModel(
             )
 
             if (isFav) {
+                Log.v("HomeViewModel", "Đang xóa khỏi yêu thích...")
                 repository.removeFromFavorite(entity)
             } else {
+                Log.v("HomeViewModel", "Đang thêm vào yêu thích...")
                 repository.addToFavorite(entity)
             }
         }

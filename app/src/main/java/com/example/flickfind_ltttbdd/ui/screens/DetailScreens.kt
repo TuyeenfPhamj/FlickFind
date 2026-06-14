@@ -23,6 +23,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.platform.LocalContext
+import android.util.Log
 import android.widget.Toast
 import com.google.firebase.auth.FirebaseAuth
 import coil.compose.AsyncImage
@@ -41,6 +42,7 @@ fun DetailScreen(
     val isFavorite by viewModel.isFavorite.collectAsState()
 
     LaunchedEffect(movieId) {
+        Log.d("DetailScreen", "==> Hiển thị DetailScreen cho movieId: $movieId")
         viewModel.getMovieById(movieId)
     }
 
@@ -78,8 +80,10 @@ fun DetailScreen(
                         isFavorite = isFavorite,
                         onToggleFavorite = {
                             if (FirebaseAuth.getInstance().currentUser != null) {
+                                Log.i("DetailScreen", "User đã đăng nhập, thực hiện toggle favorite cho phim: ${movie?.title}")
                                 viewModel.toggleFavorite(movie!!)
                             } else {
+                                Log.w("DetailScreen", "User chưa đăng nhập, không thể yêu thích")
                                 Toast.makeText(context, "Vui lòng đăng nhập để thích phim", Toast.LENGTH_SHORT).show()
                             }
                         },

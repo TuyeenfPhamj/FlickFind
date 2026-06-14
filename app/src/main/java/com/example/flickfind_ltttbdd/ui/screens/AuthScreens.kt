@@ -1,5 +1,6 @@
 package com.example.flickfind_ltttbdd.ui.screens
 
+import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -38,6 +39,7 @@ fun LoginScreen(
     val colorScheme = MaterialTheme.colorScheme
 
     LaunchedEffect(Unit) {
+        Log.d("AuthScreens", "==> Hiển thị màn hình Đăng nhập")
         viewModel.clearError()
     }
 
@@ -145,11 +147,13 @@ fun RegisterScreen(
     val lifecycleOwner = LocalLifecycleOwner.current
 
     LaunchedEffect(Unit) {
+        Log.d("AuthScreens", "==> Hiển thị màn hình Đăng ký")
         viewModel.clearError()
     }
 
     LaunchedEffect(uiState.isSuccess) {
         if (uiState.isSuccess) {
+            Log.i("AuthScreens", "Đăng ký thành công (bước 1), chờ xác thực email")
             snackbarHostState.showSnackbar(
                 message = "Vui lòng vào email để hoàn tất đăng ký.",
                 duration = SnackbarDuration.Short
@@ -160,6 +164,7 @@ fun RegisterScreen(
 
     LaunchedEffect(uiState.isEmailVerifiedSuccess) {
         if (uiState.isEmailVerifiedSuccess) {
+            Log.i("AuthScreens", "Xác thực email thành công!")
             snackbarHostState.showSnackbar(
                 message = "Bạn đã đăng ký thành công!",
                 duration = SnackbarDuration.Short
@@ -174,6 +179,7 @@ fun RegisterScreen(
         val observer = LifecycleEventObserver { _, event ->
             if (event == Lifecycle.Event.ON_RESUME) {
                 if (uiState.isVerificationSent && !uiState.isEmailVerifiedSuccess) {
+                    Log.v("AuthScreens", "Quay lại app, kiểm tra trạng thái xác thực email...")
                     viewModel.checkEmailVerificationStatus()
                 }
             }

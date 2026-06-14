@@ -1,5 +1,6 @@
 package com.example.flickfind_ltttbdd.ui.viewmodel
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.flickfind_ltttbdd.data.MovieRepository
@@ -46,11 +47,13 @@ class SearchViewModel(
     }
 
     init {
+        Log.d("SearchViewModel", "==> Khởi tạo SearchViewModel")
         FirebaseAuth.getInstance().addAuthStateListener(authListener)
     }
 
     override fun onCleared() {
         super.onCleared()
+        Log.d("SearchViewModel", "==> Hủy SearchViewModel (onCleared)")
         FirebaseAuth.getInstance().removeAuthStateListener(authListener)
     }
 
@@ -65,6 +68,7 @@ class SearchViewModel(
     }
 
     fun setFiltersAndSearch(query: String?, genre: String?, yearRange: String?, sortBy: String? = null) {
+        Log.d("SearchViewModel", "Thiết lập bộ lọc: query=$query, genre=$genre, year=$yearRange, sort=$sortBy")
         // Chuẩn hóa: Nếu chuỗi rỗng hoặc chỉ có khoảng trắng thì coi như null
         val cleanQuery = query?.takeIf { it.isNotBlank() }
         val cleanGenre = genre?.takeIf { it.isNotBlank() }
@@ -92,6 +96,7 @@ class SearchViewModel(
     }
 
     private suspend fun performSearch() {
+        Log.i("SearchViewModel", "==> Bắt đầu tìm kiếm với: query=${_uiState.value.query}, genre=${_uiState.value.genre}")
         _uiState.update { it.copy(isLoading = true, errorMessage = null) }
 
         // Gọi API lọc theo từ khóa và thể loại trực tiếp từ server
@@ -103,11 +108,13 @@ class SearchViewModel(
         )
 
         result.onSuccess { apiMovies ->
+            Log.d("SearchViewModel", "API trả về ${apiMovies.size} phim")
             // Thực hiện lọc bổ sung khoảng năm (nếu có) ở phía client
             val filtered = apiMovies.filter { movie ->
                 val y = _uiState.value.yearRange
                 y == null || matchesYearRange(movie.releaseDate, y)
             }
+            Log.d("SearchViewModel", "Sau khi lọc năm: ${filtered.size} phim")
 
             // Sắp xếp lại danh sách kết quả (Rating) nếu người dùng yêu cầu
             val sorted = if (_uiState.value.sortBy == "rating") {
@@ -122,6 +129,7 @@ class SearchViewModel(
                 isEndReached = true // Đã lọc xong danh sách phim phù hợp
             ) }
         }.onFailure { e ->
+            Log.e("SearchViewModel", "Lỗi khi tìm kiếm", e)
             val friendlyError = if (e is java.net.UnknownHostException || e.message?.contains("Unable to resolve host") == true) {
                 "Không có kết nối mạng, vui lòng thử lại"
             } else {
@@ -160,10 +168,12 @@ class SearchViewModel(
     fun toggleFavorite(movie: MovieResponse) {
         val currentUser = FirebaseAuth.getInstance().currentUser
         if (currentUser == null) {
+            Log.w("SearchViewModel", "Thất bại: User chưa đăng nhập")
             _uiState.update { it.copy(errorMessage = "Vui lòng đăng nhập để thích phim") }
             return
         }
         val userId = currentUser.uid
+        Log.d("SearchViewModel", "Toggle favorite: ${movie.title} cho user $userId")
         viewModelScope.launch {
             val isFav = repository.isMovieFavorite(movie.id, userId)
             val entity = FavoriteMovieEntity(
@@ -179,8 +189,10 @@ class SearchViewModel(
             )
 
             if (isFav) {
+                Log.v("SearchViewModel", "Đang xóa khỏi yêu thích...")
                 repository.removeFromFavorite(entity)
             } else {
+                Log.v("SearchViewModel", "Đang thêm vào yêu thích...")
                 repository.addToFavorite(entity)
             }
         }

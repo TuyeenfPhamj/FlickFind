@@ -1,5 +1,6 @@
 package com.example.flickfind_ltttbdd.ui.viewmodel
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.flickfind_ltttbdd.data.MovieRepository
@@ -47,10 +48,12 @@ class ProfileViewModel(
     }
 
     init {
+        Log.d("ProfileViewModel", "==> Khởi tạo ProfileViewModel")
         FirebaseAuth.getInstance().addAuthStateListener(authListener)
     }
 
     private fun loadProfileData(userId: String) {
+        Log.i("ProfileViewModel", "Đang tải dữ liệu Profile cho user: $userId")
         userDataJob?.cancel()
         favoritesDataJob?.cancel()
 
@@ -62,6 +65,7 @@ class ProfileViewModel(
 
         favoritesDataJob = viewModelScope.launch {
             repository.getAllFavorites(userId).collect { favorites ->
+                Log.d("ProfileViewModel", "Cập nhật thống kê từ ${favorites.size} phim yêu thích")
                 val watchedMovies = favorites.filter { it.isWatched }
                 val totalTime = watchedMovies.sumOf { it.runtime }
                 
@@ -73,6 +77,9 @@ class ProfileViewModel(
                 
                 val mostWatched = genreCounts.maxByOrNull { it.value }?.key ?: "Chưa có"
                 val leastWatched = genreCounts.minByOrNull { it.value }?.key ?: "Chưa có"
+
+                Log.i("ProfileViewModel", "Thống kê: Đã xem ${watchedMovies.size} phim, Tổng thời gian: $totalTime phút")
+                Log.v("ProfileViewModel", "Phân bổ thể loại cho biểu đồ: $genreCounts")
 
                 _uiState.update { 
                     it.copy(
@@ -89,16 +96,19 @@ class ProfileViewModel(
 
     override fun onCleared() {
         super.onCleared()
+        Log.d("ProfileViewModel", "==> Hủy ProfileViewModel (onCleared)")
         FirebaseAuth.getInstance().removeAuthStateListener(authListener)
     }
 
     fun toggleWatched(movie: FavoriteMovieEntity) {
+        Log.d("ProfileViewModel", "Toggle trạng thái xem: ${movie.title} (Hiện tại: ${movie.isWatched})")
         viewModelScope.launch {
             repository.addToFavorite(movie.copy(isWatched = !movie.isWatched))
         }
     }
     
     fun deleteFavorite(movie: FavoriteMovieEntity) {
+        Log.d("ProfileViewModel", "Xóa phim khỏi yêu thích: ${movie.title}")
         viewModelScope.launch {
             repository.removeFromFavorite(movie)
         }
@@ -106,6 +116,7 @@ class ProfileViewModel(
 
     fun updateAvatar(url: String) {
         val currentUser = FirebaseAuth.getInstance().currentUser ?: return
+        Log.i("ProfileViewModel", "Cập nhật Avatar mới: $url")
         viewModelScope.launch {
             try {
                 currentUser.updateProfile(
@@ -121,7 +132,9 @@ class ProfileViewModel(
                         avatarUrl = url
                     )
                 )
+                Log.d("ProfileViewModel", "Cập nhật Avatar thành công")
             } catch (e: Exception) {
+                Log.e("ProfileViewModel", "Lỗi khi cập nhật Avatar", e)
                 e.printStackTrace()
             }
         }
@@ -129,6 +142,7 @@ class ProfileViewModel(
 
     fun updateName(name: String) {
         val currentUser = FirebaseAuth.getInstance().currentUser ?: return
+        Log.i("ProfileViewModel", "Cập nhật tên mới: $name")
         viewModelScope.launch {
             try {
                 currentUser.updateProfile(
@@ -144,7 +158,9 @@ class ProfileViewModel(
                         avatarUrl = currentUser.photoUrl?.toString() ?: ""
                     )
                 )
+                Log.d("ProfileViewModel", "Cập nhật tên thành công")
             } catch (e: Exception) {
+                Log.e("ProfileViewModel", "Lỗi khi cập nhật tên", e)
                 e.printStackTrace()
             }
         }

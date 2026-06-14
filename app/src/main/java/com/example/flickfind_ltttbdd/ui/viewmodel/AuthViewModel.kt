@@ -1,5 +1,6 @@
 package com.example.flickfind_ltttbdd.ui.viewmodel
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.flickfind_ltttbdd.data.MovieRepository
@@ -55,6 +56,7 @@ class AuthViewModel(private val repository: MovieRepository) : ViewModel() {
             email.trim().lowercase()
         }
 
+        Log.d("AuthViewModel", "==> Đang đăng nhập: $cleanEmail")
         if (cleanEmail.isBlank() || password.isBlank()) {
             _uiState.update { it.copy(errorMessage = "Vui lòng nhập đầy đủ thông tin") }
             return
@@ -73,6 +75,7 @@ class AuthViewModel(private val repository: MovieRepository) : ViewModel() {
                 
                 if (user != null) {
                     if (!user.isEmailVerified) {
+                        Log.w("AuthViewModel", "Đăng nhập thất bại: Email chưa xác thực")
                         user.sendEmailVerification()
                         auth.signOut()
                         _uiState.update { it.copy(
@@ -82,6 +85,7 @@ class AuthViewModel(private val repository: MovieRepository) : ViewModel() {
                         ) }
                         return@launch
                     }
+                    Log.i("AuthViewModel", "Đăng nhập thành công: ${user.uid}")
                     repository.insertOrUpdateUser(
                         UserEntity(
                             id = user.uid,
@@ -93,6 +97,7 @@ class AuthViewModel(private val repository: MovieRepository) : ViewModel() {
 
                 _uiState.update { it.copy(isLoading = false, isSuccess = true, isLoggedIn = true) }
             } catch (e: Exception) {
+                Log.e("AuthViewModel", "Lỗi đăng nhập", e)
                 val friendlyMessage = when (e) {
                     is FirebaseAuthInvalidCredentialsException -> "Tài khoản hoặc mật khẩu không chính xác"
                     else -> translateError(e.message)
@@ -206,6 +211,7 @@ class AuthViewModel(private val repository: MovieRepository) : ViewModel() {
     }
 
     fun logout() {
+        Log.d("AuthViewModel", "==> Đăng xuất người dùng")
         auth.signOut()
         _uiState.update { it.copy(isLoggedIn = false, isVerificationSent = false, isEmailVerifiedSuccess = false) }
     }
