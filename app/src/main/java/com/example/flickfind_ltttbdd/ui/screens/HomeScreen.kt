@@ -39,6 +39,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import androidx.compose.ui.platform.LocalContext
+import android.util.Log
 import android.widget.Toast
 import com.google.firebase.auth.FirebaseAuth
 import coil.compose.AsyncImage
@@ -69,6 +70,7 @@ fun HomeScreen(
     LaunchedEffect(searchQuery) {
         val cleanQuery = searchQuery.trim()
         if (cleanQuery.length >= 2) {
+            Log.v("HomeScreen", "Đang đợi người dùng dừng gõ để gợi ý cho: $cleanQuery")
             kotlinx.coroutines.delay(1000)
             viewModel.updateSearchSuggestions(cleanQuery)
             isSuggestionsVisible = true
@@ -80,6 +82,10 @@ fun HomeScreen(
 
     val pullToRefreshState = rememberPullToRefreshState()
     var isRefreshing by remember { mutableStateOf(false) }
+
+    LaunchedEffect(Unit) {
+        Log.d("HomeScreen", "==> Khởi chạy HomeScreen")
+    }
 
     LaunchedEffect(uiState.isLoading) {
         if (!uiState.isLoading) {
@@ -141,6 +147,7 @@ fun HomeScreen(
                             leadingIcon = {
                                 IconButton(onClick = {
                                     val cleanQuery = searchQuery.trim()
+                                    Log.i("HomeScreen", "Người dùng nhấn icon tìm kiếm cho: $cleanQuery")
                                     if (cleanQuery.isNotEmpty()) {
                                         navController.navigate(Screen.SearchResult.createRoute(query = cleanQuery))
                                     }
@@ -267,6 +274,7 @@ fun HomeScreen(
                                         movie = movie,
                                         isFavorite = uiState.favoriteMovieIds.contains(movie.id),
                                         onFavoriteClick = {
+                                            Log.d("HomeScreen", "Click Yêu thích (Phổ biến): ${movie.title}")
                                             if (FirebaseAuth.getInstance().currentUser != null) {
                                                 viewModel.toggleFavorite(movie)
                                             } else {
@@ -274,6 +282,7 @@ fun HomeScreen(
                                             }
                                         },
                                         onCardClick = {
+                                            Log.d("HomeScreen", "Mở chi tiết (Phổ biến): ${movie.title}")
                                             navController.navigate(Screen.Detail.createRoute(movie.id))
                                         }
                                     )
@@ -307,6 +316,7 @@ fun HomeScreen(
                                 movie = movie,
                                 isFavorite = uiState.favoriteMovieIds.contains(movie.id),
                                 onFavoriteClick = {
+                                    Log.d("HomeScreen", "Click Yêu thích (Hot): ${movie.title}")
                                     if (FirebaseAuth.getInstance().currentUser != null) {
                                         viewModel.toggleFavorite(movie)
                                     } else {
@@ -314,6 +324,7 @@ fun HomeScreen(
                                     }
                                 },
                                 onCardClick = {
+                                    Log.d("HomeScreen", "Mở chi tiết (Hot): ${movie.title}")
                                     navController.navigate(Screen.Detail.createRoute(movie.id))
                                 }
                             )

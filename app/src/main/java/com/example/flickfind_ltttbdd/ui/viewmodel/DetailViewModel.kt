@@ -28,7 +28,9 @@ class DetailViewModel(
     val error: StateFlow<String?> = _error
 
     fun getMovieById(movieId: String) {
+        android.util.Log.d("DetailViewModel", "==> Bắt đầu tải chi tiết phim. ID: $movieId")
         if (movieId.isBlank()) {
+            android.util.Log.e("DetailViewModel", "Lỗi: MovieId bị trống!")
             _error.value = "ID phim không hợp lệ"
             return
         }
@@ -42,16 +44,18 @@ class DetailViewModel(
                 .onSuccess { movies ->
                     val foundMovie = movies.find { it.id == movieId }
                     if (foundMovie != null) {
+                        android.util.Log.i("DetailViewModel", "Thành công: Đã tìm thấy phim ${foundMovie.title}")
                         _movie.value = foundMovie
                         observeFavoriteStatus(foundMovie.id)
                         _isLoading.value = false
                     } else {
+                        android.util.Log.w("DetailViewModel", "Cảnh báo: Không tìm thấy ID $movieId trong danh sách API")
                         _error.value = "Không tìm thấy phim có ID: $movieId"
                         _isLoading.value = false
                     }
                 }
                 .onFailure { exception ->
-                    android.util.Log.e("DetailViewModel", "Lỗi tải phim", exception)
+                    android.util.Log.e("DetailViewModel", "Lỗi nghiêm trọng khi gọi API", exception)
                     _error.value = "Lỗi kết nối hoặc không tìm thấy phim"
                     _isLoading.value = false
                 }
@@ -62,6 +66,7 @@ class DetailViewModel(
     private fun observeFavoriteStatus(movieId: String) {
         val currentUser = FirebaseAuth.getInstance().currentUser
         if (currentUser == null) {
+            android.util.Log.w("DetailViewModel", "Chưa đăng nhập, không theo dõi trạng thái yêu thích")
             _isFavorite.value = false
             return
         }
@@ -74,8 +79,10 @@ class DetailViewModel(
 
     // [GHI CHÚ]: Thêm/Xóa phim khỏi danh sách yêu thích liên kết với từng tài khoản
     fun toggleFavorite(movie: MovieResponse) {
+        android.util.Log.d("DetailViewModel", "Bấm nút yêu thích: ${movie.title} (ID: ${movie.id})")
         val currentUser = FirebaseAuth.getInstance().currentUser
         if (currentUser == null) {
+            android.util.Log.w("DetailViewModel", "Lỗi: User chưa đăng nhập nhưng bấm nút yêu thích")
             _error.value = "Vui lòng đăng nhập để thích phim"
             return
         }
@@ -92,8 +99,10 @@ class DetailViewModel(
                 runtime = movie.runtime
             )
             if (_isFavorite.value) {
+                android.util.Log.v("DetailViewModel", "Đang xóa khỏi danh sách yêu thích...")
                 repository.removeFromFavorite(favoriteMovie)
             } else {
+                android.util.Log.v("DetailViewModel", "Đang thêm vào danh sách yêu thích...")
                 repository.addToFavorite(favoriteMovie)
             }
         }

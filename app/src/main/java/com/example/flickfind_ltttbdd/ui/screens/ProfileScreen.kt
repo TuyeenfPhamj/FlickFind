@@ -1,5 +1,6 @@
 package com.example.flickfind_ltttbdd.ui.screens
 
+import android.util.Log
 import android.content.Intent
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
@@ -48,6 +49,10 @@ fun ProfileScreen(
     var isEditMode by remember { mutableStateOf(false) }
     var showNameDialog by remember { mutableStateOf(false) }
 
+    LaunchedEffect(Unit) {
+        Log.d("ProfileScreen", "==> Hiển thị màn hình Cá nhân")
+    }
+
     val photoPickerLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.PickVisualMedia(),
         onResult = { uri ->
@@ -89,11 +94,15 @@ fun ProfileScreen(
                 avatarUrl = uiState.user?.avatarUrl ?: "",
                 onLogout = onLogout,
                 onEditAvatar = {
+                    Log.d("ProfileScreen", "Người dùng chọn đổi ảnh đại diện")
                     photoPickerLauncher.launch(
                         PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
                     )
                 },
-                onEditName = { showNameDialog = true }
+                onEditName = { 
+                    Log.d("ProfileScreen", "Người dùng chọn đổi tên")
+                    showNameDialog = true 
+                }
             )
         }
 
@@ -131,7 +140,10 @@ fun ProfileScreen(
                     fontWeight = FontWeight.Bold
                 )
                 Surface(
-                    onClick = { isEditMode = !isEditMode },
+                    onClick = { 
+                        isEditMode = !isEditMode 
+                        Log.d("ProfileScreen", "Chế độ chỉnh sửa: $isEditMode")
+                    },
                     color = if (isEditMode) Color(0xFFE91E63) else MaterialTheme.colorScheme.surfaceVariant,
                     shape = RoundedCornerShape(8.dp)
                 ) {
@@ -161,10 +173,17 @@ fun ProfileScreen(
             HorizontalFavoriteMovieItem(
                 movie = movie,
                 isEditMode = isEditMode,
-                onToggleWatched = { viewModel.toggleWatched(movie) },
-                onDelete = { viewModel.deleteFavorite(movie) },
+                onToggleWatched = { 
+                    Log.d("ProfileScreen", "Bấm toggle 'Đã xem' cho: ${movie.title}")
+                    viewModel.toggleWatched(movie) 
+                },
+                onDelete = { 
+                    Log.d("ProfileScreen", "Bấm xóa khỏi yêu thích: ${movie.title}")
+                    viewModel.deleteFavorite(movie) 
+                },
                 onClick = {
                     if (!isEditMode) {
+                        Log.d("ProfileScreen", "Mở chi tiết phim từ Profile: ${movie.title}")
                         navController.navigate(Screen.Detail.createRoute(movie.id))
                     }
                 }
@@ -318,6 +337,11 @@ fun StatusChoiceChip(text: String, isSelected: Boolean, onClick: () -> Unit) {
 
 @Composable
 fun GenreBarChartSection(genreDistribution: Map<String, Int>, totalTime: Int) {
+    LaunchedEffect(genreDistribution) {
+        if (genreDistribution.isNotEmpty()) {
+            Log.d("ProfileScreen", "Thống kê biểu đồ: Nhận được ${genreDistribution.size} thể loại. Tổng thời gian: $totalTime phút")
+        }
+    }
     Card(
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
         shape = RoundedCornerShape(16.dp),

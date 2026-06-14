@@ -1,5 +1,6 @@
 package com.example.flickfind_ltttbdd.ui.screens
 
+import android.util.Log
 import android.content.res.Configuration
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -45,6 +46,7 @@ fun SearchResultScreen(
 
     // Gọi API lọc mới mỗi khi tham số đầu vào thay đổi
     LaunchedEffect(query, genre, yearRange, sortBy) {
+        Log.i("SearchResultScreen", "==> Khởi chạy SearchResult với: query=$query, genre=$genre, year=$yearRange, sort=$sortBy")
         viewModel.setFiltersAndSearch(query, genre, yearRange, sortBy)
     }
 
@@ -115,6 +117,7 @@ fun SearchResultScreen(
                             movie = movie,
                             isFavorite = uiState.favoriteMovieIds.contains(movie.id),
                             onFavoriteClick = {
+                                Log.d("SearchResultScreen", "Click Yêu thích: ${movie.title}")
                                 if (FirebaseAuth.getInstance().currentUser != null) {
                                     viewModel.toggleFavorite(movie)
                                 } else {
@@ -122,6 +125,7 @@ fun SearchResultScreen(
                                 }
                             },
                             onCardClick = {
+                                Log.d("SearchResultScreen", "Mở chi tiết từ kết quả tìm kiếm: ${movie.title}")
                                 navController.navigate(Screen.Detail.createRoute(movie.id))
                             }
                         )
