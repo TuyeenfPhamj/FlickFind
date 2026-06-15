@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import com.example.flickfind_ltttbdd.data.MovieRepository
+import com.example.flickfind_ltttbdd.data.datastore.ThemePreferencesRepository
 import com.example.flickfind_ltttbdd.data.local.AppDatabase
 import com.example.flickfind_ltttbdd.data.remote.RetrofitClient
 import kotlin.jvm.java
@@ -13,6 +14,8 @@ class AppViewModelProvider(private val context: Context) : ViewModelProvider.Fac
     companion object {
         @Volatile
         private var repository: MovieRepository? = null
+        @Volatile
+        private var themeRepository: ThemePreferencesRepository? = null
 
         fun getRepository(context: Context): MovieRepository {
             return repository ?: synchronized(this) {
@@ -27,13 +30,24 @@ class AppViewModelProvider(private val context: Context) : ViewModelProvider.Fac
                 repo
             }
         }
+
+        fun getThemeRepository(context: Context): ThemePreferencesRepository {
+            return themeRepository ?: synchronized(this) {
+                val repo = ThemePreferencesRepository(context)
+                themeRepository = repo
+                repo
+            }
+        }
     }
 
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
         val repo = getRepository(context)
+        val themeRepo = getThemeRepository(context)
 
-        // [GHI CHÚ]: Loại bỏ việc truyền cứng userId từ Factory. 
-        // Các ViewModel bây giờ sẽ tự lấy userId từ FirebaseAuth để đảm bảo tính thời gian thực khi đăng nhập/đăng xuất.
+        if (modelClass.isAssignableFrom(ThemeViewModel::class.java)) {
+            @Suppress("UNCHECKED_CAST")
+            return ThemeViewModel(themeRepo) as T
+        }
 
         if (modelClass.isAssignableFrom(HomeViewModel::class.java)) {
             @Suppress("UNCHECKED_CAST")

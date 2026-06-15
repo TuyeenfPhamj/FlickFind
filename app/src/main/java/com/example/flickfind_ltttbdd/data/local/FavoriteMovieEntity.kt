@@ -6,7 +6,7 @@ import androidx.room.PrimaryKey
 @Entity(tableName = "favorite_movies", primaryKeys = ["id", "userId"])
 data class FavoriteMovieEntity(
     val id: String,
-    val userId: String, // ID của user từ Firebase
+    val userId: String,
     val title: String,
     val posterPath: String,
     val backdropPath: String,

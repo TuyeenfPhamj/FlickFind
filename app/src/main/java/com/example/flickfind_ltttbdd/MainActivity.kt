@@ -6,8 +6,12 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.runtime.*
+import androidx.compose.ui.platform.LocalContext
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.flickfind_ltttbdd.navigation.MainNavGraph
 import com.example.flickfind_ltttbdd.ui.theme.FlickFindLTTTBDDTheme
+import com.example.flickfind_ltttbdd.ui.viewmodel.AppViewModelProvider
+import com.example.flickfind_ltttbdd.ui.viewmodel.ThemeViewModel
 import android.view.WindowManager
 
 class MainActivity : ComponentActivity() {
@@ -25,12 +29,19 @@ class MainActivity : ComponentActivity() {
         }
 
         setContent {
-            val systemTheme = androidx.compose.foundation.isSystemInDarkTheme()
-            var isDarkTheme by remember { mutableStateOf(systemTheme) }
+            val context = LocalContext.current
+            val themeViewModel: ThemeViewModel = viewModel(
+                factory = AppViewModelProvider(context)
+            )
+            val isDarkModeState by themeViewModel.isDarkMode.collectAsState()
+
+            // Nếu chưa có giá trị trong DataStore (null), sử dụng theme của hệ thống
+            val isDarkTheme = isDarkModeState ?: androidx.compose.foundation.isSystemInDarkTheme()
+
             FlickFindLTTTBDDTheme(darkTheme = isDarkTheme) {
                 MainNavGraph(
                     isDarkTheme = isDarkTheme,
-                    onThemeToggle = { isDarkTheme = !isDarkTheme }
+                    onThemeToggle = { checked: Boolean -> themeViewModel.onThemeChanged(checked) }
                 )
             }
         }

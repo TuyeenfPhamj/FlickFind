@@ -38,7 +38,7 @@ import com.example.flickfind_ltttbdd.ui.screens.*
 @Composable
 fun MainNavGraph(
     isDarkTheme: Boolean,
-    onThemeToggle: () -> Unit
+    onThemeToggle: (Boolean) -> Unit
 ) {
     val navController = rememberNavController()
     val navBackStackEntry by navController.currentBackStackEntryAsState()

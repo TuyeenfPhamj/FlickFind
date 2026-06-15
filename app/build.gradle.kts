@@ -74,6 +74,9 @@ dependencies {
     implementation(libs.firebase.auth)
     implementation(libs.kotlinx.coroutines.play.services)
 
+    // 7. DataStore (Lưu trạng thái cài đặt)
+    implementation("androidx.datastore:datastore-preferences:1.1.2")
+
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.activity.compose)
